@@ -17,6 +17,13 @@ const router = createRouter({
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
     },
+
+    // Added for the delivery tracking page
+    {
+      path: '/tracking',
+      name: 'tracking',
+      component: () => import('../views/TrackingView.vue'),
+    },
   ],
 })
 
