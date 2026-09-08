@@ -210,15 +210,10 @@ export default {
 <style scoped>
 .products-page {
   min-height: 100vh;
-
-  padding: 20px 24px 50px;
-
+  padding: 20px;
   background: #f7f5f2;
-
   box-sizing: border-box;
-
   font-family: Arial, sans-serif;
-
   color: #543b34;
 }
 

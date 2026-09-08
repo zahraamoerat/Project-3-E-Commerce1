@@ -5,7 +5,7 @@
     ========================== -->
     <div class="brand">
       <div class="brand-icon">
-        🔗
+        <img src="https://i.ibb.co/6cPQyP4c/link-icon-white.png" alt="link icon white" border="0" class="brand-logo">
       </div>
 
       <div class="brand-text">
@@ -21,28 +21,36 @@
 
       <RouterLink to="/dashboard" class="nav-item">
         <span class="nav-icon">
-          <FontAwesomeIcon :icon="byPrefixAndName.far['chart-user']" />
+          <FontAwesomeIcon :icon="faChartLine" />
         </span>
         <span>Dashboard</span>
       </RouterLink>
 
       <RouterLink to="/products" class="nav-item">
-        <span class="nav-icon">▮</span>
+        <span class="nav-icon">
+          <FontAwesomeIcon :icon="faShoppingBag" />
+        </span>
         <span>Products</span>
       </RouterLink>
 
       <RouterLink to="/orders" class="nav-item">
-        <span class="nav-icon">☷</span>
+        <span class="nav-icon">
+          <FontAwesomeIcon :icon="faList" />
+        </span>
         <span>Orders</span>
       </RouterLink>
 
       <RouterLink to="/stockmanagement" class="nav-item">
-        <span class="nav-icon">◈</span>
+        <span class="nav-icon">
+          <FontAwesomeIcon :icon="faWarehouse" />
+        </span>
         <span>Stock Management</span>
       </RouterLink>
 
       <RouterLink to="/deliveries" class="nav-item">
-        <span class="nav-icon">▱</span>
+        <span class="nav-icon">
+          <FontAwesomeIcon :icon="faTruck" />
+        </span>
         <span>Deliveries</span>
 
         <!-- Notification dot -->
@@ -50,12 +58,16 @@
       </RouterLink>
 
       <RouterLink to="/reviews" class="nav-item">
-        <span class="nav-icon">☆</span>
+        <span class="nav-icon">
+          <FontAwesomeIcon :icon="faStar" />
+        </span>
         <span>Reviews</span>
       </RouterLink>
 
       <RouterLink to="/profile" class="nav-item">
-        <span class="nav-icon">⌘</span>
+        <span class="nav-icon">
+          <FontAwesomeIcon :icon="faUser" />
+        </span>
         <span>Business Profile</span>
       </RouterLink>
 
@@ -65,14 +77,25 @@
          LOGOUT
     ========================== -->
     <button class="logout" @click="logout">
-      <span class="logout-icon">↪</span>
+      <span class="logout-icon">
+        <FontAwesomeIcon :icon="faUser" />
+      </span>
       <span>Log out</span>
     </button>
   </aside>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import logo from "../assets/link-icon-white.png";
+import { useRouter } from "vue-router";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { faChartLine } from "@fortawesome/free-solid-svg-icons";
+import { faShoppingBag } from "@fortawesome/free-solid-svg-icons";
+import { faList } from "@fortawesome/free-solid-svg-icons";
+import { faWarehouse } from "@fortawesome/free-solid-svg-icons";
+import { faTruck } from "@fortawesome/free-solid-svg-icons";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { faUser } from "@fortawesome/free-solid-svg-icons";
 
 const router = useRouter()
 
@@ -98,7 +121,7 @@ function logout() {
   min-height: 100vh;
   background: #523a33;
   color: #c9b7ae;
-  padding: 26px 20px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -137,6 +160,12 @@ function logout() {
 .brand-text {
   display: flex;
   flex-direction: column;
+}
+
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
 
 .brand-text h2 {
