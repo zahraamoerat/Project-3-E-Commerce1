@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import MainLayout from "../layouts/MainLayout.vue";
-import Dashboard from "../views/Products.vue";
+
+import Products from "../views/Products.vue";
+import Reviews from "../views/Reviews.vue";
 
 const routes = [
   {
@@ -9,12 +11,19 @@ const routes = [
     component: MainLayout,
     children: [
       {
-        path: "",
-        redirect: "/dashboard",
+        path: "products",
+        name: "Products",
+        component: Products,
       },
       {
-        path: "dashboard",
-        component: Dashboard,
+        path: "reviews",
+        name: "Reviews",
+        component: Reviews,
+      },
+      {
+        path: "stockmanagement",
+        name: "StockManagement",
+        component: () => import("../views/StockManagement.vue"),
       },
     ],
   },

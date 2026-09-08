@@ -1,9 +1,12 @@
 <template>
   <aside class="sidebar">
-
-    <!-- Logo -->
+    <!-- =========================
+         LOGO / BRAND
+    ========================== -->
     <div class="brand">
-      <div class="brand-icon">↗</div>
+      <div class="brand-icon">
+        🔗
+      </div>
 
       <div class="brand-text">
         <h2>WeConnect</h2>
@@ -11,91 +14,95 @@
       </div>
     </div>
 
-
-    <!-- Navigation -->
+    <!-- =========================
+         NAVIGATION
+    ========================== -->
     <nav class="navigation">
 
       <RouterLink to="/dashboard" class="nav-item">
-        <span class="nav-icon">▦</span>
+        <span class="nav-icon">
+          <FontAwesomeIcon :icon="byPrefixAndName.far['chart-user']" />
+        </span>
         <span>Dashboard</span>
       </RouterLink>
 
-
-      <RouterLink to="/suppliers" class="nav-item">
-        <span class="nav-icon">⌕</span>
-        <span>Browse suppliers</span>
+      <RouterLink to="/products" class="nav-item">
+        <span class="nav-icon">▮</span>
+        <span>Products</span>
       </RouterLink>
-
 
       <RouterLink to="/orders" class="nav-item">
-        <span class="nav-icon">▤</span>
-        <span>My orders</span>
+        <span class="nav-icon">☷</span>
+        <span>Orders</span>
       </RouterLink>
 
+      <RouterLink to="/stockmanagement" class="nav-item">
+        <span class="nav-icon">◈</span>
+        <span>Stock Management</span>
+      </RouterLink>
 
       <RouterLink to="/deliveries" class="nav-item">
         <span class="nav-icon">▱</span>
         <span>Deliveries</span>
+
+        <!-- Notification dot -->
+        <span class="notification-dot"></span>
       </RouterLink>
 
-
-      <RouterLink to="/messages" class="nav-item">
-        <span class="nav-icon">◯</span>
-        <span>Messages</span>
+      <RouterLink to="/reviews" class="nav-item">
+        <span class="nav-icon">☆</span>
+        <span>Reviews</span>
       </RouterLink>
-
 
       <RouterLink to="/profile" class="nav-item">
-        <span class="nav-icon">▣</span>
-        <span>Business profile</span>
+        <span class="nav-icon">⌘</span>
+        <span>Business Profile</span>
       </RouterLink>
 
     </nav>
 
-
-    <!-- Logout -->
+    <!-- =========================
+         LOGOUT
+    ========================== -->
     <button class="logout" @click="logout">
-      <span>↪</span>
+      <span class="logout-icon">↪</span>
       <span>Log out</span>
     </button>
-
   </aside>
 </template>
 
-
 <script setup>
-
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-
 function logout() {
-
-  // Remove login information if you are using localStorage
+  // Remove login information
   localStorage.removeItem('token')
 
-  // Send user back to login
+  // Remove additional login data if needed
+  localStorage.removeItem('user')
+
+  // Redirect to login
   router.push('/login')
 }
-
 </script>
 
-
 <style scoped>
+/* =========================
+   SIDEBAR
+========================= */
+
 .sidebar {
-  width: 230px;
+  width: 250px;
   min-height: 100vh;
-
-  background: #553c35;
+  background: #523a33;
   color: #c9b7ae;
-
-  padding: 24px 16px;
-
+  padding: 26px 20px;
   display: flex;
   flex-direction: column;
-
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 
@@ -106,37 +113,53 @@ function logout() {
 .brand {
   display: flex;
   align-items: center;
-
-  gap: 10px;
-
-  margin-bottom: 35px;
-
-  padding-left: 6px;
+  gap: 13px;
+  padding: 6px 10px;
+  margin-bottom: 42px;
 }
 
 .brand-icon {
-  font-size: 28px;
-  color: #e9a16c;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+
+  font-size: 21px;
+  line-height: 1;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
 }
 
 .brand-text h2 {
   margin: 0;
 
-  color: white;
+  color: #ffffff;
 
   font-family: Georgia, serif;
+  font-size: 21px;
+  font-weight: 600;
 
-  font-size: 18px;
+  line-height: 1.1;
 }
 
 .brand-text span {
-  display: block;
+  margin-top: 6px;
 
-  margin-top: 3px;
+  color: #bdaaa1;
 
-  font-size: 7px;
+  font-size: 8px;
+  font-weight: 600;
 
-  letter-spacing: 1px;
+  letter-spacing: 1.4px;
 }
 
 
@@ -146,58 +169,106 @@ function logout() {
 
 .navigation {
   display: flex;
-
   flex-direction: column;
-
-  gap: 5px;
+  gap: 7px;
 }
 
 
-.nav-item {
-  display: flex;
+/* =========================
+   NAVIGATION ITEMS
+========================= */
 
+.nav-item {
+  position: relative;
+
+  display: flex;
   align-items: center;
 
-  gap: 11px;
+  gap: 15px;
 
   width: 100%;
+  min-height: 48px;
 
-  padding: 12px;
+  padding: 0 15px;
 
-  border-radius: 8px;
+  box-sizing: border-box;
 
-  text-decoration: none;
+  border-radius: 10px;
 
   color: #c9b7ae;
 
-  font-size: 13px;
+  text-decoration: none;
 
-  transition: 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
+
+/* =========================
+   HOVER
+========================= */
 
 .nav-item:hover {
   background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 
-  color: white;
+  transform: translateX(2px);
 }
 
 
-/* Active page */
+/* =========================
+   ACTIVE PAGE
+========================= */
 
 .nav-item.router-link-active {
-  background: #6a4d45;
+  background: #684d45;
+  color: #ffffff;
 
-  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 
+/* =========================
+   NAVIGATION ICONS
+========================= */
+
 .nav-icon {
-  width: 18px;
+  width: 22px;
 
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  font-size: 15px;
+  color: #bba99f;
+
+  font-size: 18px;
+
+  flex-shrink: 0;
+}
+
+.nav-item.router-link-active .nav-icon {
+  color: #ffffff;
+}
+
+
+/* =========================
+   NOTIFICATION DOT
+========================= */
+
+.notification-dot {
+  width: 7px;
+  height: 7px;
+
+  margin-left: auto;
+
+  border-radius: 50%;
+
+  background: #e79b63;
 }
 
 
@@ -210,32 +281,66 @@ function logout() {
 
   width: 100%;
 
-  padding: 14px 12px;
+  min-height: 52px;
 
-  border: none;
+  padding: 14px 15px;
 
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
 
   background: transparent;
 
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+
   color: #c9b7ae;
 
-  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
 
   cursor: pointer;
 
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.logout:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.logout-icon {
+  width: 22px;
+
   display: flex;
-
   align-items: center;
+  justify-content: center;
 
-  gap: 11px;
-
-  font-size: 13px;
+  font-size: 19px;
 }
 
 
-.logout:hover {
-  color: white;
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 220px;
+    padding: 22px 16px;
+  }
+
+  .brand-text h2 {
+    font-size: 19px;
+  }
+
+  .nav-item {
+    min-height: 46px;
+    font-size: 13px;
+  }
 }
 
 
@@ -244,40 +349,89 @@ function logout() {
 ========================= */
 
 @media (max-width: 700px) {
-
   .sidebar {
     width: 100%;
-
     min-height: auto;
 
-    padding: 12px;
-  }
+    padding: 14px 16px;
 
+    position: relative;
+  }
 
   .brand {
-    margin-bottom: 12px;
+    margin-bottom: 18px;
   }
 
+  .brand-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 19px;
+  }
+
+  .brand-text h2 {
+    font-size: 19px;
+  }
 
   .navigation {
     flex-direction: row;
 
     overflow-x: auto;
 
-    gap: 5px;
+    gap: 8px;
+
+    padding-bottom: 5px;
+
+    scrollbar-width: none;
   }
 
+  .navigation::-webkit-scrollbar {
+    display: none;
+  }
 
   .nav-item {
     width: auto;
 
-    white-space: nowrap;
+    min-width: max-content;
+    min-height: 44px;
+
+    padding: 0 14px;
+
+    gap: 9px;
+
+    font-size: 13px;
   }
 
+  .nav-icon {
+    width: 19px;
+    font-size: 16px;
+  }
 
   .logout {
     display: none;
   }
+}
 
+
+/* =========================
+   SMALL MOBILE
+========================= */
+
+@media (max-width: 450px) {
+  .sidebar {
+    padding: 12px;
+  }
+
+  .brand {
+    padding: 4px;
+  }
+
+  .navigation {
+    gap: 6px;
+  }
+
+  .nav-item {
+    padding: 0 12px;
+    min-height: 42px;
+  }
 }
 </style>
