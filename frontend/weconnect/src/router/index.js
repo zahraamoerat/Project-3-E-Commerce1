@@ -1,15 +1,19 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import MainLayout from "../layouts/MainLayout.vue";
-
 import Products from "../views/Products.vue";
 import Reviews from "../views/Reviews.vue";
+import StockManagement from "../views/StockManagement.vue";
 
 const routes = [
   {
     path: "/",
     component: MainLayout,
     children: [
+      {
+        path: "",
+        redirect: "/products",
+      },
       {
         path: "products",
         name: "Products",
@@ -23,15 +27,18 @@ const routes = [
       {
         path: "stockmanagement",
         name: "StockManagement",
-        component: () => import("../views/StockManagement.vue"),
+        component: StockManagement,
       },
     ],
   },
+
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/products",
+  },
 ];
 
-const router = createRouter({
+export default createRouter({
   history: createWebHistory(),
   routes,
 });
-
-export default router;

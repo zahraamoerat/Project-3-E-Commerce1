@@ -13,11 +13,7 @@
 
         <div class="search-container">
           <span class="search-icon">⌕</span>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search wholesale items..."
-          />
+          <input v-model="searchQuery" type="text" placeholder="Search wholesale items..." />
         </div>
       </header>
 
@@ -82,10 +78,7 @@
 
             <tbody>
 
-              <tr
-                v-for="product in filteredProducts"
-                :key="product.sku"
-              >
+              <tr v-for="product in filteredProducts" :key="product.sku">
 
                 <td class="product-name">
                   {{ product.name }}
@@ -95,12 +88,10 @@
                   {{ product.sku }}
                 </td>
 
-                <td
-                  :class="{
-                    'stock-warning': product.status === 'Low Stock',
-                    'stock-danger': product.status === 'Out of Stock'
-                  }"
-                >
+                <td :class="{
+                  'stock-warning': product.status === 'Low Stock',
+                  'stock-danger': product.status === 'Out of Stock'
+                }">
                   {{ product.stock }}
                 </td>
 
@@ -109,10 +100,7 @@
                 </td>
 
                 <td>
-                  <span
-                    class="status-badge"
-                    :class="getStatusClass(product.status)"
-                  >
+                  <span class="status-badge" :class="getStatusClass(product.status)">
                     {{ product.status }}
                   </span>
                 </td>
@@ -122,10 +110,7 @@
                 </td>
 
                 <td>
-                  <button
-                    class="restock-button"
-                    @click="restockProduct(product)"
-                  >
+                  <button class="restock-button" @click="restockProduct(product)">
                     Restock
                   </button>
                 </td>
@@ -269,14 +254,12 @@ function restockProduct(product) {
 </script>
 
 <style scoped>
-
 * {
   box-sizing: border-box;
 }
 
 .stock-page {
   min-height: 100vh;
-  margin-left: 210px;
   background: #f6f4f1;
   color: #4b3934;
   font-family: Arial, Helvetica, sans-serif;

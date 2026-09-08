@@ -4,15 +4,11 @@ import Sidebar from "../components/Sidebar.vue";
 
 <template>
   <div class="main-layout">
-
-    <!-- Sidebar stays visible on every page -->
     <Sidebar />
 
-    <!-- Page content changes depending on the route -->
     <main class="main-content">
       <router-view />
     </main>
-
   </div>
 </template>
 
@@ -20,11 +16,19 @@ import Sidebar from "../components/Sidebar.vue";
 .main-layout {
   display: flex;
   min-height: 100vh;
+  background: #f7f5f2;
 }
 
 .main-content {
   flex: 1;
+  min-width: 0;
   min-height: 100vh;
-  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@media (max-width: 700px) {
+  .main-layout {
+    flex-direction: column;
+  }
 }
 </style>

@@ -15,11 +15,7 @@
       <div class="search-box">
         <span class="search-icon">⌕</span>
 
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search reviews or buyers..."
-        />
+        <input v-model="searchQuery" type="text" placeholder="Search reviews or buyers..." />
       </div>
 
     </header>
@@ -152,21 +148,14 @@
     <!-- REVIEWS -->
     <section class="reviews-list">
 
-      <article
-        v-for="review in filteredReviews"
-        :key="review.id"
-        class="review-card"
-      >
+      <article v-for="review in filteredReviews" :key="review.id" class="review-card">
 
         <!-- REVIEW HEADER -->
         <div class="review-header">
 
           <div class="buyer-info">
 
-            <div
-              class="buyer-avatar"
-              :class="review.avatarClass"
-            >
+            <div class="buyer-avatar" :class="review.avatarClass">
               {{ review.initials }}
             </div>
 
@@ -184,11 +173,7 @@
           <div class="review-rating">
 
             <div class="stars">
-              <span
-                v-for="star in 5"
-                :key="star"
-                :class="{ empty: star > review.rating }"
-              >
+              <span v-for="star in 5" :key="star" :class="{ empty: star > review.rating }">
                 ★
               </span>
             </div>
@@ -221,10 +206,7 @@
 
 
         <!-- SELLER RESPONSE -->
-        <div
-          v-if="review.response"
-          class="seller-response"
-        >
+        <div v-if="review.response" class="seller-response">
 
           <div class="response-header">
             <strong>
@@ -244,11 +226,7 @@
 
 
         <!-- REPLY BUTTON -->
-        <button
-          v-else
-          class="reply-button"
-          @click="replyToReview(review)"
-        >
+        <button v-else class="reply-button" @click="replyToReview(review)">
           Reply to review
         </button>
 
@@ -256,10 +234,7 @@
 
 
       <!-- NO RESULTS -->
-      <div
-        v-if="filteredReviews.length === 0"
-        class="no-results"
-      >
+      <div v-if="filteredReviews.length === 0" class="no-results">
         No reviews found.
       </div>
 
@@ -439,7 +414,6 @@ export default {
 
 
 <style scoped>
-
 * {
   box-sizing: border-box;
 }
@@ -452,8 +426,6 @@ export default {
 .reviews-page {
 
   min-height: 100vh;
-
-  margin-left: 210px;
 
   padding: 17px 26px 50px;
 
@@ -1156,5 +1128,4 @@ export default {
   }
 
 }
-
 </style>

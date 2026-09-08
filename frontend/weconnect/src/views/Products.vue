@@ -15,10 +15,7 @@
 
       <div class="search-box">
         <span>⌕</span>
-        <input
-          type="text"
-          placeholder="Search catalog structures..."
-        />
+        <input type="text" placeholder="Search catalog structures..." />
       </div>
 
     </header>
@@ -38,10 +35,7 @@
           <div class="form-group">
             <label>WHOLESALE PRODUCT TITLE</label>
 
-            <input
-              type="text"
-              placeholder="e.g. Sugar Cane Takeaway Bowls (750ml) - Pack of 500"
-            />
+            <input type="text" placeholder="e.g. Sugar Cane Takeaway Bowls (750ml) - Pack of 500" />
           </div>
 
           <div class="two-columns">
@@ -60,10 +54,7 @@
             <div class="form-group">
               <label>STOCK KEEPING UNIT (SKU)</label>
 
-              <input
-                type="text"
-                value="CFP-SCB-750M"
-              />
+              <input type="text" value="CFP-SCB-750M" />
             </div>
 
           </div>
@@ -72,8 +63,7 @@
             <label>DETAILED DESCRIPTION</label>
 
             <textarea
-              placeholder="Enter detailed bulk buying features (dimensions, food certifications, materials used, thermal properties, pack densities, etc.)..."
-            ></textarea>
+              placeholder="Enter detailed bulk buying features (dimensions, food certifications, materials used, thermal properties, pack densities, etc.)..."></textarea>
           </div>
 
         </section>
@@ -89,19 +79,13 @@
             <div class="form-group">
               <label>BASE PRICE PER UNIT PACK (R)</label>
 
-              <input
-                type="text"
-                value="R 550.00"
-              />
+              <input type="text" value="R 550.00" />
             </div>
 
             <div class="form-group">
               <label>MINIMUM ORDER QUANTITY (MOQ)</label>
 
-              <input
-                type="text"
-                value="10 packs"
-              />
+              <input type="text" value="10 packs" />
             </div>
 
           </div>
@@ -180,19 +164,13 @@
             <div class="form-group">
               <label>INITIAL STOCK QTY</label>
 
-              <input
-                type="text"
-                value="500 packs"
-              />
+              <input type="text" value="500 packs" />
             </div>
 
             <div class="form-group">
               <label>LOW STOCK ALERT</label>
 
-              <input
-                type="text"
-                value="50 packs"
-              />
+              <input type="text" value="50 packs" />
             </div>
 
           </div>
@@ -200,10 +178,7 @@
           <div class="form-group">
             <label>SHIPPING WEIGHT (PER PACK)</label>
 
-            <input
-              type="text"
-              value="2.5 kg"
-            />
+            <input type="text" value="2.5 kg" />
           </div>
 
 
@@ -233,11 +208,8 @@ export default {
 
 
 <style scoped>
-
 .products-page {
   min-height: 100vh;
-
-  margin-left: 210px;
 
   padding: 20px 24px 50px;
 
@@ -576,5 +548,4 @@ export default {
 
   color: #634c44;
 }
-
 </style>
