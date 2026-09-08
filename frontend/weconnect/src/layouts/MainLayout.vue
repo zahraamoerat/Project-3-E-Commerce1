@@ -3,23 +3,23 @@ import Sidebar from "../components/Sidebar.vue";
 </script>
 
 <template>
-  <div class="main-layout">
+  <div class="sidebar_main-layout">
     <Sidebar />
 
-    <main class="main-content">
+    <main class="sidebar_main-content">
       <router-view />
     </main>
   </div>
 </template>
 
 <style scoped>
-.main-layout {
+.sidebar_main-layout {
   display: flex;
   min-height: 100vh;
   background: #f7f5f2;
 }
 
-.main-content {
+.sidebar_main-content {
   flex: 1;
   min-width: 0;
   min-height: 100vh;
@@ -27,7 +27,7 @@ import Sidebar from "../components/Sidebar.vue";
 }
 
 @media (max-width: 700px) {
-  .main-layout {
+  .sidebar_main-layout {
     flex-direction: column;
   }
 }

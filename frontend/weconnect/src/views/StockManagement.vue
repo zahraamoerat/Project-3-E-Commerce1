@@ -258,6 +258,597 @@ function restockProduct(product) {
   box-sizing: border-box;
 }
 
+
+/* =========================
+   PAGE
+========================= */
+
+.stock-page {
+  min-height: 100vh;
+
+  background: #f6f4f1;
+  color: #4b3934;
+
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.main-content {
+  min-height: 100vh;
+
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.page-header {
+  min-height: 100px;
+
+  background: #f8f7f5;
+
+  border-bottom: 1px solid #e8e4df;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 30px;
+
+  padding: 20px 40px;
+}
+
+.page-header h1 {
+  margin: 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: 32px;
+
+  font-weight: 700;
+
+  color: #44332f;
+}
+
+.page-header p {
+  margin: 8px 0 0;
+
+  font-family: Arial, Helvetica, sans-serif;
+
+  font-size: 15px;
+
+  line-height: 1.5;
+
+  color: #756a66;
+}
+
+
+/* =========================
+   SEARCH
+========================= */
+
+.search-container {
+  width: 320px;
+
+  height: 46px;
+
+  display: flex;
+
+  align-items: center;
+
+  border: 1px solid #ded9d5;
+
+  border-radius: 25px;
+
+  background: #ffffff;
+
+  padding: 0 16px;
+
+  transition: all 0.2s ease;
+}
+
+.search-container:focus-within {
+  border-color: #d9824e;
+
+  box-shadow:
+    0 0 0 3px rgba(217, 130, 78, 0.1);
+}
+
+.search-icon {
+  font-size: 20px;
+
+  color: #756a66;
+
+  margin-right: 8px;
+}
+
+.search-container input {
+  width: 100%;
+
+  border: none;
+
+  outline: none;
+
+  font-size: 14px;
+
+  color: #4b3934;
+
+  background: transparent;
+}
+
+.search-container input::placeholder {
+  color: #817873;
+}
+
+
+/* =========================
+   STATISTICS
+========================= */
+
+.stats-grid {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 20px;
+
+  padding: 35px 40px 25px;
+}
+
+.stat-card {
+  min-height: 160px;
+
+  background: #ffffff;
+
+  border: 1px solid #e4dfdb;
+
+  border-radius: 16px;
+
+  padding: 24px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: space-between;
+
+  box-shadow:
+    0 4px 14px rgba(75, 57, 52, 0.04);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 8px 20px rgba(75, 57, 52, 0.08);
+}
+
+
+/* Warning Card */
+
+.stat-card.warning {
+  border: 2px solid #e56f45;
+}
+
+
+/* Danger Card */
+
+.stat-card.danger {
+  border: 2px solid #ef5c36;
+}
+
+
+/* =========================
+   STAT TEXT
+========================= */
+
+.stat-label {
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.6px;
+
+  color: #665c58;
+}
+
+.stat-value {
+  margin-top: 10px;
+
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: 38px;
+
+  font-weight: 700;
+
+  color: #4b3934;
+}
+
+.stat-card.warning .stat-value {
+  color: #d8753f;
+}
+
+.stat-card.danger .stat-value {
+  color: #e84d27;
+}
+
+.stat-description {
+  font-size: 13px;
+
+  color: #756a66;
+}
+
+.warning-text {
+  color: #e56f45;
+
+  font-weight: 600;
+}
+
+.danger-text {
+  color: #e84d27;
+
+  font-weight: 600;
+}
+
+
+/* =========================
+   INVENTORY CARD
+========================= */
+
+.inventory-card {
+  margin: 0 40px 40px;
+
+  background: #ffffff;
+
+  border: 1px solid #e4dfdb;
+
+  border-radius: 16px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 4px 14px rgba(75, 57, 52, 0.04);
+}
+
+.inventory-header {
+  padding: 28px 28px 18px;
+}
+
+.inventory-header h2 {
+  margin: 0;
+
+  font-family: Georgia, "Times New Roman", serif;
+
+  font-size: 22px;
+
+  color: #4b3934;
+}
+
+
+/* =========================
+   TABLE
+========================= */
+
+.table-container {
+  width: 100%;
+
+  overflow-x: auto;
+
+  padding: 0 28px 25px;
+}
+
+table {
+  width: 100%;
+
+  min-width: 950px;
+
+  border-collapse: collapse;
+
+  font-size: 14px;
+}
+
+thead tr {
+  border-top: 1px solid #e5e0dc;
+
+  border-bottom: 1px solid #e5e0dc;
+
+  background: #faf9f7;
+}
+
+th {
+  text-align: left;
+
+  padding: 15px 12px;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.5px;
+
+  color: #756a66;
+
+  white-space: nowrap;
+}
+
+td {
+  padding: 18px 12px;
+
+  border-bottom: 1px solid #eeeae7;
+
+  color: #655b57;
+
+  font-size: 14px;
+}
+
+tbody tr {
+  transition: background 0.2s ease;
+}
+
+tbody tr:hover {
+  background: #faf8f6;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =========================
+   PRODUCT DETAILS
+========================= */
+
+.product-name {
+  color: #4b3934;
+
+  font-weight: 600;
+
+  font-size: 15px;
+}
+
+.sku {
+  color: #817873;
+
+  font-size: 13px;
+}
+
+.stock-warning {
+  color: #df6a42;
+
+  font-weight: 700;
+}
+
+.stock-danger {
+  color: #e84d27;
+
+  font-weight: 700;
+}
+
+
+/* =========================
+   STATUS BADGES
+========================= */
+
+.status-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  padding: 7px 12px;
+
+  border-radius: 20px;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+.in-stock {
+  background: #e3f2e5;
+
+  color: #32823d;
+}
+
+.low-stock {
+  background: #f4e9dc;
+
+  color: #d8753f;
+}
+
+.out-of-stock {
+  background: #fde4df;
+
+  color: #ed593a;
+}
+
+
+/* =========================
+   RESTOCK BUTTON
+========================= */
+
+.restock-button {
+  border: none;
+
+  border-radius: 8px;
+
+  background: #d9824e;
+
+  color: white;
+
+  padding: 10px 18px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.restock-button:hover {
+  background: #c86f3e;
+
+  transform: translateY(-1px);
+}
+
+.restock-button:active {
+  transform: translateY(0);
+}
+
+
+/* =========================
+   NO RESULTS
+========================= */
+
+.no-results {
+  text-align: center;
+
+  padding: 50px;
+
+  color: #817873;
+
+  font-size: 15px;
+}
+
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 1100px) {
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .page-header {
+    padding: 20px 30px;
+  }
+
+  .stats-grid {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+
+  .inventory-card {
+    margin-left: 30px;
+    margin-right: 30px;
+  }
+
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 700px) {
+
+  .page-header {
+    min-height: auto;
+
+    padding: 25px 20px;
+
+    gap: 20px;
+
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .page-header h1 {
+    font-size: 28px;
+  }
+
+  .search-container {
+    width: 100%;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+
+    padding: 20px;
+  }
+
+  .inventory-card {
+    margin: 0 20px 30px;
+  }
+
+  .inventory-header {
+    padding: 20px 20px 15px;
+  }
+
+  .inventory-header h2 {
+    font-size: 20px;
+  }
+
+  .table-container {
+    padding: 0 20px 20px;
+  }
+
+}
+
+
+/* =========================
+   SMALL MOBILE
+========================= */
+
+@media (max-width: 400px) {
+
+  .page-header {
+    padding: 20px 15px;
+  }
+
+  .page-header h1 {
+    font-size: 25px;
+  }
+
+  .stats-grid {
+    padding: 15px;
+  }
+
+  .stat-card {
+    min-height: 140px;
+
+    padding: 20px;
+  }
+
+  .stat-value {
+    font-size: 34px;
+  }
+
+  .inventory-card {
+    margin: 0 15px 25px;
+  }
+
+}
+</style>
+
+<!-- <style scoped>
+* {
+  box-sizing: border-box;
+}
+
 .stock-page {
   min-height: 100vh;
   background: #f6f4f1;
@@ -585,4 +1176,4 @@ tbody tr:last-child td {
     margin: 0 15px;
   }
 }
-</style>
+</style> -->
