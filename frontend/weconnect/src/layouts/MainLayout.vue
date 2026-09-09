@@ -13,9 +13,22 @@ import Sidebar from "../components/Sidebar.vue";
 </template>
 
 <style scoped>
+:global(html),
+:global(body),
+:global(#app) {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
 .sidebar_main-layout {
   display: flex;
+  gap: 0;
+  width: 100%;
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
   background: #f7f5f2;
 }
 
@@ -23,6 +36,8 @@ import Sidebar from "../components/Sidebar.vue";
   flex: 1;
   min-width: 0;
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
   overflow-x: hidden;
 }
 
