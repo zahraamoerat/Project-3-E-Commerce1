@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -7,22 +6,48 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+        redirect: '/tracking',
     },
-    {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
-    },
-
     // Added for the delivery tracking page
     {
       path: '/tracking',
       name: 'tracking',
       component: () => import('../views/TrackingView.vue'),
+    },
+
+    // Add the Small Business Orders page
+    {
+      path: '/small-business/orders',
+      name: 'small-business-orders',
+      component: () => import('../views/SmallBusinessOrdersView.vue'),
+    },
+
+    // Add the Supplier Orders page
+    {
+      path: '/supplier/orders',
+      name: 'supplier-orders',
+      component: () => import('../views/SupplierOrdersView.vue'),
+    },
+
+    // Add the Small Business Deliveries page
+    {
+      path: '/small-business/deliveries',
+      name: 'small-business-deliveries',
+      component: () => import('../views/SmallBusinessDeliveriesView.vue'),
+    },
+
+    // Add the Supplier Deliveries page
+    {
+      path: '/supplier/deliveries',
+      name: 'supplier-deliveries',
+      component: () => import('../views/SupplierDeliveriesView.vue'),
+    },
+
+    // Add the payment page
+    {
+      path: '/payment/:orderId',
+      name: 'payment',
+      component: () => import('../views/PaymentsView.vue'),
     },
   ],
 })
