@@ -1,593 +1,839 @@
 <template>
   <div class="products-page">
-    <!-- ===================================================== PAGE HEADER ====================================================== -->
-    <header class="page-header">
-      <div class="page-header-content">
-        <h1>Add New Product</h1>
-        <p> List a new product or wholesale bundle to make it available for custom business buying. </p>
-      </div> <!-- Search -->
-      <div class="search-box"> <span class="search-icon">⌕</span>
-        <input type="text" placeholder="Search catalog structures..." />
+
+    <!-- ========================= HEADER ========================= -->
+    <header class="products-header">
+
+      <div class="products-title-section">
+        <h1>Products</h1>
+        <p>Manage your wholesale catalog, pricing, and stock levels.</p>
       </div>
+
+      <!-- Search -->
+      <div class="products-search">
+        <FontAwesomeIcon :icon="faMagnifyingGlass" />
+        <input v-model="searchQuery" type="text" placeholder="Search wholesale items..." />
+      </div>
+
     </header>
-    <!-- ===================================================== MAIN CONTENT ====================================================== -->
-    <div class="content-grid">
-      <!-- =================================================== LEFT COLUMN ==================================================== -->
-      <div class="left-column">
-        <!-- =============================================== PRODUCT DETAILS ================================================ -->
-        <section class="card">
-          <h2>Product Details &amp; Cataloging</h2>
-          <div class="form-group"> <label> WHOLESALE PRODUCT TITLE </label>
-            <input type="text" placeholder="e.g. Sugar Cane Takeaway Bowls (750ml) - Pack of 500" />
+
+    <!-- Dotted divider -->
+    <div class="header-divider"></div>
+
+    <!-- ========================= CONTROLS ========================= -->
+    <section class="products-controls">
+
+      <div class="filter-group">
+
+        <!-- Category -->
+        <div class="filter-dropdown">
+          <span>Category:</span>
+
+          <select v-model="selectedCategory">
+            <option value="All">All</option>
+            <option value="Paper Goods">Paper Goods</option>
+            <option value="Cleaning">Cleaning</option>
+            <option value="Packaging">Packaging</option>
+          </select>
+
+          <FontAwesomeIcon :icon="faChevronDown" />
+        </div>
+
+        <!-- Stock status -->
+        <div class="filter-dropdown">
+          <span>Stock Status:</span>
+
+          <select v-model="selectedStatus">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="All">All</option>
+          </select>
+
+          <FontAwesomeIcon :icon="faChevronDown" />
+        </div>
+
+      </div>
+
+      <!-- Add Product -->
+      <button class="add-product-button" @click="addProducts">
+        Add Product
+      </button>
+
+    </section>
+
+    <!-- ========================= PRODUCT LIST ========================= -->
+    <main class="product-list">
+
+      <article v-for="product in filteredProducts" :key="product.id" class="product-card">
+
+        <!-- Product Image -->
+        <div class="product-image-container">
+          <img v-if="product.image" :src="product.image" :alt="product.name" class="product-image" />
+
+          <div v-else class="product-image-placeholder">
+            <div class="paper-stack paper-stack-one"></div>
+            <div class="paper-stack paper-stack-two"></div>
+            <div class="paper-stack paper-stack-three"></div>
           </div>
-          <div class="two-columns">
-            <div class="form-group"> <label> PRODUCT CATEGORY </label> <select>
-                <option> Eco-friendly Packaging </option>
-                <option> Food &amp; Beverage </option>
-                <option> Cleaning Supplies </option>
-                <option> Office Supplies </option>
-              </select> </div>
-            <div class="form-group"> <label> STOCK KEEPING UNIT (SKU) </label> <input type="text"
-                value="CFP-SCB-750M" /> </div>
-          </div>
-          <div class="form-group"> <label> DETAILED DESCRIPTION </label> <textarea
-              placeholder="Enter detailed bulk buying features (dimensions, food certifications, materials used, thermal properties, pack densities, etc.)"></textarea>
-          </div>
-        </section>
-        <!-- =============================================== PRICING ================================================ -->
-        <section class="card">
-          <h2> Pricing &amp; Bulk Discount Tiers (ZAR) </h2>
-          <div class="two-columns">
-            <div class="form-group"> <label> BASE PRICE PER UNIT PACK (R) </label> <input type="text"
-                value="R 550.00" /> </div>
-            <div class="form-group"> <label> MINIMUM ORDER QUANTITY (MOQ) </label> <input type="text"
-                value="10 packs" /> </div>
-          </div>
-          <div class="form-group"> <label> BULK DISCOUNT TIERS </label>
-            <div class="discount-grid"> <!-- Tier 1 -->
-              <div class="discount-card"> <strong> 10 - 49 packs </strong> <span> Base price (R 550) </span> </div>
-              <!-- Tier 2 -->
-              <div class="discount-card"> <strong> 50 - 99 packs </strong> <span> 5% off (R 522.50) </span> </div>
-              <!-- Tier 3 -->
-              <div class="discount-card"> <strong> 100+ packs </strong> <span> 10% off (R 495.00) </span> </div>
+        </div>
+
+        <!-- Product information -->
+        <div class="product-content">
+
+          <div class="product-top-row">
+            <div>
+              <span class="product-category">
+                {{ product.category }}
+              </span>
+
+              <h2>{{ product.name }}</h2>
             </div>
+
+            <span class="product-status" :class="{
+              inactive: product.status === 'Inactive'
+            }">
+              {{ product.status }}
+            </span>
           </div>
-        </section>
+
+          <div class="product-details">
+
+            <div class="product-price">
+              <span>UNIT price</span>
+              <strong>R {{ product.price.toFixed(2) }}</strong>
+            </div>
+
+            <div class="product-stock">
+              <span>stock qty</span>
+              <strong>{{ product.stock }} units</strong>
+            </div>
+
+          </div>
+
+          <!-- Actions -->
+          <div class="product-actions">
+
+            <button class="edit-button" @click="editProduct(product)">
+              Edit
+            </button>
+
+            <button class="delete-button" @click="deleteProduct(product)">
+              Delete
+            </button>
+
+          </div>
+
+        </div>
+
+      </article>
+
+      <!-- Empty state -->
+      <div v-if="filteredProducts.length === 0" class="empty-products">
+        <h3>No products found</h3>
+        <p>Try changing your search or filters.</p>
       </div>
-      <!-- =================================================== RIGHT COLUMN ==================================================== -->
-      <div class="right-column">
-        <!-- =============================================== PRODUCT MEDIA ================================================ -->
-        <section class="card">
-          <h2> Product Media </h2>
-          <div class="upload-area">
-            <div class="upload-icon"> ↥ </div> <strong> Drag product images here </strong> <span> Supports JPG, PNG (Max
-              5MB) </span>
-          </div>
-          <div class="image-preview">
-            <div class="thumbnail"> <span>📦</span> </div>
-            <div class="thumbnail"> <span>▤</span> </div> <button type="button" class="add-image"> + </button>
-          </div>
-        </section>
-        <!-- =============================================== INVENTORY ================================================ -->
-        <section class="card">
-          <h2> Inventory &amp; Logistics </h2>
-          <div class="two-columns">
-            <div class="form-group"> <label> INITIAL STOCK QTY </label> <input type="text" value="500 packs" /> </div>
-            <div class="form-group"> <label> LOW STOCK ALERT </label> <input type="text" value="50 packs" /> </div>
-          </div>
-          <div class="form-group"> <label> SHIPPING WEIGHT (PER PACK) </label> <input type="text" value="2.5 kg" />
-          </div> <!-- Publish --> <button type="button" class="publish-button"> Publish Product </button> <!-- Draft -->
-          <button type="button" class="draft-button"> Save as Draft </button>
-        </section>
-      </div>
-    </div>
+
+    </main>
+
   </div>
 </template>
-<script>export default { name: "Products" } </script>
+
+
+<script setup>
+import { computed, ref } from "vue"
+import { useRouter } from "vue-router"
+
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
+
+import {
+  faMagnifyingGlass,
+  faChevronDown
+} from "@fortawesome/free-solid-svg-icons"
+
+import AddProducts from "../views/AddProducts.vue";
+
+const routes = [
+  {
+    path: "/products/add",
+    name: "AddProducts",
+    component: AddProducts,
+  },
+];
+
+
+/* ========================= ROUTER ========================= */
+
+const router = useRouter()
+
+
+/* ========================= STATE ========================= */
+
+const searchQuery = ref("")
+const selectedCategory = ref("All")
+const selectedStatus = ref("Active")
+
+
+/* ========================= PRODUCTS ========================= */
+
+const products = ref([
+  {
+    id: 1,
+    name: "Napkin Bundles",
+    category: "PAPER GOODS",
+    price: 145.00,
+    stock: 450,
+    status: "Active",
+
+    // Add your own image here if you have one:
+    // image: new URL("../assets/napkin-bundles.jpg", import.meta.url).href
+
+    image: null
+  }
+])
+
+
+/* ========================= FILTERED PRODUCTS ========================= */
+
+const filteredProducts = computed(() => {
+  return products.value.filter((product) => {
+
+    const matchesSearch =
+      product.name
+        .toLowerCase()
+        .includes(searchQuery.value.toLowerCase())
+
+    const matchesCategory =
+      selectedCategory.value === "All" ||
+      product.category.toLowerCase() ===
+      selectedCategory.value.toLowerCase()
+
+    const matchesStatus =
+      selectedStatus.value === "All" ||
+      product.status === selectedStatus.value
+
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      matchesStatus
+    )
+  })
+})
+
+
+/* ========================= ACTIONS ========================= */
+
+function addProduct() {
+  router.push("/products/add")
+}
+
+
+function editProduct(product) {
+  router.push(`/products/edit/${product.id}`)
+}
+
+
+function deleteProduct(product) {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete "${product.name}"?`
+  )
+
+  if (!confirmed) return
+
+  products.value = products.value.filter(
+    item => item.id !== product.id
+  )
+}
+
+function addProducts() {
+  router.push({ name: "AddProducts" });
+}
+</script>
+
+
 <style scoped>
-/* ========================================================= PRODUCTS PAGE ========================================================= */
+/* =========================================================
+   PAGE
+========================================================= */
+
 .products-page {
-  /* * The sidebar is handled by the main layout. * Therefore, DO NOT add margin-left here. */
-  width: 100%;
   min-height: 100vh;
-  padding: 32px;
+  background: #f7f6f3;
+  color: #523a33;
   box-sizing: border-box;
-  background: #f7f5f2;
-  font-family: Arial, sans-serif;
-  color: #543b34;
-  /* * Prevent content from creating * unwanted horizontal scrolling. */
-  overflow-x: hidden;
+  font-family: "Figtree", Arial, sans-serif;
 }
 
-/* ========================================================= PAGE HEADER ========================================================= */
-.page-header {
-  width: 100%;
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.products-header {
+  height: 58px;
+  padding: 0 24px;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  gap: 30px;
-  margin-bottom: 30px;
+  box-sizing: border-box;
 }
 
-.page-header-content {
-  min-width: 0;
+
+/* Title */
+
+.products-title-section {
+  display: flex;
+  flex-direction: column;
 }
 
-.page-header h1 {
-  margin: 0 0 8px;
-  font-family: Georgia, serif;
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: #57372f;
-}
-
-.page-header p {
+.products-title-section h1 {
   margin: 0;
-  max-width: 650px;
-  color: #82736d;
-  font-size: 14px;
-  line-height: 1.6;
+  color: #523a33;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
-/* ========================================================= SEARCH ========================================================= */
-.search-box {
-  width: 280px;
-  min-width: 220px;
+.products-title-section p {
+  margin: 2px 0 0;
+  color: #77716d;
+  font-size: 9px;
+  font-weight: 400;
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.products-search {
+  width: 214px;
+  height: 25px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 15px;
+  gap: 8px;
+  padding: 0 10px;
   background: #ffffff;
-  border: 1px solid #e5dfda;
-  border-radius: 25px;
+  border: 1px solid #ebe8e5;
+  border-radius: 16px;
   box-sizing: border-box;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.search-box:focus-within {
-  border-color: #d47b48;
-  box-shadow: 0 0 0 3px rgba(212, 123, 72, 0.1);
+.products-search svg {
+  color: #8b817b;
+  font-size: 9px;
 }
 
-.search-icon {
-  font-size: 19px;
-  color: #806f68;
-  flex-shrink: 0;
-}
-
-.search-box input {
+.products-search input {
   width: 100%;
-  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
-  font-size: 13px;
-  color: #543b34;
+  color: #523a33;
+  font-family: "Figtree", Arial, sans-serif;
+  font-size: 9px;
 }
 
-.search-box input::placeholder {
-  color: #aaa09b;
+.products-search input::placeholder {
+  color: #928c88;
 }
 
-/* ========================================================= MAIN GRID ========================================================= */
-.content-grid {
+
+/* =========================================================
+   HEADER DIVIDER
+========================================================= */
+
+.header-divider {
   width: 100%;
-  display: grid;
-  /* * Larger left section and * smaller right section. */
-  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
-  gap: 24px;
+  border-top: 2px dotted #9ed2e6;
+}
+
+
+/* =========================================================
+   CONTROLS
+========================================================= */
+
+.products-controls {
+  min-height: 70px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   box-sizing: border-box;
 }
 
-.left-column,
-.right-column {
-  min-width: 0;
+
+/* Filter group */
+
+.filter-group {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
+  align-items: center;
+  gap: 8px;
 }
 
-/* ========================================================= CARDS ========================================================= */
-.card {
-  width: 100%;
+
+/* =========================================================
+   FILTER DROPDOWNS
+========================================================= */
+
+.filter-dropdown {
+  position: relative;
+  height: 23px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
   background: #ffffff;
-  border: 1px solid #e5dfda;
-  border-radius: 16px;
-  padding: 26px;
+  border: 1px solid #e8e2de;
+  border-radius: 5px;
+  color: #574c47;
+  font-size: 9px;
   box-sizing: border-box;
-  box-shadow: 0 4px 15px rgba(84, 59, 52, 0.04);
 }
 
-.card h2 {
-  margin: 0 0 22px;
-  font-family: Georgia, serif;
-  font-size: 19px;
-  font-weight: 700;
-  line-height: 1.3;
-  color: #63463c;
+.filter-dropdown span {
+  white-space: nowrap;
 }
 
-/* ========================================================= FORM GROUP ========================================================= */
-.form-group {
-  width: 100%;
-  margin-bottom: 20px;
-}
-
-.form-group:last-child {
-  margin-bottom: 0;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: #806f68;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 13px 14px;
-  border: 1px solid #e6e1dc;
-  border-radius: 9px;
-  background: #faf9f7;
-  color: #665953;
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: #aaa09b;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  border-color: #d47b48;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(212, 123, 72, 0.1);
-}
-
-.form-group textarea {
-  min-height: 125px;
-  resize: vertical;
-  line-height: 1.5;
-}
-
-/* ========================================================= TWO COLUMNS ========================================================= */
-.two-columns {
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 18px;
-}
-
-/* ========================================================= DISCOUNT GRID ========================================================= */
-.discount-grid {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.discount-card {
-  min-width: 0;
-  padding: 15px;
-  background: #faf8f6;
-  border: 1px solid #e7e1dc;
-  border-radius: 10px;
-  box-sizing: border-box;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.discount-card:hover {
-  transform: translateY(-2px);
-  border-color: #d47b48;
-  box-shadow: 0 4px 12px rgba(84, 59, 52, 0.08);
-}
-
-.discount-card strong {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-  line-height: 1.3;
-  color: #63463c;
-}
-
-.discount-card span {
-  display: block;
-  font-size: 11px;
-  line-height: 1.4;
-  color: #8b5a43;
-}
-
-/* ========================================================= UPLOAD AREA ========================================================= */
-.upload-area {
-  width: 100%;
-  min-height: 155px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  background: #faf8f6;
-  border: 2px dashed #d9d0ca;
-  border-radius: 12px;
-  margin-bottom: 18px;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
-
-.upload-area:hover {
-  border-color: #d47b48;
-  background: #fffaf7;
-}
-
-.upload-icon {
-  color: #d47b48;
-  font-size: 30px;
-  line-height: 1;
-  margin-bottom: 10px;
-}
-
-.upload-area strong {
-  font-size: 13px;
-  color: #68554e;
-}
-
-.upload-area span {
-  margin-top: 6px;
-  font-size: 11px;
-  color: #9a8d87;
-}
-
-/* ========================================================= IMAGE PREVIEW ========================================================= */
-.image-preview {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.thumbnail,
-.add-image {
-  width: 68px;
-  height: 68px;
-  border-radius: 10px;
-  border: 1px solid #e3ddd7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  background: #f8f6f3;
-}
-
-.thumbnail {
-  font-size: 27px;
-}
-
-.add-image {
-  cursor: pointer;
-  font-size: 27px;
-  color: #806f68;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.add-image:hover {
-  background: #fffaf7;
-  border-color: #d47b48;
-  color: #d47b48;
-}
-
-/* ========================================================= BUTTONS ========================================================= */
-.publish-button,
-.draft-button {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 14px;
-  border-radius: 25px;
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* Publish */
-.publish-button {
-  margin-top: 24px;
-  background: #d47b48;
+.filter-dropdown select {
+  appearance: none;
+  -webkit-appearance: none;
   border: none;
+  outline: none;
+  background: transparent;
+  color: #574c47;
+  padding: 0 13px 0 0;
+  font-family: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.filter-dropdown svg {
+  position: absolute;
+  right: 6px;
+  pointer-events: none;
+  font-size: 7px;
+  color: #625852;
+}
+
+
+/* =========================================================
+   ADD PRODUCT BUTTON
+========================================================= */
+
+.add-product-button {
+  min-width: 90px;
+  height: 29px;
+  padding: 0 17px;
+  border: none;
+  border-radius: 18px;
+  background: #d77b45;
   color: #ffffff;
-  box-shadow: 0 4px 10px rgba(212, 123, 72, 0.2);
+  font-family: "Figtree", Arial, sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(82, 58, 51, 0.08);
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
-.publish-button:hover {
-  background: #c76d3b;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(212, 123, 72, 0.25);
+.add-product-button:hover {
+  background: #c96d39;
+  transform: translateY(-1px);
 }
 
-/* Draft */
-.draft-button {
-  margin-top: 10px;
+
+/* =========================================================
+   PRODUCT LIST
+========================================================= */
+
+.product-list {
+  padding: 0 24px 30px;
+}
+
+
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
+
+.product-card {
+  width: 100%;
   background: #ffffff;
-  border: 1px solid #e4dcd6;
-  color: #634c44;
+  border: 1px solid #e8e2de;
+  border-radius: 10px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-.draft-button:hover {
-  background: #f8f6f3;
-  border-color: #d47b48;
+
+/* =========================================================
+   PRODUCT IMAGE
+========================================================= */
+
+.product-image-container {
+  height: 108px;
+  margin: 9px 9px 0;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #d9d8d9;
 }
 
-/* ========================================================= LARGE TABLET ========================================================= */
-@media (max-width: 1200px) {
-  .products-page {
-    padding: 28px;
+
+/* Real image */
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+
+/* =========================================================
+   IMAGE PLACEHOLDER
+   Creates a paper-stack appearance when no image exists.
+========================================================= */
+
+.product-image-placeholder {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    linear-gradient(165deg,
+      #a9a7ab 0%,
+      #d6d5d5 40%,
+      #f3f1e9 40%,
+      #f3f1e9 65%,
+      #b8b7b9 100%);
+}
+
+
+/* Paper stacks */
+
+.paper-stack {
+  position: absolute;
+  background: #eeeee7;
+  box-shadow:
+    inset -2px 0 rgba(130, 128, 123, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+
+/* Large left paper */
+
+.paper-stack-one {
+  width: 30%;
+  height: 120%;
+  left: 28%;
+  top: -8%;
+  transform: skewY(2deg);
+}
+
+
+/* Center paper */
+
+.paper-stack-two {
+  width: 23%;
+  height: 105%;
+  left: 43%;
+  top: -4%;
+  border-radius: 5px;
+  background:
+    repeating-linear-gradient(to bottom,
+      #eeeeea 0px,
+      #eeeeea 2px,
+      #dadad5 3px);
+}
+
+
+/* Right paper */
+
+.paper-stack-three {
+  width: 16%;
+  height: 110%;
+  left: 57%;
+  top: -5%;
+  background:
+    repeating-linear-gradient(to bottom,
+      #eeeee9 0px,
+      #eeeee9 2px,
+      #d7d7d2 3px);
+}
+
+
+/* =========================================================
+   PRODUCT CONTENT
+========================================================= */
+
+.product-content {
+  padding: 10px 9px 9px;
+}
+
+
+/* =========================================================
+   PRODUCT TOP ROW
+========================================================= */
+
+.product-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+
+/* Category */
+
+.product-category {
+  display: block;
+  margin-bottom: 5px;
+  color: #8d8884;
+  font-size: 7px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+
+/* Product name */
+
+.product-top-row h2 {
+  margin: 0;
+  color: #523a33;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.product-status {
+  margin-top: 2px;
+  padding: 3px 7px;
+  border-radius: 10px;
+  background: #e5f4e4;
+  color: #4d9855;
+  font-size: 7px;
+  font-weight: 600;
+}
+
+.product-status.inactive {
+  background: #f5e5e2;
+  color: #bd6555;
+}
+
+
+/* =========================================================
+   PRODUCT DETAILS
+========================================================= */
+
+.product-details {
+  min-height: 40px;
+  margin-top: 7px;
+  padding-bottom: 7px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 1px solid #eeeae7;
+}
+
+
+/* Price */
+
+.product-price,
+.product-stock {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-price span,
+.product-stock span {
+  margin-bottom: 3px;
+  color: #9a928d;
+  font-size: 6px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.product-price strong,
+.product-stock strong {
+  color: #523a33;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.product-stock {
+  text-align: right;
+}
+
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+.product-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  padding-top: 9px;
+}
+
+.product-actions button {
+  height: 22px;
+  border-radius: 5px;
+  font-family: "Figtree", Arial, sans-serif;
+  font-size: 7px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+
+/* Edit */
+
+.edit-button {
+  border: none;
+  background: #f3f1ee;
+  color: #645953;
+}
+
+.edit-button:hover {
+  background: #e9e5e1;
+}
+
+
+/* Delete */
+
+.delete-button {
+  border: 1px solid #ebe3df;
+  background: #ffffff;
+  color: #e35f3d;
+}
+
+.delete-button:hover {
+  background: #fff5f2;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.empty-products {
+  margin-top: 20px;
+  padding: 50px 20px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #e8e2de;
+  border-radius: 10px;
+}
+
+.empty-products h3 {
+  margin: 0 0 5px;
+  color: #523a33;
+  font-family: Georgia, serif;
+  font-size: 15px;
+}
+
+.empty-products p {
+  margin: 0;
+  color: #8c8580;
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .products-header {
+    padding: 0 18px;
   }
 
-  .content-grid {
-    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
-    gap: 20px;
+  .products-controls {
+    padding: 0 18px;
   }
 
-  .card {
-    padding: 22px;
+  .product-list {
+    padding-left: 18px;
+    padding-right: 18px;
   }
 }
 
-/* ========================================================= TABLET ========================================================= */
-@media (max-width: 1000px) {
-  .products-page {
-    padding: 24px;
-  }
 
-  .page-header {
-    align-items: flex-start;
-  }
+/* =========================================================
+   MOBILE
+========================================================= */
 
-  .search-box {
-    width: 240px;
-    min-width: 200px;
-  }
+@media (max-width: 700px) {
 
-  /* * Stack the main columns. */
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* * Put right-side cards next to each other * when there is enough tablet width. */
-  .right-column {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 20px;
-  }
-}
-
-/* ========================================================= SMALL TABLET ========================================================= */
-@media (max-width: 800px) {
-  .page-header {
+  .products-header {
+    height: auto;
+    padding: 18px 16px 12px;
     flex-direction: column;
     align-items: stretch;
-    gap: 18px;
+    gap: 12px;
   }
 
-  .search-box {
+  .products-search {
     width: 100%;
-    max-width: none;
+    height: 32px;
   }
 
-  .right-column {
-    display: flex;
+  .products-controls {
+    padding: 12px 16px;
     flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
 
-  .discount-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-/* ========================================================= MOBILE ========================================================= */
-@media (max-width: 700px) {
-  .products-page {
-    padding: 18px;
+  .filter-group {
+    width: 100%;
+    overflow-x: auto;
   }
 
-  .page-header {
-    margin-bottom: 22px;
+  .filter-dropdown {
+    flex-shrink: 0;
   }
 
-  .page-header h1 {
-    font-size: 27px;
+  .add-product-button {
+    width: 100%;
+    height: 34px;
   }
 
-  .page-header p {
-    font-size: 13px;
+  .product-list {
+    padding: 0 16px 25px;
   }
 
-  .content-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
-  .left-column,
-  .right-column {
-    gap: 18px;
-  }
-
-  .card {
-    padding: 19px;
-    border-radius: 14px;
-  }
-
-  .card h2 {
-    font-size: 17px;
-    margin-bottom: 18px;
-  }
-
-  .two-columns {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-
-  .discount-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .upload-area {
-    min-height: 140px;
+  .product-image-container {
+    height: 140px;
   }
 }
 
-/* ========================================================= SMALL MOBILE ========================================================= */
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
 @media (max-width: 450px) {
-  .products-page {
-    padding: 12px;
+
+  .products-title-section h1 {
+    font-size: 19px;
   }
 
-  .page-header h1 {
-    font-size: 24px;
+  .product-image-container {
+    height: 120px;
   }
 
-  .page-header p {
-    font-size: 12px;
-  }
-
-  .card {
-    padding: 16px;
-    border-radius: 12px;
-  }
-
-  .card h2 {
-    font-size: 16px;
-  }
-
-  .form-group input,
-  .form-group select,
-  .form-group textarea {
-    font-size: 12px;
-    padding: 12px;
-  }
-
-  .thumbnail,
-  .add-image {
-    width: 60px;
-    height: 60px;
-  }
-
-  .publish-button,
-  .draft-button {
-    padding: 13px;
+  .product-actions {
+    gap: 5px;
   }
 }
 </style>

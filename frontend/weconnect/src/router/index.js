@@ -4,6 +4,7 @@ import MainLayout from "../layouts/MainLayout.vue";
 import Products from "../views/Products.vue";
 import Reviews from "../views/Reviews.vue";
 import StockManagement from "../views/StockManagement.vue";
+import AddProducts from "../views/AddProducts.vue";
 
 const routes = [
   {
@@ -13,6 +14,11 @@ const routes = [
       {
         path: "",
         redirect: "/products",
+      },
+      {
+        path: "addproducts",
+        name: "AddProducts",
+        component: AddProducts,
       },
       {
         path: "products",
