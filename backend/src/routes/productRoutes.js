@@ -1,23 +1,72 @@
 import express from "express";
 
 import {
-  publishProduct,
-  fetchProducts,
-  fetchProductById,
-  editProduct,
-  removeProduct
+  createProduct,
+  getProducts,
+  getProductById,
+  updateProduct,
+  deleteProduct,
+  updateProductStock
 } from "../controllers/productController.js";
 
 const router = express.Router();
 
-router.post("/", publishProduct);
+/* =========================================================
+   PRODUCTS
+   ========================================================= */
 
-router.get("/", fetchProducts);
+/*
+  GET
+  /api/products
+*/
+router.get(
+  "/",
+  getProducts
+);
 
-router.get("/:id", fetchProductById);
+/*
+  GET
+  /api/products/:id
+*/
+router.get(
+  "/:id",
+  getProductById
+);
 
-router.put("/:id", editProduct);
+/*
+  POST
+  /api/products
+*/
+router.post(
+  "/",
+  createProduct
+);
 
-router.delete("/:id", removeProduct);
+/*
+  PUT
+  /api/products/:id
+*/
+router.put(
+  "/:id",
+  updateProduct
+);
+
+/*
+  PATCH
+  /api/products/:id/stock
+*/
+router.patch(
+  "/:id/stock",
+  updateProductStock
+);
+
+/*
+  DELETE
+  /api/products/:id
+*/
+router.delete(
+  "/:id",
+  deleteProduct
+);
 
 export default router;
