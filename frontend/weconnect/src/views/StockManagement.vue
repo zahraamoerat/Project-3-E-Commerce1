@@ -81,28 +81,31 @@
               <tr v-for="product in filteredProducts" :key="product.sku">
 
                 <td class="product-name">
-                  {{ product.name }}
+                  {{product.product_name}}
                 </td>
 
                 <td class="sku">
-                  {{ product.sku }}
+                  {{product.product_id}}
                 </td>
 
                 <td :class="{
                   'stock-warning': product.status === 'Low Stock',
                   'stock-danger': product.status === 'Out of Stock'
                 }">
-                  {{ product.stock }}
+                  {{ product.quantity }}
                 </td>
 
                 <td>
-                  {{ product.minimum }}
+                  {{ product.low_stock_threshold}}
                 </td>
 
                 <td>
-                  <span class="status-badge" :class="getStatusClass(product.status)">
-                    {{ product.status }}
-                  </span>
+                  <span
+  class="status-badge"
+  :class="getStockStatusClass(product)"
+>
+  {{ getStockStatus(product) }}
+</span>
                 </td>
 
                 <td>
@@ -136,121 +139,266 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import {
+  ref,
+  computed,
+  onMounted
+} from "vue";
 
-const searchQuery = ref('')
+import { api } from "@/services/api";
 
-const products = ref([
-  {
-    name: 'Takeaway Containers (500ml)',
-    sku: 'CFP-TAK-500',
-    stock: '40 left',
-    stockNumber: 40,
-    minimum: '100 units',
-    minimumNumber: 100,
-    status: 'Low Stock',
-    lastRestocked: '02 Oct 2026'
-  },
-  {
-    name: 'Compostable Cups (250ml)',
-    sku: 'CFP-CUP-250',
-    stock: '1,200 units',
-    stockNumber: 1200,
-    minimum: '300 units',
-    minimumNumber: 300,
-    status: 'In Stock',
-    lastRestocked: '24 Sep 2026'
-  },
-  {
-    name: 'Cutlery Packs ×500',
-    sku: 'CFP-CUT-500',
-    stock: '860 units',
-    stockNumber: 860,
-    minimum: '200 units',
-    minimumNumber: 200,
-    status: 'In Stock',
-    lastRestocked: '10 Oct 2026'
-  },
-  {
-    name: 'Branded Paper Bags',
-    sku: 'CFP-BAG-BRN',
-    stock: '65 left',
-    stockNumber: 65,
-    minimum: '150 units',
-    minimumNumber: 150,
-    status: 'Low Stock',
-    lastRestocked: '18 Sep 2026'
-  },
-  {
-    name: 'Food-grade Cling Wrap',
-    sku: 'CFP-CLG-FGD',
-    stock: '0 units left',
-    stockNumber: 0,
-    minimum: '15 units',
-    minimumNumber: 15,
-    status: 'Out of Stock',
-    lastRestocked: '05 Aug 2026'
-  },
-  {
-    name: 'Napkin Bundles',
-    sku: 'CFP-NAP-WHT',
-    stock: '450 units',
-    stockNumber: 450,
-    minimum: '100 units',
-    minimumNumber: 100,
-    status: 'In Stock',
-    lastRestocked: '04 Oct 2026'
+const searchQuery =
+  ref("");
+
+const products =
+  ref([]);
+
+const loading =
+  ref(true);
+
+const error =
+  ref("");
+
+/* =========================================================
+   STATISTICS
+   ========================================================= */
+
+const totalProducts =
+  computed(() =>
+    products.value.length
+  );
+
+const lowStockCount =
+  computed(() =>
+    products.value.filter(
+      (product) => {
+        const quantity =
+          Number(
+            product.quantity || 0
+          );
+
+        const threshold =
+          Number(
+            product.low_stock_threshold ||
+              0
+          );
+
+        return (
+          quantity > 0 &&
+          quantity <= threshold
+        );
+      }
+    ).length
+  );
+
+const outOfStockCount =
+  computed(() =>
+    products.value.filter(
+      (product) =>
+        Number(
+          product.quantity || 0
+        ) === 0
+    ).length
+  );
+
+const reorderPending =
+  computed(() =>
+    products.value.filter(
+      (product) =>
+        Number(
+          product.quantity || 0
+        ) <=
+        Number(
+          product.low_stock_threshold ||
+            0
+        )
+    ).length
+  );
+
+/* =========================================================
+   LOAD PRODUCTS
+   ========================================================= */
+
+async function loadProducts() {
+  loading.value = true;
+
+  error.value = "";
+
+  try {
+    const data =
+      await api.getProducts();
+
+    products.value =
+      Array.isArray(data)
+        ? data
+        : data.products || [];
+  } catch (err) {
+    console.error(
+      "Failed to load inventory:",
+      err
+    );
+
+    error.value =
+      err.message ||
+      "Unable to load inventory.";
+  } finally {
+    loading.value = false;
   }
-])
-
-const totalProducts = 42
-
-const lowStockCount = computed(() => {
-  return products.value.filter(
-    product => product.status === 'Low Stock'
-  ).length
-})
-
-const outOfStockCount = computed(() => {
-  return products.value.filter(
-    product => product.status === 'Out of Stock'
-  ).length
-})
-
-const reorderPending = 3
-
-const filteredProducts = computed(() => {
-  const query = searchQuery.value.toLowerCase().trim()
-
-  if (!query) {
-    return products.value
-  }
-
-  return products.value.filter(product =>
-    product.name.toLowerCase().includes(query) ||
-    product.sku.toLowerCase().includes(query)
-  )
-})
-
-function getStatusClass(status) {
-  if (status === 'In Stock') {
-    return 'in-stock'
-  }
-
-  if (status === 'Low Stock') {
-    return 'low-stock'
-  }
-
-  if (status === 'Out of Stock') {
-    return 'out-of-stock'
-  }
-
-  return ''
 }
 
-function restockProduct(product) {
-  alert(`Restock requested for ${product.name}`)
+/* =========================================================
+   FILTER PRODUCTS
+   ========================================================= */
+
+const filteredProducts =
+  computed(() => {
+    const query =
+      searchQuery.value
+        .toLowerCase()
+        .trim();
+
+    if (!query) {
+      return products.value;
+    }
+
+    return products.value.filter(
+      (product) => {
+        const name =
+          (
+            product.product_name ||
+            ""
+          ).toLowerCase();
+
+        const sku =
+          (
+            product.sku ||
+            ""
+          ).toLowerCase();
+
+        return (
+          name.includes(query) ||
+          sku.includes(query)
+        );
+      }
+    );
+  });
+
+/* =========================================================
+   STOCK STATUS
+   ========================================================= */
+
+function getStockStatus(
+  product
+) {
+  const quantity =
+    Number(
+      product.quantity || 0
+    );
+
+  const threshold =
+    Number(
+      product.low_stock_threshold ||
+        0
+    );
+
+  if (quantity === 0) {
+    return "Out of Stock";
+  }
+
+  if (
+    quantity <= threshold
+  ) {
+    return "Low Stock";
+  }
+
+  return "In Stock";
 }
+
+function getStockStatusClass(
+  product
+) {
+  const status =
+    getStockStatus(product);
+
+  if (
+    status === "Out of Stock"
+  ) {
+    return "out-of-stock";
+  }
+
+  if (
+    status === "Low Stock"
+  ) {
+    return "low-stock";
+  }
+
+  return "in-stock";
+}
+
+/* =========================================================
+   RESTOCK
+   ========================================================= */
+
+async function restockProduct(
+  product
+) {
+  const enteredQuantity =
+    window.prompt(
+      `Enter new stock quantity for ${product.product_name}:`,
+      product.quantity
+    );
+
+  if (
+    enteredQuantity === null
+  ) {
+    return;
+  }
+
+  const quantity =
+    Number(
+      enteredQuantity
+    );
+
+  if (
+    !Number.isInteger(
+      quantity
+    ) ||
+    quantity < 0
+  ) {
+    error.value =
+      "Stock quantity must be a non-negative whole number.";
+
+    return;
+  }
+
+  error.value = "";
+
+  try {
+    await api.updateProductStock(
+      product.product_id,
+      quantity
+    );
+
+    await loadProducts();
+  } catch (err) {
+    console.error(
+      "Failed to update stock:",
+      err
+    );
+
+    error.value =
+      err.message ||
+      "Unable to update stock.";
+  }
+}
+
+/* =========================================================
+   LOAD WHEN PAGE OPENS
+   ========================================================= */
+
+onMounted(() => {
+  loadProducts();
+});
 </script>
 
 <style scoped>

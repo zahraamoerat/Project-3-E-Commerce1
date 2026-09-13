@@ -409,25 +409,16 @@
 </template>
 
 <script>
-const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:5000"
-).replace(/\/+$/, "");
-
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png"];
+import { api } from "@/services/api";
 
 export default {
   name: "AddProducts",
 
   data() {
     return {
-      images: [],
-      isDragOver: false,
-      uploadError: "",
-      nextId: 1,
-      isPublishing: false,
-      successMessage: "",
-      errorMessage: "",
+      /* =====================================================
+         FORM DATA
+         ===================================================== */
 
       form: {
         product_name: "",
@@ -435,172 +426,556 @@ export default {
         sku: "",
         description: "",
         price: "",
-        moq: 10,
-        quantity: 500,
-        low_stock_threshold: 50,
+        unit: "pack",
+        quantity: "",
+        low_stock_threshold: "",
+        moq: "",
         shipping_weight: "",
-        unit: "pack"
-      }
+        product_image: null
+      },
+
+      /* =====================================================
+         IMAGE
+         ===================================================== */
+
+      selectedImage: null,
+      imagePreview: null,
+
+      /* =====================================================
+         BULK DISCOUNTS
+         ===================================================== */
+
+      bulkDiscounts: [
+        {
+          min_quantity: 10,
+          max_quantity: 49,
+          discount_percentage: 5
+        },
+        {
+          min_quantity: 50,
+          max_quantity: 99,
+          discount_percentage: 10
+        },
+        {
+          min_quantity: 100,
+          max_quantity: null,
+          discount_percentage: 15
+        }
+      ],
+
+      /* =====================================================
+         FORM STATE
+         ===================================================== */
+
+      loading: false,
+      savingDraft: false,
+
+      error: "",
+      successMessage: "",
+
+      /* =====================================================
+         VALIDATION ERRORS
+         ===================================================== */
+
+      validationErrors: {}
     };
   },
 
-  beforeUnmount() {
-    this.images.forEach((image) => URL.revokeObjectURL(image.url));
+  computed: {
+    /* =====================================================
+       SUPPLIER ID
+       ===================================================== */
+
+    supplierId() {
+      return Number(
+        import.meta.env.VITE_SUPPLIER_ID
+      );
+    },
+
+    /* =====================================================
+       FORM VALID
+       ===================================================== */
+
+    isFormValid() {
+      return (
+        this.form.product_name.trim() !== "" &&
+        this.form.category_name.trim() !== "" &&
+        this.form.price !== "" &&
+        Number(this.form.price) >= 0 &&
+        this.form.quantity !== "" &&
+        Number.isInteger(
+          Number(this.form.quantity)
+        ) &&
+        Number(this.form.quantity) >= 0
+      );
+    }
   },
 
   methods: {
-    openFilePicker() {
-      this.$refs.fileInput?.click();
+    /* =====================================================
+       CLEAR MESSAGES
+       ===================================================== */
+
+    clearMessages() {
+      this.error = "";
+      this.successMessage = "";
     },
 
-    onFileInputChange(event) {
-      this.handleFiles(event.target.files);
-      event.target.value = "";
-    },
+    /* =====================================================
+       HANDLE IMAGE
+       ===================================================== */
 
-    onDrop(event) {
-      this.isDragOver = false;
-      this.handleFiles(event.dataTransfer.files);
-    },
+    handleImageUpload(event) {
+      this.clearMessages();
 
-    handleFiles(fileList) {
-      this.uploadError = "";
+      const file =
+        event.target.files?.[0];
 
-      for (const file of Array.from(fileList || [])) {
-        if (
-          ACCEPTED_TYPES.includes(file.type) &&
-          file.size <= MAX_FILE_SIZE_BYTES
-        ) {
-          this.images.push({
-            id: this.nextId++,
-            file,
-            url: URL.createObjectURL(file),
-            name: file.name
-          });
-        } else {
-          this.uploadError =
-            "Only JPG/PNG files under 5MB are supported.";
-        }
+      if (!file) {
+        this.selectedImage = null;
+        this.imagePreview = null;
+        return;
       }
-    },
 
-    removeImage(index) {
-      const [removed] = this.images.splice(index, 1);
+      /* ---------------------------------------------------
+         FILE TYPE
+         --------------------------------------------------- */
 
-      if (removed) {
-        URL.revokeObjectURL(removed.url);
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png"
+      ];
+
+      if (
+        !allowedTypes.includes(
+          file.type
+        )
+      ) {
+        this.error =
+          "Only JPG and PNG images are allowed.";
+
+        event.target.value = "";
+
+        return;
       }
+
+      /* ---------------------------------------------------
+         FILE SIZE
+         --------------------------------------------------- */
+
+      const maxSize =
+        5 * 1024 * 1024;
+
+      if (file.size > maxSize) {
+        this.error =
+          "Image size must be 5MB or less.";
+
+        event.target.value = "";
+
+        return;
+      }
+
+      /* ---------------------------------------------------
+         SAVE FILE
+         --------------------------------------------------- */
+
+      this.selectedImage = file;
+
+      /*
+       * At this stage the backend does not yet
+       * support multipart image uploads.
+       *
+       * Therefore the image is previewed here,
+       * but product_image will remain null when
+       * the product is submitted.
+       */
+
+      const reader =
+        new FileReader();
+
+      reader.onload = (e) => {
+        this.imagePreview =
+          e.target.result;
+      };
+
+      reader.readAsDataURL(file);
     },
+
+    /* =====================================================
+       REMOVE IMAGE
+       ===================================================== */
+
+    removeImage() {
+      this.selectedImage = null;
+      this.imagePreview = null;
+
+      const input =
+        this.$refs.imageInput;
+
+      if (input) {
+        input.value = "";
+      }
+
+      this.form.product_image =
+        null;
+    },
+
+    /* =====================================================
+       VALIDATE FORM
+       ===================================================== */
 
     validateForm() {
-      const price = Number(this.form.price);
-      const quantity = Number(this.form.quantity);
-      const threshold = Number(this.form.low_stock_threshold);
-      const moq = Number(this.form.moq);
+      this.validationErrors = {};
 
-      if (!this.form.product_name.trim()) {
-        return "Please enter a product name.";
+      let valid = true;
+
+      /* ---------------------------------------------------
+         PRODUCT NAME
+         --------------------------------------------------- */
+
+      if (
+        !this.form.product_name.trim()
+      ) {
+        this.validationErrors.product_name =
+          "Product name is required.";
+
+        valid = false;
       }
 
-      if (!this.form.category_name) {
-        return "Please select a product category.";
+      /* ---------------------------------------------------
+         CATEGORY
+         --------------------------------------------------- */
+
+      if (
+        !this.form.category_name.trim()
+      ) {
+        this.validationErrors.category_name =
+          "Category is required.";
+
+        valid = false;
       }
 
-      if (!Number.isFinite(price) || price < 0) {
-        return "Please enter a valid product price.";
+      /* ---------------------------------------------------
+         PRICE
+         --------------------------------------------------- */
+
+      if (
+        this.form.price === "" ||
+        this.form.price === null
+      ) {
+        this.validationErrors.price =
+          "Price is required.";
+
+        valid = false;
+      } else if (
+        Number(this.form.price) < 0
+      ) {
+        this.validationErrors.price =
+          "Price cannot be negative.";
+
+        valid = false;
       }
 
-      if (!Number.isInteger(moq) || moq < 1) {
-        return "MOQ must be at least 1.";
+      /* ---------------------------------------------------
+         QUANTITY
+         --------------------------------------------------- */
+
+      if (
+        this.form.quantity === "" ||
+        this.form.quantity === null
+      ) {
+        this.validationErrors.quantity =
+          "Quantity is required.";
+
+        valid = false;
+      } else if (
+        !Number.isInteger(
+          Number(this.form.quantity)
+        ) ||
+        Number(this.form.quantity) < 0
+      ) {
+        this.validationErrors.quantity =
+          "Quantity must be a non-negative whole number.";
+
+        valid = false;
       }
 
-      if (!Number.isInteger(quantity) || quantity < 0) {
-        return "Please enter a valid stock quantity.";
+      /* ---------------------------------------------------
+         LOW STOCK THRESHOLD
+         --------------------------------------------------- */
+
+      if (
+        this.form.low_stock_threshold !==
+          "" &&
+        (
+          !Number.isInteger(
+            Number(
+              this.form
+                .low_stock_threshold
+            )
+          ) ||
+          Number(
+            this.form
+              .low_stock_threshold
+          ) < 0
+        )
+      ) {
+        this.validationErrors.low_stock_threshold =
+          "Low stock threshold must be a non-negative whole number.";
+
+        valid = false;
       }
 
-      if (!Number.isInteger(threshold) || threshold < 0) {
-        return "Please enter a valid low-stock threshold.";
+      /* ---------------------------------------------------
+         MOQ
+         --------------------------------------------------- */
+
+      if (
+        this.form.moq !== "" &&
+        (
+          !Number.isInteger(
+            Number(this.form.moq)
+          ) ||
+          Number(this.form.moq) < 0
+        )
+      ) {
+        this.validationErrors.moq =
+          "MOQ must be a non-negative whole number.";
+
+        valid = false;
       }
 
-      return "";
+      /* ---------------------------------------------------
+         SHIPPING WEIGHT
+         --------------------------------------------------- */
+
+      if (
+        this.form.shipping_weight !==
+          "" &&
+        Number(
+          this.form.shipping_weight
+        ) < 0
+      ) {
+        this.validationErrors.shipping_weight =
+          "Shipping weight cannot be negative.";
+
+        valid = false;
+      }
+
+      return valid;
     },
 
-    async publishProduct() {
-      this.successMessage = "";
-      this.errorMessage = "";
+    /* =====================================================
+       BUILD PRODUCT PAYLOAD
+       ===================================================== */
 
-      const validationError = this.validateForm();
+    buildProductPayload() {
+      /*
+       * These are the fields currently supported
+       * by the backend product API.
+       *
+       * MOQ, shipping weight and bulk discount
+       * information are intentionally not included
+       * because the current backend/database does
+       * not persist those values yet.
+       */
 
-      if (validationError) {
-        this.errorMessage = validationError;
+      return {
+        supplier_id:
+          this.supplierId,
+
+        product_name:
+          this.form.product_name.trim(),
+
+        category_name:
+          this.form.category_name.trim(),
+
+        sku:
+          this.form.sku.trim() ||
+          null,
+
+        description:
+          this.form.description.trim() ||
+          null,
+
+        price:
+          Number(this.form.price),
+
+        unit:
+          this.form.unit ||
+          "pack",
+
+        quantity:
+          Number(this.form.quantity),
+
+        low_stock_threshold:
+          this.form
+            .low_stock_threshold ===
+          ""
+            ? 0
+            : Number(
+                this.form
+                  .low_stock_threshold
+              ),
+
+        /*
+         * Image upload has not yet been
+         * connected to the backend.
+         */
+        product_image:
+          null
+      };
+    },
+
+    /* =====================================================
+       ADD PRODUCT
+       ===================================================== */
+
+    async submitProduct() {
+      this.clearMessages();
+
+      /* ---------------------------------------------------
+         VALIDATE
+         --------------------------------------------------- */
+
+      if (!this.validateForm()) {
+        this.error =
+          "Please correct the highlighted fields.";
+
         return;
       }
 
-      const supplierId = Number(import.meta.env.VITE_SUPPLIER_ID);
+      /* ---------------------------------------------------
+         SUPPLIER
+         --------------------------------------------------- */
 
-      if (!Number.isInteger(supplierId) || supplierId < 1) {
-        this.errorMessage =
-          "Configure a valid VITE_SUPPLIER_ID in frontend/weconnect/.env.";
+      if (!this.supplierId) {
+        this.error =
+          "Supplier ID is not configured. Please set VITE_SUPPLIER_ID in your frontend .env file.";
+
         return;
       }
 
-      this.isPublishing = true;
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      this.loading = true;
 
       try {
-        const response = await fetch(`${API_URL}/api/products`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json"
-          },
-          signal: controller.signal,
-          body: JSON.stringify({
-            supplier_id: supplierId,
-            product_name: this.form.product_name.trim(),
-            category_name: this.form.category_name,
-            sku: this.form.sku.trim() || null,
-            description: this.form.description.trim() || null,
-            price: Number(this.form.price),
-            unit: this.form.unit,
-            quantity: Number(this.form.quantity),
-            low_stock_threshold: Number(this.form.low_stock_threshold),
-            product_image: null
-          })
-        });
+        /* -------------------------------------------------
+           CREATE PRODUCT
+           ------------------------------------------------- */
 
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(
-            data.message || `Request failed with status ${response.status}.`
+        const data =
+          await api.createProduct(
+            this.buildProductPayload()
           );
-        }
+
+        console.log(
+          "Product created:",
+          data
+        );
 
         this.successMessage =
-          data.message || "Product published successfully.";
+          data.message ||
+          "Product created successfully.";
 
-        window.dispatchEvent(new CustomEvent("product-published"));
+        /* -------------------------------------------------
+           RESET FORM
+           ------------------------------------------------- */
+
+        this.resetForm();
+
+        /*
+         * Keep the success message visible
+         * briefly so the user knows that the
+         * product was saved.
+         */
 
         setTimeout(() => {
-          this.$router.push("/products");
-        }, 500);
-      } catch (error) {
-        this.errorMessage =
-          error.name === "AbortError"
-            ? "The server took too long to respond."
-            : error.message || "Unable to publish the product.";
+          this.successMessage = "";
+        }, 4000);
+
+      } catch (err) {
+        console.error(
+          "Failed to create product:",
+          err
+        );
+
+        this.error =
+          err.message ||
+          "Failed to create product. Please try again.";
       } finally {
-        clearTimeout(timeoutId);
-        this.isPublishing = false;
+        this.loading = false;
       }
     },
 
-    saveDraft() {
-      this.successMessage = "Draft functionality is not connected yet.";
-      this.errorMessage = "";
+    /* =====================================================
+       SAVE DRAFT
+       ===================================================== */
+
+    async saveDraft() {
+      this.clearMessages();
+
+      /*
+       * Draft functionality is not currently
+       * supported by the backend.
+       *
+       * Do not send a fake request.
+       */
+
+      this.error =
+        "Draft saving is not connected to the backend yet. Please use Add Product to save the product.";
+    },
+
+    /* =====================================================
+       RESET FORM
+       ===================================================== */
+
+    resetForm() {
+      this.form = {
+        product_name: "",
+        category_name: "",
+        sku: "",
+        description: "",
+        price: "",
+        unit: "pack",
+        quantity: "",
+        low_stock_threshold: "",
+        moq: "",
+        shipping_weight: "",
+        product_image: null
+      };
+
+      this.removeImage();
+
+      this.validationErrors = {};
+    },
+
+    /* =====================================================
+       ADD DISCOUNT TIER
+       ===================================================== */
+
+    addDiscountTier() {
+      this.bulkDiscounts.push({
+        min_quantity: "",
+        max_quantity: "",
+        discount_percentage: ""
+      });
+    },
+
+    /* =====================================================
+       REMOVE DISCOUNT TIER
+       ===================================================== */
+
+    removeDiscountTier(index) {
+      if (
+        this.bulkDiscounts.length <= 1
+      ) {
+        return;
+      }
+
+      this.bulkDiscounts.splice(
+        index,
+        1
+      );
     }
   }
 };
