@@ -1,1858 +1,1490 @@
 <template>
-  <div class="reviews-page">
 
-    <!-- PAGE HEADER -->
-    <header class="page-header">
+  <div class="products-page">
 
-      <div class="header-content">
-        <h1>Reviews</h1>
+    <!-- ========================= HEADER ========================= -->
+
+    <header class="products-header">
+
+      <div class="products-title-section">
+
+        <h1>Products</h1>
 
         <p>
-          See what buyers are saying about your products and wholesale services.
+          Manage your wholesale catalog, pricing, and stock levels.
         </p>
+
       </div>
 
-      <div class="search-box">
-        <span class="search-icon">⌕</span>
 
-        <input v-model="searchQuery" type="text" placeholder="Search reviews or buyers..." />
+      <!-- Search -->
+
+      <div class="products-search">
+
+        <FontAwesomeIcon
+          :icon="faMagnifyingGlass"
+        />
+
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search wholesale items..."
+        />
+
       </div>
 
     </header>
 
 
-    <!-- STATISTICS -->
-    <section class="stats-grid">
+    <!-- Dotted divider -->
 
-      <!-- Average Rating -->
-      <div class="stat-card average-card">
+    <div class="header-divider"></div>
 
-        <span class="stat-label">
-          AVERAGE RATING
-        </span>
 
-        <div class="rating-number">
-          4.7
-          <span>/ 5</span>
+    <!-- ========================= CONTROLS ========================= -->
+
+    <section class="products-controls">
+
+      <div class="filter-group">
+
+
+        <!-- Category -->
+
+        <div class="filter-dropdown">
+
+          <span>Category:</span>
+
+          <select
+            v-model="selectedCategory"
+          >
+
+            <option value="All">
+              All
+            </option>
+
+            <option
+              v-for="category in categories"
+              :key="category"
+              :value="category"
+            >
+              {{ category }}
+            </option>
+
+          </select>
+
+          <FontAwesomeIcon
+            :icon="faChevronDown"
+          />
+
         </div>
 
-        <div class="rating-stars">
-          ★★★★★
-          <span>Highly Rated</span>
+
+        <!-- Stock status -->
+
+        <div class="filter-dropdown">
+
+          <span>Stock Status:</span>
+
+          <select
+            v-model="selectedStatus"
+          >
+
+            <option value="All">
+              All
+            </option>
+
+            <option value="Active">
+              Active
+            </option>
+
+            <option value="Inactive">
+              Inactive
+            </option>
+
+          </select>
+
+          <FontAwesomeIcon
+            :icon="faChevronDown"
+          />
+
         </div>
 
       </div>
 
 
-      <!-- Total Reviews -->
-      <div class="stat-card">
+      <!-- Add Product -->
 
-        <span class="stat-label">
-          TOTAL REVIEWS
-        </span>
-
-        <div class="stat-number">
-          148
-        </div>
-
-        <span class="stat-change">
-          +14 this month
-        </span>
-
-      </div>
-
-
-      <!-- Five Star Reviews -->
-      <div class="stat-card">
-
-        <span class="stat-label">
-          5-STAR REVIEWS
-        </span>
-
-        <div class="stat-number">
-          122
-        </div>
-
-        <span class="stat-description">
-          82% of all reviews
-        </span>
-
-      </div>
-
-
-      <!-- Response Rate -->
-      <div class="stat-card">
-
-        <span class="stat-label">
-          RESPONSE RATE
-        </span>
-
-        <div class="stat-number">
-          94%
-        </div>
-
-        <span class="stat-change">
-          Excellent support
-        </span>
-
-      </div>
+      <button
+        class="add-product-button"
+        @click="addProducts"
+      >
+        Add Product
+      </button>
 
     </section>
 
 
-    <!-- FILTERS -->
-    <section class="filters">
+    <!-- ========================= LOADING ========================= -->
 
-      <div class="filter-left">
-
-        <select v-model="ratingFilter">
-          <option value="all">Rating: All Stars</option>
-          <option value="5">5 Stars</option>
-          <option value="4">4 Stars</option>
-          <option value="3">3 Stars</option>
-          <option value="2">2 Stars</option>
-          <option value="1">1 Star</option>
-        </select>
+    <div
+      v-if="loading"
+      class="products-message"
+    >
+      Loading products...
+    </div>
 
 
-        <select v-model="statusFilter">
-          <option value="all">Status: All Reviews</option>
-          <option value="replied">Replied</option>
-          <option value="unreplied">Needs Reply</option>
-        </select>
+    <!-- ========================= ERROR ========================= -->
 
-      </div>
+    <div
+      v-if="error && !loading"
+      class="products-error"
+    >
+      {{ error }}
 
-
-      <select v-model="sortOrder">
-        <option value="recent">
-          Sort by: Most Recent
-        </option>
-
-        <option value="oldest">
-          Sort by: Oldest
-        </option>
-
-        <option value="highest">
-          Sort by: Highest Rated
-        </option>
-
-        <option value="lowest">
-          Sort by: Lowest Rated
-        </option>
-      </select>
-
-    </section>
+      <button
+        type="button"
+        @click="fetchProducts"
+      >
+        Try Again
+      </button>
+    </div>
 
 
-    <!-- REVIEWS -->
-    <section class="reviews-list">
+    <!-- ========================= PRODUCT LIST ========================= -->
 
-      <article v-for="review in filteredReviews" :key="review.id" class="review-card">
+    <main
+      v-if="!loading && !error"
+      class="product-list"
+    >
 
-        <!-- REVIEW HEADER -->
-        <div class="review-header">
+      <article
+        v-for="product in filteredProducts"
+        :key="product.id"
+        class="product-card"
+      >
 
-          <div class="buyer-info">
 
-            <div class="buyer-avatar" :class="review.avatarClass">
-              {{ review.initials }}
-            </div>
+        <!-- Product Image -->
+
+        <div class="product-image-container">
+
+          <img
+            v-if="product.image"
+            :src="product.image"
+            :alt="product.name"
+            class="product-image"
+          />
+
+
+          <div
+            v-else
+            class="product-image-placeholder"
+          >
+
+            <div
+              class="paper-stack paper-stack-one"
+            ></div>
+
+            <div
+              class="paper-stack paper-stack-two"
+            ></div>
+
+            <div
+              class="paper-stack paper-stack-three"
+            ></div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Product information -->
+
+        <div class="product-content">
+
+
+          <div class="product-top-row">
 
             <div>
-              <h3>{{ review.buyer }}</h3>
 
-              <span class="buyer-location">
-                {{ review.location }}
+              <span class="product-category">
+                {{ product.category }}
               </span>
+
+              <h2>
+                {{ product.name }}
+              </h2>
+
+            </div>
+
+
+            <span
+              class="product-status"
+              :class="{
+                inactive:
+                  product.status === 'Inactive'
+              }"
+            >
+              {{ product.status }}
+            </span>
+
+          </div>
+
+
+          <div class="product-details">
+
+
+            <div class="product-price">
+
+              <span>
+                UNIT price
+              </span>
+
+              <strong>
+                R {{ product.price.toFixed(2) }}
+              </strong>
+
+            </div>
+
+
+            <div class="product-stock">
+
+              <span>
+                stock qty
+              </span>
+
+              <strong>
+                {{ product.stock }} units
+              </strong>
+
             </div>
 
           </div>
 
 
-          <div class="review-rating">
+          <!-- Actions -->
 
-            <div class="stars">
-              <span v-for="star in 5" :key="star" :class="{ empty: star > review.rating }">
-                ★
-              </span>
-            </div>
+          <div class="product-actions">
 
-            <span class="review-date">
-              {{ review.date }}
-            </span>
+            <button
+              class="edit-button"
+              @click="editProduct(product)"
+            >
+              Edit
+            </button>
+
+
+            <button
+              class="delete-button"
+              :disabled="deletingId === product.id"
+              @click="handleDeleteProduct(product)"
+            >
+              {{
+                deletingId === product.id
+                  ? "Deleting..."
+                  : "Delete"
+              }}
+            </button>
 
           </div>
 
         </div>
-
-
-        <!-- PRODUCT -->
-        <div class="product-purchased">
-
-          <span>PRODUCT PURCHASED:</span>
-
-          <strong>
-            {{ review.product }}
-          </strong>
-
-        </div>
-
-
-        <!-- REVIEW TEXT -->
-        <p class="review-text">
-          {{ review.comment }}
-        </p>
-
-
-        <!-- SELLER RESPONSE -->
-        <div v-if="review.response" class="seller-response">
-
-          <div class="response-header">
-            <strong>
-              REPLY FROM CAPE FRESH PACKAGING (YOU)
-            </strong>
-
-            <span>
-              Replied on {{ review.responseDate }}
-            </span>
-          </div>
-
-          <p>
-            {{ review.response }}
-          </p>
-
-        </div>
-
-
-        <!-- REPLY BUTTON -->
-        <button v-else class="reply-button" @click="replyToReview(review)">
-          Reply to review
-        </button>
 
       </article>
 
 
-      <!-- NO RESULTS -->
-      <div v-if="filteredReviews.length === 0" class="no-results">
-        No reviews found.
+      <!-- Empty state -->
+
+      <div
+        v-if="filteredProducts.length === 0"
+        class="empty-products"
+      >
+
+        <h3>
+          No products found
+        </h3>
+
+        <p>
+          Try changing your search or filters.
+        </p>
+
       </div>
 
-    </section>
+    </main>
 
   </div>
+
 </template>
 
+<script setup>
 
-<script>
-export default {
-  name: 'Reviews',
+import {
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  ref
+} from "vue";
 
-  data() {
-    return {
-      searchQuery: '',
-      ratingFilter: 'all',
-      statusFilter: 'all',
-      sortOrder: 'recent',
-
-      reviews: [
-        {
-          id: 1,
-          buyer: 'Kaya Kitchen',
-          initials: 'KK',
-          location: 'Woodstock, Cape Town',
-          rating: 5,
-          date: '12 Oct 2026',
-          product: 'Takeaway Containers (500ml)',
-          comment:
-            'Exceptional quality biodegradable takeaway containers. We use them for all our hot lunch packs and they never leak. Cape Fresh always delivers in under 48 hours. Excellent service!',
-          avatarClass: 'avatar-brown',
-          response:
-            'Thank you so much for the glowing review, Kaya Kitchen! We are thrilled to support your sustainable lunch packaging initiatives.',
-          responseDate: '12 Oct 2026'
-        },
-
-        {
-          id: 2,
-          buyer: 'Lindiwe Bakery',
-          initials: 'LB',
-          location: 'Soweto, Johannesburg',
-          rating: 4,
-          date: '10 Oct 2026',
-          product: 'Branded Paper Bags',
-          comment:
-            'Really beautiful printing on our custom pastry bags. The colors are crisp and represent our brand perfectly. Knocked off one star just because bulk discount tiers on 5,000 units are slightly low.',
-          avatarClass: 'avatar-orange',
-          response: null,
-          responseDate: null
-        },
-
-        {
-          id: 3,
-          buyer: 'Foodie Lane Cafe',
-          initials: 'FL',
-          location: 'Observatory, CT',
-          rating: 5,
-          date: '08 Oct 2026',
-          product: 'Compostable Cups (250ml)',
-          comment:
-            'Great quality cups and excellent service. The ordering process was simple and delivery was faster than expected.',
-          avatarClass: 'avatar-green',
-          response: null,
-          responseDate: null
-        },
-
-        {
-          id: 4,
-          buyer: 'Urban Eats',
-          initials: 'UE',
-          location: 'Sea Point, Cape Town',
-          rating: 5,
-          date: '05 Oct 2026',
-          product: 'Kraft Food Boxes',
-          comment:
-            'The boxes are strong, attractive and perfect for our takeaway meals. We will definitely order again.',
-          avatarClass: 'avatar-blue',
-          response:
-            'Thank you Urban Eats! We really appreciate your feedback and look forward to serving you again.',
-          responseDate: '06 Oct 2026'
-        }
-      ]
-    }
-  },
+import {
+  useRouter
+} from "vue-router";
 
 
-  computed: {
-    filteredReviews() {
-
-      let results = [...this.reviews]
-
-
-      // Search
-      if (this.searchQuery.trim()) {
-
-        const search = this.searchQuery.toLowerCase()
-
-        results = results.filter(review =>
-          review.buyer.toLowerCase().includes(search) ||
-          review.product.toLowerCase().includes(search) ||
-          review.comment.toLowerCase().includes(search)
-        )
-      }
+import {
+  FontAwesomeIcon
+} from "@fortawesome/vue-fontawesome";
 
 
-      // Rating filter
-      if (this.ratingFilter !== 'all') {
-
-        results = results.filter(
-          review => review.rating === Number(this.ratingFilter)
-        )
-      }
+import {
+  faMagnifyingGlass,
+  faChevronDown
+} from "@fortawesome/free-solid-svg-icons";
 
 
-      // Status filter
-      if (this.statusFilter === 'replied') {
+/* ========================= ROUTER ========================= */
 
-        results = results.filter(
-          review => review.response
-        )
-      }
-
-      if (this.statusFilter === 'unreplied') {
-
-        results = results.filter(
-          review => !review.response
-        )
-      }
+const router = useRouter();
 
 
-      // Sorting
-      if (this.sortOrder === 'highest') {
+/* ========================= STATE ========================= */
 
-        results.sort(
-          (a, b) => b.rating - a.rating
-        )
-      }
+const searchQuery = ref("");
 
-      if (this.sortOrder === 'lowest') {
+const selectedCategory =
+  ref("All");
 
-        results.sort(
-          (a, b) => a.rating - b.rating
-        )
-      }
-
-      if (this.sortOrder === 'recent') {
-
-        results.sort(
-          (a, b) => b.id - a.id
-        )
-      }
-
-      if (this.sortOrder === 'oldest') {
-
-        results.sort(
-          (a, b) => a.id - b.id
-        )
-      }
-
-      return results
-    }
-  },
+const selectedStatus =
+  ref("All");
 
 
-  methods: {
+const loading =
+  ref(true);
 
-    replyToReview(review) {
+const error =
+  ref("");
 
-      alert(`Replying to ${review.buyer}'s review.`)
+
+/* ========================= PRODUCTS ========================= */
+
+const products =
+  ref([]);
+
+
+/* ========================= DELETE STATE ========================= */
+
+const deletingId =
+  ref(null);
+
+
+/* ========================= CATEGORIES ========================= */
+
+const categories =
+  computed(() => {
+
+    const categoryList =
+      products.value
+        .map(product => product.category)
+        .filter(Boolean);
+
+
+    return [
+      ...new Set(categoryList)
+    ];
+
+  });
+
+
+/* ========================= FETCH PRODUCTS ========================= */
+
+const fetchProducts = async () => {
+
+  loading.value = true;
+
+  error.value = "";
+
+
+  try {
+
+    const response =
+      await fetch(
+        "http://localhost:5000/api/products"
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        "Failed to load products."
+      );
 
     }
+
+
+    /*
+     * Convert database fields into
+     * the fields used by the UI.
+     */
+
+    products.value =
+      data.map(product => ({
+
+        id:
+          product.product_id,
+
+        name:
+          product.product_name,
+
+        category:
+          product.category_name ||
+          "Uncategorized",
+
+        price:
+          Number(product.price) || 0,
+
+        stock:
+          Number(product.quantity) || 0,
+
+        status:
+          product.is_active
+            ? "Active"
+            : "Inactive",
+
+        sku:
+          product.sku,
+
+        description:
+          product.description,
+
+        image:
+          product.product_image
+
+      }));
+
+
+  } catch (err) {
+
+    console.error(
+      "Error loading products:",
+      err
+    );
+
+    error.value =
+      err.message ||
+      "Unable to load products.";
+
+  } finally {
+
+    loading.value = false;
 
   }
+
+};
+
+
+/* ========================= FILTERED PRODUCTS ========================= */
+
+const filteredProducts =
+  computed(() => {
+
+    return products.value.filter(
+      (product) => {
+
+        const matchesSearch =
+          product.name
+            .toLowerCase()
+            .includes(
+              searchQuery.value
+                .toLowerCase()
+            );
+
+
+        const matchesCategory =
+          selectedCategory.value === "All" ||
+          product.category.toLowerCase() ===
+          selectedCategory.value.toLowerCase();
+
+
+        const matchesStatus =
+          selectedStatus.value === "All" ||
+          product.status ===
+          selectedStatus.value;
+
+
+        return (
+          matchesSearch &&
+          matchesCategory &&
+          matchesStatus
+        );
+
+      }
+    );
+
+  });
+
+
+/* ========================= ADD PRODUCT ========================= */
+
+function addProducts() {
+
+  router.push("/products/add");
+
 }
+
+
+/* ========================= EDIT ========================= */
+
+function editProduct(product) {
+
+  router.push(
+    `/products/edit/${product.id}`
+  );
+
+}
+
+
+/* ========================= DELETE ========================= */
+
+async function handleDeleteProduct(product) {
+
+  const confirmed =
+    window.confirm(
+      `Are you sure you want to delete "${product.name}"?`
+    );
+
+
+  if (!confirmed) {
+
+    return;
+
+  }
+
+
+  deletingId.value = product.id;
+
+  error.value = "";
+
+
+  try {
+
+    const response =
+      await fetch(
+        `http://localhost:5000/api/products/${product.id}`,
+        {
+          method: "DELETE"
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        "Failed to delete product."
+      );
+
+    }
+
+
+    products.value =
+      products.value.filter(
+        item =>
+          item.id !== product.id
+      );
+
+
+  } catch (err) {
+
+    console.error(
+      "Error deleting product:",
+      err
+    );
+
+    error.value =
+      err.message ||
+      "Unable to delete product.";
+
+  } finally {
+
+    deletingId.value = null;
+
+  }
+
+}
+
+
+/* ========================= REFRESH AFTER PUBLISH ========================= */
+
+const handleProductPublished =
+  () => {
+
+    fetchProducts();
+
+  };
+
+
+/* ========================= PAGE LOAD ========================= */
+
+onMounted(() => {
+
+  fetchProducts();
+
+  window.addEventListener(
+    "product-published",
+    handleProductPublished
+  );
+
+});
+
+
+/* ========================= CLEANUP ========================= */
+
+onBeforeUnmount(() => {
+
+  window.removeEventListener(
+    "product-published",
+    handleProductPublished
+  );
+
+});
+
 </script>
 
 <style scoped>
-* {
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.products-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f7f6f3;
+  color: #523a33;
+  box-sizing: border-box;
+  font-family: "Figtree", Arial, sans-serif;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.products-header {
+  min-height: 82px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
   box-sizing: border-box;
 }
 
-/* =========================
-   PAGE
-========================= */
 
-.reviews-page {
-  min-height: 100vh;
-  width: 100%;
+/* Title */
 
-  padding: 40px;
-
-  background: #f7f5f2;
-  color: #563d35;
-
-  font-family: Arial, sans-serif;
-
-  max-width: 1500px;
-  margin: 0 auto;
-}
-
-
-/* =========================
-   HEADER
-========================= */
-
-.page-header {
+.products-title-section {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  gap: 30px;
-
-  padding-bottom: 22px;
-
-  border-bottom: 1px solid #e7e1dc;
-
-  margin-bottom: 30px;
+  flex-direction: column;
 }
 
-.header-content h1 {
-  margin: 0 0 8px;
-
-  font-family: Georgia, serif;
-
-  font-size: 32px;
-  font-weight: 700;
-
-  color: #57372f;
-}
-
-.header-content p {
+.products-title-section h1 {
   margin: 0;
-
-  font-size: 15px;
-  line-height: 1.5;
-
-  color: #81746e;
-}
-
-
-/* =========================
-   SEARCH
-========================= */
-
-.search-box {
-  width: 320px;
-  height: 46px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  padding: 0 16px;
-
-  background: #ffffff;
-
-  border: 1px solid #e5ded8;
-
-  border-radius: 24px;
-
-  transition: all 0.2s ease;
-}
-
-.search-box:focus-within {
-  border-color: #d47b48;
-
-  box-shadow:
-    0 0 0 3px rgba(212, 123, 72, 0.1);
-}
-
-.search-icon {
-  font-size: 20px;
-
-  color: #6d5a53;
-}
-
-.search-box input {
-  width: 100%;
-
-  border: none;
-
-  outline: none;
-
-  background: transparent;
-
-  font-size: 14px;
-
-  color: #594941;
-}
-
-
-/* =========================
-   STATISTICS
-========================= */
-
-.stats-grid {
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, 1fr);
-
-  gap: 20px;
-
-  margin-bottom: 25px;
-}
-
-.stat-card {
-  min-height: 155px;
-
-  padding: 24px;
-
-  background: #ffffff;
-
-  border: 1px solid #e5ded8;
-
-  border-radius: 15px;
-
-  box-shadow:
-    0 4px 14px rgba(84, 59, 52, 0.04);
-
-  transition: all 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-3px);
-
-  box-shadow:
-    0 8px 20px rgba(84, 59, 52, 0.08);
-}
-
-.average-card {
-  border: 2px solid #d67d49;
-}
-
-
-/* =========================
-   STAT TEXT
-========================= */
-
-.stat-label {
-  display: block;
-
-  font-size: 11px;
-
+  color: #523a33;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
   font-weight: 700;
-
-  letter-spacing: 0.6px;
-
-  color: #756760;
-
-  margin-bottom: 14px;
+  line-height: 1.1;
 }
 
-.rating-number {
-  font-family: Georgia, serif;
-
-  font-size: 38px;
-
-  font-weight: bold;
-
-  color: #c96f3d;
-}
-
-.rating-number span {
-  font-family: Arial, sans-serif;
-
-  font-size: 15px;
-
-  color: #756760;
-}
-
-.rating-stars {
-  margin-top: 7px;
-
-  color: #d4753e;
-
-  font-size: 17px;
-}
-
-.rating-stars span {
-  margin-left: 8px;
-
-  color: #d4753e;
-
-  font-size: 12px;
-
-  font-weight: 600;
-}
-
-.stat-number {
-  font-family: Georgia, serif;
-
-  font-size: 38px;
-
-  font-weight: bold;
-
-  color: #563d35;
-
-  margin-bottom: 10px;
-}
-
-.stat-change {
-  color: #49894c;
-
+.products-title-section p {
+  margin: 6px 0 0;
+  color: #77716d;
   font-size: 13px;
-
-  font-weight: 600;
-}
-
-.stat-description {
-  color: #756760;
-
-  font-size: 13px;
+  line-height: 1.4;
 }
 
 
-/* =========================
-   FILTERS
-========================= */
+/* =========================================================
+   SEARCH
+========================================================= */
 
-.filters {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 20px;
-
-  margin-bottom: 25px;
-}
-
-.filter-left {
-  display: flex;
-
-  gap: 12px;
-}
-
-.filters select {
+.products-search {
+  width: 310px;
   height: 42px;
+
+  display: flex;
+  align-items: center;
+  gap: 11px;
 
   padding: 0 15px;
 
-  border: 1px solid #e3dcd6;
-
-  border-radius: 9px;
-
   background: #ffffff;
+  border: 1px solid #e5dfdb;
+  border-radius: 22px;
 
-  color: #5e4b44;
+  box-sizing: border-box;
 
-  font-size: 13px;
-
-  outline: none;
-
-  cursor: pointer;
-
-  transition: all 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.filters select:hover,
-.filters select:focus {
-  border-color: #d47b48;
-}
-
-
-/* =========================
-   REVIEW LIST
-========================= */
-
-.reviews-list {
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 18px;
-}
-
-
-/* =========================
-   REVIEW CARD
-========================= */
-
-.review-card {
-  padding: 24px;
-
-  background: #ffffff;
-
-  border: 1px solid #e5ded8;
-
-  border-radius: 15px;
-
+.products-search:focus-within {
+  border-color: #d77b45;
   box-shadow:
-    0 4px 14px rgba(84, 59, 52, 0.04);
-
-  transition: all 0.2s ease;
+    0 0 0 3px rgba(215, 123, 69, 0.10);
 }
 
-.review-card:hover {
-  border-color: #d8cec8;
-
-  box-shadow:
-    0 6px 18px rgba(84, 59, 52, 0.07);
-}
-
-
-/* =========================
-   REVIEW HEADER
-========================= */
-
-.review-header {
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: flex-start;
-
-  margin-bottom: 18px;
-}
-
-.buyer-info {
-  display: flex;
-
-  align-items: center;
-
-  gap: 14px;
-}
-
-
-/* =========================
-   AVATAR
-========================= */
-
-.buyer-avatar {
-  width: 48px;
-
-  height: 48px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  border-radius: 50%;
-
+.products-search svg {
+  color: #8b817b;
   font-size: 14px;
-
-  font-weight: 700;
-
   flex-shrink: 0;
 }
 
-.avatar-brown {
-  background: #ead5bd;
+.products-search input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
 
-  color: #79563d;
-}
+  color: #523a33;
 
-.avatar-orange {
-  background: #d67d49;
-
-  color: #ffffff;
-}
-
-.avatar-green {
-  background: #e1f0e5;
-
-  color: #4f7656;
-}
-
-.avatar-blue {
-  background: #dfe9f4;
-
-  color: #52718d;
-}
-
-
-/* =========================
-   BUYER DETAILS
-========================= */
-
-.buyer-info h3 {
-  margin: 0 0 5px;
-
-  font-size: 17px;
-
-  color: #563d35;
-}
-
-.buyer-location {
-  font-size: 13px;
-
-  color: #81746e;
-}
-
-
-/* =========================
-   RATING
-========================= */
-
-.review-rating {
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: flex-end;
-}
-
-.stars {
-  font-size: 19px;
-
-  letter-spacing: 2px;
-
-  color: #d67d49;
-}
-
-.stars .empty {
-  color: #ded7d2;
-}
-
-.review-date {
-  margin-top: 5px;
-
-  font-size: 12px;
-
-  color: #81746e;
-}
-
-
-/* =========================
-   PRODUCT PURCHASED
-========================= */
-
-.product-purchased {
-  display: flex;
-
-  flex-wrap: wrap;
-
-  gap: 8px;
-
-  margin-bottom: 13px;
-
+  font-family: "Figtree", Arial, sans-serif;
   font-size: 13px;
 }
 
-.product-purchased span {
-  color: #d06f3c;
-
-  font-weight: 700;
-
-  letter-spacing: 0.3px;
-}
-
-.product-purchased strong {
-  color: #563d35;
-
-  font-weight: 600;
+.products-search input::placeholder {
+  color: #9a928d;
 }
 
 
-/* =========================
-   REVIEW TEXT
-========================= */
+/* =========================================================
+   HEADER DIVIDER
+========================================================= */
 
-.review-text {
-  margin: 0;
-
-  font-size: 15px;
-
-  line-height: 1.7;
-
-  color: #594a44;
-
-  max-width: 1000px;
+.header-divider {
+  width: 100%;
+  border-top: 2px dotted #9ed2e6;
 }
 
 
-/* =========================
-   SELLER RESPONSE
-========================= */
+/* =========================================================
+   CONTROLS
+========================================================= */
 
-.seller-response {
-  margin-top: 20px;
+.products-controls {
+  min-height: 92px;
 
-  padding: 18px;
+  padding: 0 32px;
 
-  background: #f5f3f0;
-
-  border: 1px solid #e4ded8;
-
-  border-left: 4px solid #d67d49;
-
-  border-radius: 10px;
-}
-
-.response-header {
   display: flex;
-
+  align-items: center;
   justify-content: space-between;
 
-  align-items: center;
+  gap: 20px;
 
-  gap: 15px;
-
-  margin-bottom: 10px;
-}
-
-.response-header strong {
-  font-size: 11px;
-
-  color: #634b42;
-
-  letter-spacing: 0.4px;
-}
-
-.response-header span {
-  font-size: 12px;
-
-  color: #8b7d76;
-}
-
-.seller-response p {
-  margin: 0;
-
-  font-size: 14px;
-
-  line-height: 1.6;
-
-  color: #81746e;
-}
-
-
-/* =========================
-   REPLY BUTTON
-========================= */
-
-.reply-button {
-  margin-top: 18px;
-
-  padding: 11px 18px;
-
-  background: #ffffff;
-
-  border: 1px solid #d47b48;
-
-  border-radius: 22px;
-
-  color: #c76d3b;
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition: all 0.2s ease;
-}
-
-.reply-button:hover {
-  background: #d47b48;
-
-  color: #ffffff;
-
-  transform: translateY(-1px);
-}
-
-
-/* =========================
-   NO RESULTS
-========================= */
-
-.no-results {
-  padding: 60px 30px;
-
-  text-align: center;
-
-  background: #ffffff;
-
-  border: 1px solid #e5ded8;
-
-  border-radius: 15px;
-
-  color: #81746e;
-
-  font-size: 16px;
-}
-
-
-/* =========================
-   TABLET
-========================= */
-
-@media (max-width: 1100px) {
-
-  .reviews-page {
-    padding: 30px;
-  }
-
-  .stats-grid {
-    grid-template-columns:
-      repeat(2, 1fr);
-  }
-
-}
-
-
-/* =========================
-   MOBILE
-========================= */
-
-@media (max-width: 700px) {
-
-  .reviews-page {
-    padding: 20px 15px;
-  }
-
-  .page-header {
-    flex-direction: column;
-
-    align-items: stretch;
-
-    gap: 20px;
-  }
-
-  .header-content h1 {
-    font-size: 28px;
-  }
-
-  .search-box {
-    width: 100%;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .filters {
-    flex-direction: column;
-
-    align-items: stretch;
-  }
-
-  .filter-left {
-    flex-direction: column;
-
-    width: 100%;
-  }
-
-  .filters select {
-    width: 100%;
-  }
-
-  .review-card {
-    padding: 18px;
-  }
-
-  .review-header {
-    flex-direction: column;
-
-    gap: 15px;
-  }
-
-  .review-rating {
-    align-items: flex-start;
-  }
-
-  .response-header {
-    flex-direction: column;
-
-    align-items: flex-start;
-  }
-
-}
-
-
-/* =========================
-   SMALL MOBILE
-========================= */
-
-@media (max-width: 400px) {
-
-  .reviews-page {
-    padding: 12px;
-  }
-
-  .header-content h1 {
-    font-size: 25px;
-  }
-
-  .stat-card {
-    padding: 18px;
-  }
-
-  .rating-number,
-  .stat-number {
-    font-size: 32px;
-  }
-
-}
-</style>
-
-<!-- 
-<style scoped>
-* {
   box-sizing: border-box;
 }
 
 
-/* =========================
-   PAGE
-========================= */
+/* Filter group */
 
-.reviews-page {
-
-  min-height: 100vh;
-
-  padding: 17px 26px 50px;
-
-  background: #f7f5f2;
-
-  color: #563d35;
-
-  font-family: Arial, sans-serif;
-
-}
-
-
-/* =========================
-   HEADER
-========================= */
-
-.page-header {
-
+.filter-group {
   display: flex;
-
-  justify-content: space-between;
-
-  align-items: flex-start;
-
-  padding-bottom: 14px;
-
-  border-bottom: 1px solid #e7e1dc;
-
-  margin-bottom: 25px;
-
-}
-
-.header-content h1 {
-
-  margin: 0 0 4px;
-
-  font-family: Georgia, serif;
-
-  font-size: 21px;
-
-  color: #57372f;
-
-}
-
-.header-content p {
-
-  margin: 0;
-
-  font-size: 9px;
-
-  color: #81746e;
-
-}
-
-
-.search-box {
-
-  width: 200px;
-
-  height: 24px;
-
-  display: flex;
-
   align-items: center;
+  gap: 12px;
+}
 
-  gap: 7px;
 
-  padding: 0 10px;
+/* =========================================================
+   FILTER DROPDOWNS
+========================================================= */
+
+.filter-dropdown {
+  position: relative;
+
+  min-width: 180px;
+  height: 42px;
+
+  padding: 0 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 5px;
 
   background: #ffffff;
+  border: 1px solid #e3dcd8;
+  border-radius: 8px;
 
-  border: 1px solid #e5ded8;
-
-  border-radius: 15px;
-
-}
-
-.search-icon {
+  color: #574c47;
 
   font-size: 13px;
 
-  color: #6d5a53;
+  box-sizing: border-box;
 
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.search-box input {
+.filter-dropdown:hover {
+  border-color: #cfc4be;
+}
 
-  width: 100%;
+.filter-dropdown:focus-within {
+  border-color: #d77b45;
+  box-shadow:
+    0 0 0 3px rgba(215, 123, 69, 0.08);
+}
+
+.filter-dropdown span {
+  white-space: nowrap;
+  color: #817872;
+}
+
+.filter-dropdown select {
+  appearance: none;
+  -webkit-appearance: none;
 
   border: none;
-
   outline: none;
-
   background: transparent;
 
-  font-size: 8px;
+  color: #523a33;
 
-  color: #594941;
+  padding: 0 20px 0 0;
 
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.filter-dropdown svg {
+  position: absolute;
+  right: 13px;
+
+  pointer-events: none;
+
+  font-size: 11px;
+  color: #625852;
 }
 
 
-/* =========================
-   STATISTICS
-========================= */
+/* =========================================================
+   ADD PRODUCT BUTTON
+========================================================= */
 
-.stats-grid {
+.add-product-button {
+  min-width: 135px;
+  height: 44px;
+
+  padding: 0 24px;
+
+  border: none;
+  border-radius: 22px;
+
+  background: #d77b45;
+  color: #ffffff;
+
+  font-family: "Figtree", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 4px 10px rgba(82, 58, 51, 0.12);
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.add-product-button:hover {
+  background: #c96d39;
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 7px 16px rgba(82, 58, 51, 0.16);
+}
+
+.add-product-button:active {
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   LOADING / ERROR
+========================================================= */
+
+.products-message,
+.products-error {
+  margin: 0 32px 30px;
+  padding: 40px;
+  background: #ffffff;
+  border: 1px solid #e5dfdb;
+  border-radius: 14px;
+  text-align: center;
+  color: #77716d;
+  box-sizing: border-box;
+}
+
+.products-error {
+  color: #c0392b;
+}
+
+.products-error button {
+  display: block;
+  margin: 15px auto 0;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 20px;
+  background: #d77b45;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   PRODUCT LIST
+========================================================= */
+
+.product-list {
+  padding: 0 32px 40px;
 
   display: grid;
 
-  grid-template-columns:
-    repeat(4, 1fr);
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(420px, 1fr)
+  );
 
-  gap: 13px;
+  gap: 24px;
 
-  margin-bottom: 15px;
-
+  box-sizing: border-box;
 }
 
-.stat-card {
 
-  min-height: 84px;
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
 
-  padding: 13px;
+.product-card {
+  width: 100%;
 
   background: #ffffff;
 
-  border: 1px solid #e5ded8;
+  border: 1px solid #e5dfdb;
+  border-radius: 14px;
 
-  border-radius: 9px;
+  overflow: hidden;
 
+  box-sizing: border-box;
+
+  box-shadow:
+    0 2px 8px rgba(82, 58, 51, 0.04);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.average-card {
+.product-card:hover {
+  transform: translateY(-2px);
 
-  border: 1px solid #d67d49;
-
+  box-shadow:
+    0 8px 22px rgba(82, 58, 51, 0.09);
 }
 
 
-.stat-label {
+/* =========================================================
+   PRODUCT IMAGE
+========================================================= */
+
+.product-image-container {
+  height: 230px;
+
+  margin: 12px 12px 0;
+
+  overflow: hidden;
+
+  border-radius: 10px;
+
+  background: #d9d8d9;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
 
   display: block;
 
-  font-size: 7px;
-
-  font-weight: 700;
-
-  color: #756760;
-
-  margin-bottom: 7px;
-
+  object-fit: cover;
 }
 
 
-.rating-number {
+/* =========================================================
+   IMAGE PLACEHOLDER
+========================================================= */
 
-  font-family: Georgia, serif;
+.product-image-placeholder {
+  position: relative;
 
-  font-size: 22px;
+  width: 100%;
+  height: 100%;
 
-  font-weight: bold;
+  overflow: hidden;
 
-  color: #c96f3d;
-
-}
-
-.rating-number span {
-
-  font-family: Arial, sans-serif;
-
-  font-size: 9px;
-
-  color: #756760;
-
-}
-
-
-.rating-stars {
-
-  margin-top: 3px;
-
-  color: #d4753e;
-
-  font-size: 10px;
-
-}
-
-.rating-stars span {
-
-  margin-left: 5px;
-
-  color: #d4753e;
-
-  font-size: 7px;
-
+  background:
+    linear-gradient(
+      165deg,
+      #aaa8ac 0%,
+      #d6d5d5 40%,
+      #f3f1e9 40%,
+      #f3f1e9 65%,
+      #b8b7b9 100%
+    );
 }
 
 
-.stat-number {
+/* Paper stacks */
 
-  font-family: Georgia, serif;
+.paper-stack {
+  position: absolute;
 
-  font-size: 22px;
+  background: #eeeee7;
 
-  font-weight: bold;
-
-  color: #563d35;
-
-  margin-bottom: 5px;
-
+  box-shadow:
+    inset -2px 0 rgba(130, 128, 123, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 
-.stat-change {
+/* Large left paper */
 
-  color: #49894c;
+.paper-stack-one {
+  width: 30%;
+  height: 120%;
 
-  font-size: 7px;
+  left: 28%;
+  top: -8%;
 
-  font-weight: 600;
-
+  transform: skewY(2deg);
 }
 
 
-.stat-description {
+/* Center paper */
 
-  color: #756760;
+.paper-stack-two {
+  width: 23%;
+  height: 105%;
 
-  font-size: 7px;
-
-}
-
-
-/* =========================
-   FILTERS
-========================= */
-
-.filters {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  margin-bottom: 15px;
-
-}
-
-.filter-left {
-
-  display: flex;
-
-  gap: 8px;
-
-}
-
-
-.filters select {
-
-  height: 21px;
-
-  padding: 0 8px;
-
-  border: 1px solid #e3dcd6;
+  left: 43%;
+  top: -4%;
 
   border-radius: 5px;
 
-  background: #ffffff;
-
-  color: #5e4b44;
-
-  font-size: 7px;
-
-  outline: none;
-
-  cursor: pointer;
-
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #eeeeea 0px,
+      #eeeeea 3px,
+      #dadad5 4px
+    );
 }
 
 
-/* =========================
-   REVIEW CARD
-========================= */
+/* Right paper */
 
-.reviews-list {
+.paper-stack-three {
+  width: 16%;
+  height: 110%;
 
+  left: 57%;
+  top: -5%;
+
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #eeeee9 0px,
+      #eeeee9 3px,
+      #d7d7d2 4px
+    );
+}
+
+
+/* =========================================================
+   PRODUCT CONTENT
+========================================================= */
+
+.product-content {
+  padding: 18px 18px 16px;
+}
+
+
+/* =========================================================
+   PRODUCT TOP ROW
+========================================================= */
+
+.product-top-row {
   display: flex;
-
-  flex-direction: column;
-
-  gap: 12px;
-
-}
-
-
-.review-card {
-
-  padding: 14px;
-
-  background: #ffffff;
-
-  border: 1px solid #e5ded8;
-
-  border-radius: 9px;
-
-}
-
-
-/* =========================
-   REVIEW HEADER
-========================= */
-
-.review-header {
-
-  display: flex;
-
-  justify-content: space-between;
 
   align-items: flex-start;
+  justify-content: space-between;
 
-  margin-bottom: 11px;
-
+  gap: 20px;
 }
 
 
-.buyer-info {
+/* =========================================================
+   CATEGORY
+========================================================= */
 
-  display: flex;
+.product-category {
+  display: block;
 
-  align-items: center;
+  margin-bottom: 7px;
 
-  gap: 8px;
+  color: #948b86;
 
+  font-size: 10px;
+  font-weight: 600;
+
+  letter-spacing: 0.6px;
+
+  text-transform: uppercase;
 }
 
 
-.buyer-avatar {
+/* =========================================================
+   PRODUCT NAME
+========================================================= */
 
-  width: 26px;
+.product-top-row h2 {
+  margin: 0;
 
-  height: 26px;
+  color: #523a33;
 
-  display: flex;
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
 
-  align-items: center;
-
-  justify-content: center;
-
-  border-radius: 50%;
-
-  font-size: 8px;
-
+  font-size: 21px;
   font-weight: 700;
 
+  line-height: 1.2;
 }
 
 
-.avatar-brown {
+/* =========================================================
+   STATUS
+========================================================= */
 
-  background: #ead5bd;
+.product-status {
+  flex-shrink: 0;
 
-  color: #79563d;
+  margin-top: 2px;
 
+  padding: 6px 11px;
+
+  border-radius: 20px;
+
+  background: #e5f4e4;
+  color: #4d9855;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.product-status.inactive {
+  background: #f5e5e2;
+  color: #bd6555;
 }
 
 
-.avatar-orange {
+/* =========================================================
+   PRODUCT DETAILS
+========================================================= */
 
-  background: #d67d49;
+.product-details {
+  min-height: 68px;
 
-  color: #ffffff;
+  margin-top: 18px;
+  padding-bottom: 15px;
 
+  display: flex;
+
+  align-items: flex-end;
+  justify-content: space-between;
+
+  border-bottom: 1px solid #eeeae7;
 }
 
 
-.avatar-green {
+/* Price / Stock */
 
-  background: #e1f0e5;
-
-  color: #4f7656;
-
-}
-
-
-.avatar-blue {
-
-  background: #dfe9f4;
-
-  color: #52718d;
-
-}
-
-
-.buyer-info h3 {
-
-  margin: 0 0 2px;
-
-  font-size: 9px;
-
-  color: #563d35;
-
-}
-
-
-.buyer-location {
-
-  font-size: 7px;
-
-  color: #81746e;
-
-}
-
-
-/* =========================
-   RATING
-========================= */
-
-.review-rating {
-
+.product-price,
+.product-stock {
   display: flex;
 
   flex-direction: column;
-
-  align-items: flex-end;
-
 }
 
+.product-price span,
+.product-stock span {
+  margin-bottom: 6px;
 
-.stars {
+  color: #9a928d;
 
-  font-size: 12px;
-
-  letter-spacing: 1px;
-
-  color: #d67d49;
-
-}
-
-
-.stars .empty {
-
-  color: #ded7d2;
-
-}
-
-
-.review-date {
-
-  margin-top: 1px;
-
-  font-size: 6px;
-
-  color: #81746e;
-
-}
-
-
-/* =========================
-   PRODUCT
-========================= */
-
-.product-purchased {
-
-  display: flex;
-
-  gap: 6px;
-
-  margin-bottom: 8px;
-
-  font-size: 7px;
-
-}
-
-
-.product-purchased span {
-
-  color: #d06f3c;
-
-  font-weight: 700;
-
-}
-
-
-.product-purchased strong {
-
-  color: #563d35;
-
+  font-size: 10px;
   font-weight: 600;
 
+  letter-spacing: 0.4px;
+
+  text-transform: uppercase;
+}
+
+.product-price strong,
+.product-stock strong {
+  color: #523a33;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.product-stock {
+  text-align: right;
 }
 
 
-/* =========================
-   REVIEW TEXT
-========================= */
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
 
-.review-text {
+.product-actions {
+  display: grid;
 
-  margin: 0;
+  grid-template-columns: 1fr 1fr;
 
-  font-size: 8px;
+  gap: 10px;
 
-  line-height: 1.6;
-
-  color: #594a44;
-
+  padding-top: 15px;
 }
 
-
-/* =========================
-   SELLER RESPONSE
-========================= */
-
-.seller-response {
-
-  margin-top: 10px;
-
-  padding: 9px;
-
-  background: #f5f3f0;
-
-  border: 1px solid #e4ded8;
+.product-actions button {
+  height: 38px;
 
   border-radius: 7px;
 
-}
+  font-family:
+    "Figtree",
+    Arial,
+    sans-serif;
 
-
-.response-header {
-
-  display: flex;
-
-  justify-content: space-between;
-
-  margin-bottom: 5px;
-
-}
-
-
-.response-header strong {
-
-  font-size: 6px;
-
-  color: #634b42;
-
-}
-
-
-.response-header span {
-
-  font-size: 6px;
-
-  color: #8b7d76;
-
-}
-
-
-.seller-response p {
-
-  margin: 0;
-
-  font-size: 7px;
-
-  line-height: 1.5;
-
-  color: #81746e;
-
-}
-
-
-/* =========================
-   REPLY BUTTON
-========================= */
-
-.reply-button {
-
-  margin-top: 9px;
-
-  padding: 5px 9px;
-
-  background: #f7f5f2;
-
-  border: 1px solid #e2dcd7;
-
-  border-radius: 4px;
-
-  color: #634b42;
-
-  font-size: 7px;
+  font-size: 12px;
+  font-weight: 600;
 
   cursor: pointer;
 
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.product-actions button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
 }
 
 
-.reply-button:hover {
+/* Edit */
 
-  background: #eee9e4;
+.edit-button {
+  border: none;
 
+  background: #f3f1ee;
+
+  color: #645953;
+}
+
+.edit-button:hover {
+  background: #e9e5e1;
 }
 
 
-/* =========================
-   NO RESULTS
-========================= */
+/* Delete */
 
-.no-results {
+.delete-button {
+  border: 1px solid #ebe3df;
 
-  padding: 40px;
+  background: #ffffff;
+
+  color: #e35f3d;
+}
+
+.delete-button:hover {
+  background: #fff5f2;
+
+  border-color: #e5cfc8;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.empty-products {
+  grid-column: 1 / -1;
+
+  margin-top: 5px;
+
+  padding: 70px 20px;
 
   text-align: center;
 
   background: #ffffff;
 
-  border: 1px solid #e5ded8;
+  border: 1px solid #e8e2de;
+  border-radius: 14px;
+}
 
-  border-radius: 9px;
+.empty-products h3 {
+  margin: 0 0 8px;
 
-  color: #81746e;
+  color: #523a33;
 
-  font-size: 10px;
+  font-family: Georgia, serif;
 
+  font-size: 20px;
+}
+
+.empty-products p {
+  margin: 0;
+
+  color: #8c8580;
+
+  font-size: 13px;
 }
 
 
-/* =========================
-   RESPONSIVE
-========================= */
+/* =========================================================
+   TABLET
+========================================================= */
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
 
-  .stats-grid {
+  .products-header,
+  .products-controls {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .product-list {
+    padding-left: 24px;
+    padding-right: 24px;
 
     grid-template-columns:
-      repeat(2, 1fr);
-
+      repeat(auto-fit, minmax(360px, 1fr));
   }
 
-  .content-grid {
-
-    grid-template-columns: 1fr;
-
+  .products-search {
+    width: 260px;
   }
 
 }
 
 
-@media (max-width: 650px) {
+/* =========================================================
+   MOBILE
+========================================================= */
 
-  .reviews-page {
+@media (max-width: 700px) {
 
-    margin-left: 0;
+  .products-header {
+    min-height: auto;
 
-    padding: 15px;
-
-  }
-
-  .stats-grid {
-
-    grid-template-columns: 1fr;
-
-  }
-
-  .page-header {
+    padding: 20px 16px 16px;
 
     flex-direction: column;
+    align-items: stretch;
 
-    gap: 15px;
-
+    gap: 16px;
   }
 
-  .search-box {
+  .products-title-section h1 {
+    font-size: 28px;
+  }
 
+  .products-title-section p {
+    font-size: 12px;
+  }
+
+  .products-search {
     width: 100%;
-
+    height: 44px;
   }
 
-  .filters {
+
+  .products-controls {
+    padding: 16px;
 
     flex-direction: column;
 
     align-items: stretch;
-
-    gap: 8px;
-
   }
 
-  .filter-left {
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
+  .filter-dropdown {
     width: 100%;
-
   }
 
-  .filters select {
+  .add-product-button {
+    width: 100%;
+  }
 
-    flex: 1;
 
+  .product-list {
+    padding: 0 16px 30px;
+
+    grid-template-columns: 1fr;
+
+    gap: 18px;
+  }
+
+  .products-message,
+  .products-error {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .product-card {
+    min-width: 0;
+  }
+
+  .product-top-row h2 {
+    font-size: 18px;
   }
 
 }
-</style> -->
+
+</style>

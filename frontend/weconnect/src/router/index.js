@@ -5,6 +5,7 @@ import Products from "../views/Products.vue";
 import Reviews from "../views/Reviews.vue";
 import StockManagement from "../views/StockManagement.vue";
 import AddProducts from "../views/AddProducts.vue";
+import EditProduct from "../views/EditProduct.vue";
 
 const routes = [
   {
@@ -16,7 +17,7 @@ const routes = [
         redirect: "/products",
       },
       {
-        path: "addproducts",
+        path: "products/add",
         name: "AddProducts",
         component: AddProducts,
       },
@@ -24,6 +25,11 @@ const routes = [
         path: "products",
         name: "Products",
         component: Products,
+      },
+      {
+        path: "products/edit/:id",
+        name: "EditProduct",
+        component: EditProduct,
       },
       {
         path: "reviews",

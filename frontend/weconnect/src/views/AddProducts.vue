@@ -17,10 +17,30 @@
       <div class="add-product_search-box">
         <span class="add-product_search-icon">⌕</span>
 
-        <input type="text" placeholder="Search catalog structures..." />
+        <input
+          type="text"
+          placeholder="Search catalog structures..."
+        />
       </div>
 
     </header>
+
+
+    <!-- SUCCESS MESSAGE -->
+    <div
+      v-if="successMessage"
+      class="add-product_success-message"
+    >
+      {{ successMessage }}
+    </div>
+
+    <!-- ERROR MESSAGE -->
+    <div
+      v-if="errorMessage"
+      class="add-product_error-message"
+    >
+      {{ errorMessage }}
+    </div>
 
 
     <!-- ===================================================== MAIN CONTENT ====================================================== -->
@@ -37,7 +57,11 @@
           <div class="add-product_form-group">
             <label>WHOLESALE PRODUCT TITLE</label>
 
-            <input type="text" placeholder="e.g. Sugar Cane Takeaway Bowls (750ml) - Pack of 500" />
+            <input
+              v-model="form.product_name"
+              type="text"
+              placeholder="e.g. Sugar Cane Takeaway Bowls (750ml) - Pack of 500"
+            />
           </div>
 
 
@@ -46,11 +70,26 @@
             <div class="add-product_form-group">
               <label>PRODUCT CATEGORY</label>
 
-              <select>
-                <option>Eco-friendly Packaging</option>
-                <option>Food &amp; Beverage</option>
-                <option>Cleaning Supplies</option>
-                <option>Office Supplies</option>
+              <select v-model="form.category_name">
+                <option value="" disabled>
+                  Select a category
+                </option>
+
+                <option value="Eco-friendly Packaging">
+                  Eco-friendly Packaging
+                </option>
+
+                <option value="Food & Beverage">
+                  Food & Beverage
+                </option>
+
+                <option value="Cleaning Supplies">
+                  Cleaning Supplies
+                </option>
+
+                <option value="Office Supplies">
+                  Office Supplies
+                </option>
               </select>
             </div>
 
@@ -58,7 +97,11 @@
             <div class="add-product_form-group">
               <label>STOCK KEEPING UNIT (SKU)</label>
 
-              <input type="text" value="CFP-SCB-750M" />
+              <input
+                v-model="form.sku"
+                type="text"
+                placeholder="CFP-SCB-750M"
+              />
             </div>
 
           </div>
@@ -69,7 +112,9 @@
             <label>DETAILED DESCRIPTION</label>
 
             <textarea
-              placeholder="Enter detailed bulk buying features (dimensions, food certifications, materials used, thermal properties, pack densities, etc.)"></textarea>
+              v-model="form.description"
+              placeholder="Enter detailed bulk buying features (dimensions, food certifications, materials used, thermal properties, pack densities, etc.)"
+            ></textarea>
 
           </div>
 
@@ -90,7 +135,13 @@
 
               <label>BASE PRICE PER UNIT PACK (R)</label>
 
-              <input type="text" value="R 550.00" />
+              <input
+                v-model="form.price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="550.00"
+              />
 
             </div>
 
@@ -99,7 +150,12 @@
 
               <label>MINIMUM ORDER QUANTITY (MOQ)</label>
 
-              <input type="text" value="10 packs" />
+              <input
+                v-model="form.moq"
+                type="number"
+                min="1"
+                placeholder="10"
+              />
 
             </div>
 
@@ -114,22 +170,37 @@
 
               <!-- Tier 1 -->
               <div class="add-product_discount-card">
+
                 <strong>10 - 49 packs</strong>
-                <span>Base price (R 550)</span>
+
+                <span>
+                  Base price (R 550)
+                </span>
+
               </div>
 
 
               <!-- Tier 2 -->
               <div class="add-product_discount-card">
+
                 <strong>50 - 99 packs</strong>
-                <span>5% off (R 522.50)</span>
+
+                <span>
+                  5% off (R 522.50)
+                </span>
+
               </div>
 
 
               <!-- Tier 3 -->
               <div class="add-product_discount-card">
+
                 <strong>100+ packs</strong>
-                <span>10% off (R 495.00)</span>
+
+                <span>
+                  10% off (R 495.00)
+                </span>
+
               </div>
 
             </div>
@@ -150,13 +221,26 @@
           <h2>Product Media</h2>
 
 
-          <input ref="fileInput" type="file" accept="image/jpeg,image/png" multiple
-            class="add-product_hidden-file-input" @change="onFileInputChange" />
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/jpeg,image/png"
+            multiple
+            class="add-product_hidden-file-input"
+            @change="onFileInputChange"
+          />
 
 
-          <div class="add-product_upload-area" :class="{ 'add-product_is-dragover': isDragOver }"
-            @click="openFilePicker" @dragover.prevent="isDragOver = true" @dragleave.prevent="isDragOver = false"
-            @drop.prevent="onDrop">
+          <div
+            class="add-product_upload-area"
+            :class="{
+              'add-product_is-dragover': isDragOver
+            }"
+            @click="openFilePicker"
+            @dragover.prevent="isDragOver = true"
+            @dragleave.prevent="isDragOver = false"
+            @drop.prevent="onDrop"
+          >
 
             <div class="add-product_upload-icon">
               ↥
@@ -173,26 +257,45 @@
           </div>
 
 
-          <p v-if="uploadError" class="add-product_upload-error">
+          <p
+            v-if="uploadError"
+            class="add-product_upload-error"
+          >
             {{ uploadError }}
           </p>
 
 
           <div class="add-product_image-preview">
 
-            <div class="add-product_thumbnail" v-for="(image, index) in images" :key="image.id">
+            <div
+              class="add-product_thumbnail"
+              v-for="(image, index) in images"
+              :key="image.id"
+            >
 
-              <img :src="image.url" :alt="image.name" />
+              <img
+                :src="image.url"
+                :alt="image.name"
+              />
 
-              <button type="button" class="add-product_remove-image" title="Remove image"
-                @click.stop="removeImage(index)">
+              <button
+                type="button"
+                class="add-product_remove-image"
+                title="Remove image"
+                @click.stop="removeImage(index)"
+              >
                 ×
               </button>
 
             </div>
 
 
-            <button type="button" class="add-product_add-image" title="Add image" @click="openFilePicker">
+            <button
+              type="button"
+              class="add-product_add-image"
+              title="Add image"
+              @click="openFilePicker"
+            >
               +
             </button>
 
@@ -215,7 +318,12 @@
 
               <label>INITIAL STOCK QTY</label>
 
-              <input type="text" value="500 packs" />
+              <input
+                v-model="form.quantity"
+                type="number"
+                min="0"
+                placeholder="500"
+              />
 
             </div>
 
@@ -224,7 +332,12 @@
 
               <label>LOW STOCK ALERT</label>
 
-              <input type="text" value="50 packs" />
+              <input
+                v-model="form.low_stock_threshold"
+                type="number"
+                min="0"
+                placeholder="50"
+              />
 
             </div>
 
@@ -235,19 +348,54 @@
 
             <label>SHIPPING WEIGHT (PER PACK)</label>
 
-            <input type="text" value="2.5 kg" />
+            <input
+              v-model="form.shipping_weight"
+              type="text"
+              placeholder="2.5 kg"
+            />
 
           </div>
 
 
+          <!-- SUCCESS MESSAGE -->
+          <p
+            v-if="successMessage"
+            class="add-product_success-message"
+          >
+            {{ successMessage }}
+          </p>
+
+
+          <!-- ERROR MESSAGE -->
+          <p
+            v-if="errorMessage"
+            class="add-product_error-message"
+          >
+            {{ errorMessage }}
+          </p>
+
+
           <!-- Publish -->
-          <button type="button" class="add-product_publish-button">
-            Publish Product
+          <button
+            type="button"
+            class="add-product_publish-button"
+            :disabled="isPublishing"
+            @click="publishProduct"
+          >
+            {{
+              isPublishing
+                ? "Publishing..."
+                : "Publish Product"
+            }}
           </button>
 
 
           <!-- Draft -->
-          <button type="button" class="add-product_draft-button">
+          <button
+            type="button"
+            class="add-product_draft-button"
+            @click="saveDraft"
+          >
             Save as Draft
           </button>
 
@@ -260,159 +408,206 @@
   </div>
 </template>
 
-
 <script>
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:5000"
+).replace(/\/+$/, "");
+
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
-
-const ACCEPTED_TYPES = [
-  "image/jpeg",
-  "image/png"
-];
-
+const ACCEPTED_TYPES = ["image/jpeg", "image/png"];
 
 export default {
-  name: "Products",
+  name: "AddProducts",
 
   data() {
     return {
       images: [],
-
       isDragOver: false,
-
       uploadError: "",
-
       nextId: 1,
+      isPublishing: false,
+      successMessage: "",
+      errorMessage: "",
+
+      form: {
+        product_name: "",
+        category_name: "",
+        sku: "",
+        description: "",
+        price: "",
+        moq: 10,
+        quantity: 500,
+        low_stock_threshold: 50,
+        shipping_weight: "",
+        unit: "pack"
+      }
     };
   },
 
-
   beforeUnmount() {
-
-    // Release object URLs so we don't leak memory.
-    this.images.forEach((image) => {
-      URL.revokeObjectURL(image.url);
-    });
-
+    this.images.forEach((image) => URL.revokeObjectURL(image.url));
   },
 
-
   methods: {
-
     openFilePicker() {
-      this.$refs.fileInput.click();
+      this.$refs.fileInput?.click();
     },
-
 
     onFileInputChange(event) {
-
       this.handleFiles(event.target.files);
-
-      // Reset so selecting the same file again still fires "change".
       event.target.value = "";
-
     },
-
 
     onDrop(event) {
-
       this.isDragOver = false;
-
       this.handleFiles(event.dataTransfer.files);
-
     },
 
-
     handleFiles(fileList) {
-
       this.uploadError = "";
 
-      const files = Array.from(fileList || []);
+      for (const file of Array.from(fileList || [])) {
+        if (
+          ACCEPTED_TYPES.includes(file.type) &&
+          file.size <= MAX_FILE_SIZE_BYTES
+        ) {
+          this.images.push({
+            id: this.nextId++,
+            file,
+            url: URL.createObjectURL(file),
+            name: file.name
+          });
+        } else {
+          this.uploadError =
+            "Only JPG/PNG files under 5MB are supported.";
+        }
+      }
+    },
 
-      if (!files.length) {
+    removeImage(index) {
+      const [removed] = this.images.splice(index, 1);
+
+      if (removed) {
+        URL.revokeObjectURL(removed.url);
+      }
+    },
+
+    validateForm() {
+      const price = Number(this.form.price);
+      const quantity = Number(this.form.quantity);
+      const threshold = Number(this.form.low_stock_threshold);
+      const moq = Number(this.form.moq);
+
+      if (!this.form.product_name.trim()) {
+        return "Please enter a product name.";
+      }
+
+      if (!this.form.category_name) {
+        return "Please select a product category.";
+      }
+
+      if (!Number.isFinite(price) || price < 0) {
+        return "Please enter a valid product price.";
+      }
+
+      if (!Number.isInteger(moq) || moq < 1) {
+        return "MOQ must be at least 1.";
+      }
+
+      if (!Number.isInteger(quantity) || quantity < 0) {
+        return "Please enter a valid stock quantity.";
+      }
+
+      if (!Number.isInteger(threshold) || threshold < 0) {
+        return "Please enter a valid low-stock threshold.";
+      }
+
+      return "";
+    },
+
+    async publishProduct() {
+      this.successMessage = "";
+      this.errorMessage = "";
+
+      const validationError = this.validateForm();
+
+      if (validationError) {
+        this.errorMessage = validationError;
         return;
       }
 
+      const supplierId = Number(import.meta.env.VITE_SUPPLIER_ID);
 
-      const accepted = [];
-
-      const rejected = [];
-
-
-      for (const file of files) {
-
-        const isAcceptedType =
-          ACCEPTED_TYPES.includes(file.type);
-
-        const isUnderSizeLimit =
-          file.size <= MAX_FILE_SIZE_BYTES;
-
-
-        if (
-          isAcceptedType &&
-          isUnderSizeLimit
-        ) {
-
-          accepted.push(file);
-
-        } else {
-
-          rejected.push(file);
-
-        }
-
+      if (!Number.isInteger(supplierId) || supplierId < 1) {
+        this.errorMessage =
+          "Configure a valid VITE_SUPPLIER_ID in frontend/weconnect/.env.";
+        return;
       }
 
+      this.isPublishing = true;
 
-      accepted.forEach((file) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        this.images.push({
-
-          id: this.nextId++,
-
-          file,
-
-          url: URL.createObjectURL(file),
-
-          name: file.name,
-
+      try {
+        const response = await fetch(`${API_URL}/api/products`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json"
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            supplier_id: supplierId,
+            product_name: this.form.product_name.trim(),
+            category_name: this.form.category_name,
+            sku: this.form.sku.trim() || null,
+            description: this.form.description.trim() || null,
+            price: Number(this.form.price),
+            unit: this.form.unit,
+            quantity: Number(this.form.quantity),
+            low_stock_threshold: Number(this.form.low_stock_threshold),
+            product_image: null
+          })
         });
 
-      });
+        const data = await response.json().catch(() => ({}));
 
+        if (!response.ok) {
+          throw new Error(
+            data.message || `Request failed with status ${response.status}.`
+          );
+        }
 
-      if (rejected.length) {
+        this.successMessage =
+          data.message || "Product published successfully.";
 
-        this.uploadError =
-          `${rejected.length} file(s) skipped. Only JPG/PNG under 5MB are supported.`;
+        window.dispatchEvent(new CustomEvent("product-published"));
 
+        setTimeout(() => {
+          this.$router.push("/products");
+        }, 500);
+      } catch (error) {
+        this.errorMessage =
+          error.name === "AbortError"
+            ? "The server took too long to respond."
+            : error.message || "Unable to publish the product.";
+      } finally {
+        clearTimeout(timeoutId);
+        this.isPublishing = false;
       }
-
     },
 
-
-    removeImage(index) {
-
-      const [removed] =
-        this.images.splice(index, 1);
-
-
-      if (removed) {
-
-        URL.revokeObjectURL(
-          removed.url
-        );
-
-      }
-
-    },
-
-  },
-
+    saveDraft() {
+      this.successMessage = "Draft functionality is not connected yet.";
+      this.errorMessage = "";
+    }
+  }
 };
 </script>
 
-
 <style scoped>
+
 /* =========================================================
    PRODUCTS PAGE
 ========================================================= */
@@ -508,6 +703,31 @@ export default {
 
 .add-product_search-box input::placeholder {
   color: #aaa09b;
+}
+
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+.add-product_success-message {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: #e9f7e8;
+  border: 1px solid #c9e6c7;
+  border-radius: 9px;
+  color: #3d7f42;
+  font-size: 13px;
+}
+
+.add-product_error-message {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: #fff0ed;
+  border: 1px solid #f0cfc8;
+  border-radius: 9px;
+  color: #c0392b;
+  font-size: 13px;
 }
 
 
@@ -1005,6 +1225,14 @@ export default {
     0 6px 14px rgba(212, 123, 72, 0.25);
 }
 
+.add-product_publish-button:disabled {
+  opacity: 0.65;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
 
 /* Draft */
 
@@ -1232,4 +1460,5 @@ export default {
   }
 
 }
+
 </style>
