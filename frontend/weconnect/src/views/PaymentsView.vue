@@ -467,10 +467,10 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
   faArrowLeft,
   faArrowRight,
@@ -491,42 +491,49 @@ import {
   faUser
 } from '@fortawesome/free-solid-svg-icons'
 
-// Shared order data
-import { orders } from '../data/orders'
-
-// SweetAlert2 handles payment confirmation and feedback
 import Swal from 'sweetalert2'
 
-// Get the current route
+// Get the current route.
 const route = useRoute()
 
-// Find the order using the ID from the URL
-const selectedOrder = computed(() => {
-  return orders.find(order => order.id === Number(route.params.orderId))
-})
+// Store the order loaded from the backend.
+const order = ref(null)
 
-// Store the selected payment method
+// Store the order's payment information.
+const existingPayment = ref(null)
+
+// Store loading and error states.
+const isLoading = ref(true)
+const loadError = ref('')
+
+// Store the selected payment method.
 const paymentMethod = ref('card')
 
-// Store card information entered by the user
+// Store card information entered by the user.
+// These values are only used for frontend validation.
 const cardName = ref('')
 const cardNumber = ref('')
 const expiryDate = ref('')
 const cvv = ref('')
 
-// Store payment state
+// Store payment state.
 const isProcessing = ref(false)
 const paymentSuccess = ref(false)
 
-// Store the payment reference after payment
+// Store the payment reference returned by the backend.
 const paymentReference = ref('')
 
-// Format prices into two decimal places
+// Return the order currently being displayed.
+const selectedOrder = computed(() => {
+  return order.value
+})
+
+// Format prices into two decimal places.
 function formatPrice(price) {
-  return Number(price).toFixed(2)
+  return Number(price || 0).toFixed(2)
 }
 
-// Add spaces between groups of card numbers
+// Add spaces between groups of card numbers.
 function formatCardNumber(event) {
   const numbersOnly = event.target.value
     .replace(/\D/g, '')
@@ -537,7 +544,7 @@ function formatCardNumber(event) {
     .trim()
 }
 
-// Format expiry date as MM/YY
+// Format expiry date as MM/YY.
 function formatExpiryDate(event) {
   const numbersOnly = event.target.value
     .replace(/\D/g, '')
@@ -551,7 +558,7 @@ function formatExpiryDate(event) {
   }
 }
 
-// Check the card fields before starting the prototype payment
+// Check the card fields before starting the payment.
 function validateCardDetails() {
   if (!cardName.value.trim()) {
     return 'Please enter the cardholder name.'
@@ -563,7 +570,7 @@ function validateCardDetails() {
     return 'Please enter a valid 16-digit card number.'
   }
 
-  // Check that the expiry follows MM/YY format
+  // Check that the expiry follows MM/YY format.
   if (!/^\d{2}\/\d{2}$/.test(expiryDate.value)) {
     return 'Please enter the expiry date in MM/YY format.'
   }
@@ -575,14 +582,146 @@ function validateCardDetails() {
   return null
 }
 
-// Simulate the payment process
+// Load one order from the backend.
+async function loadOrder() {
+  try {
+    isLoading.value = true
+    loadError.value = ''
+
+    const orderId = Number(route.params.orderId)
+
+    if (!orderId) {
+      throw new Error('Invalid order ID')
+    }
+
+    const response = await fetch(
+      `http://localhost:3000/api/orders/${orderId}`
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to load order')
+    }
+
+    const data = await response.json()
+
+    if (!data) {
+      throw new Error('Order not found')
+    }
+
+    order.value = {
+      id: data.order_id,
+      orderNumber: data.order_number || 'N/A',
+      business: data.buyer_name || 'Buyer',
+      supplier: data.supplier_name || 'Supplier',
+      status: data.order_status || 'Pending',
+      subtotal: Number(data.total_amount || 0),
+      deliveryFee: 0,
+      total: Number(data.total_amount || 0),
+      deliveryId: data.delivery_id || 'Not assigned'
+    }
+
+    await loadExistingPayment(orderId)
+  } catch (error) {
+    console.error('Error loading payment order:', error)
+
+    loadError.value =
+      'Unable to load the selected order.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Load the latest payment for this order.
+async function loadExistingPayment(orderId) {
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/payments/order/${orderId}`
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to load payment')
+    }
+
+    const payments = await response.json()
+
+    if (!payments.length) {
+      existingPayment.value = null
+      return
+    }
+
+    existingPayment.value = payments[0]
+
+    // If the order is already paid, show the receipt.
+    if (existingPayment.value.payment_status === 'Completed') {
+      paymentReference.value =
+        existingPayment.value.transaction_reference || ''
+
+      paymentSuccess.value = true
+    }
+  } catch (error) {
+    console.error('Error loading existing payment:', error)
+
+    existingPayment.value = null
+  }
+}
+
+// Convert the selected frontend payment method into
+// the payment method name stored in the database.
+function getPaymentMethodName() {
+  return paymentMethod.value === 'card'
+    ? 'Card'
+    : 'EFT'
+}
+
+// Send the payment to the backend.
+async function submitPayment() {
+  const response = await fetch(
+    'http://localhost:3000/api/payments',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        orderId: selectedOrder.value.id,
+        methodName: getPaymentMethodName(),
+        amount: selectedOrder.value.total
+      })
+    }
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || 'Failed to process payment'
+    )
+  }
+
+  return data
+}
+
+// Process the payment.
 async function processPayment() {
-  // Stop the process if there is no selected order
+  // Stop if the order is unavailable.
   if (!selectedOrder.value) {
     return
   }
 
-  // Validate card details before continuing
+  // Prevent paying the same order twice.
+  if (existingPayment.value?.payment_status === 'Completed') {
+    await Swal.fire({
+      icon: 'info',
+      title: 'Already paid',
+      text: 'This order already has a completed payment.',
+      confirmButtonColor: '#4E342E'
+    })
+
+    paymentSuccess.value = true
+    return
+  }
+
+  // Validate card details before continuing.
   if (paymentMethod.value === 'card') {
     const validationMessage = validateCardDetails()
 
@@ -598,10 +737,12 @@ async function processPayment() {
     }
   }
 
-  // Ask for confirmation before processing
+  // Ask for confirmation before processing.
   const confirmation = await Swal.fire({
     title: 'Confirm payment',
-    text: `You are about to pay R ${formatPrice(selectedOrder.value.total)} for ${selectedOrder.value.orderNumber}.`,
+    text: `You are about to pay R ${formatPrice(
+      selectedOrder.value.total
+    )} for ${selectedOrder.value.orderNumber}.`,
     icon: 'question',
     showCancelButton: true,
     confirmButtonText: 'Confirm Payment',
@@ -610,15 +751,13 @@ async function processPayment() {
     cancelButtonColor: '#7A665B'
   })
 
-  // Stop if the user cancels
   if (!confirmation.isConfirmed) {
     return
   }
 
-  // Show processing state
   isProcessing.value = true
 
-  // Show loading feedback
+  // Show processing feedback.
   Swal.fire({
     title: 'Processing payment',
     text: 'Please wait while your payment is being processed.',
@@ -630,24 +769,24 @@ async function processPayment() {
     }
   })
 
-  // Simulate a short payment request
-  setTimeout(async () => {
-    // Mark the order as paid for the frontend prototype
-    selectedOrder.value.paymentStatus = 'Paid'
+  try {
+    // Create the real payment record in MySQL.
+    const payment = await submitPayment()
 
-    // Create a temporary payment reference
-    paymentReference.value = `PAY-${selectedOrder.value.id}001`
+    paymentReference.value =
+      payment.transactionReference || ''
 
-    // Store the temporary payment reference
-    selectedOrder.value.paymentId = paymentReference.value
+    // Store the returned payment information locally.
+    existingPayment.value = {
+      payment_id: payment.paymentId,
+      payment_status: 'Completed',
+      transaction_reference: payment.transactionReference
+    }
 
-    // Stop processing
     isProcessing.value = false
 
-    // Close loading alert
     Swal.close()
 
-    // Show success notification
     await Swal.fire({
       icon: 'success',
       title: 'Payment Successful',
@@ -656,10 +795,29 @@ async function processPayment() {
       confirmButtonColor: '#4E342E'
     })
 
-    // Show the on-page receipt
     paymentSuccess.value = true
-  }, 1500)
+  } catch (error) {
+    console.error('Error processing payment:', error)
+
+    isProcessing.value = false
+
+    Swal.close()
+
+    await Swal.fire({
+      icon: 'error',
+      title: 'Payment failed',
+      text:
+        error.message ||
+        'We could not record your payment. Please try again.',
+      confirmButtonColor: '#4E342E'
+    })
+  }
 }
+
+// Load the order when the payment page opens.
+onMounted(() => {
+  loadOrder()
+})
 </script>
 
 <style scoped>

@@ -12,8 +12,12 @@
       <span class="connect-tracking-map-signal"></span>
 
       <div>
-        <strong>GPS ACTIVE</strong>
-        <small>Vehicle location updating</small>
+        <strong>{{ gpsLocation ? 'GPS ACTIVE' : 'GPS WAITING' }}</strong>
+        <small>
+          {{ gpsLocation
+            ? 'Vehicle location updating'
+            : 'Waiting for GPS position' }}
+        </small>
       </div>
     </div>
 
@@ -22,22 +26,24 @@
 
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Font Awesome icon used inside the vehicle marker.
-import { faTruckFast } from '@fortawesome/free-solid-svg-icons'
-
-
 // TrackingView listens for this event and updates the page information.
 const emit = defineEmits(['tracking-update'])
 
+// Receive the latest GPS location from the backend.
+const props = defineProps({
+  gpsLocation: {
+    type: Object,
+    default: null
+  }
+})
 
 // HTML element used by Leaflet.
 const mapContainer = ref(null)
-
 
 // Leaflet map instance.
 let map = null
@@ -45,176 +51,12 @@ let map = null
 // Moving vehicle marker.
 let deliveryMarker = null
 
-// Simulated GPS timer.
-let trackingTimer = null
-
-
-// ---------------------------------------------------------
-// DELIVERY ROUTE
-// ---------------------------------------------------------
-
-// Supplier warehouse.
-const pickupLocation = [-29.8587, 31.0218]
-
-// Points between the supplier and business.
-// More points make the simulated vehicle movement smoother.
-const routePoints = [
-  pickupLocation,
-  [-29.8610, 31.0228],
-  [-29.8640, 31.0240],
-  [-29.8670, 31.0250],
-  [-29.8700, 31.0265],
-  [-29.8730, 31.0280],
-  [-29.8755, 31.0290],
-  [-29.8780, 31.0300]
-]
-
-// Small business destination.
-const destinationLocation = routePoints[routePoints.length - 1]
-
-
-// Start the vehicle partway through the journey.
-// This makes the prototype open looking like an active delivery.
-let currentRouteIndex = 4
-
-
-// ---------------------------------------------------------
-// VEHICLE ICON
-// ---------------------------------------------------------
-
-// Simple truck icon for the Leaflet marker.
-// Keeping the marker HTML simple prevents Leaflet from
-// depending on the Font Awesome rendering system.
+// Vehicle icon used by the map.
 const truckIcon = '🚚'
 
-// ---------------------------------------------------------
-// CREATE MAP
-// ---------------------------------------------------------
-
-onMounted(() => {
-
-  // Create the Leaflet map.
-  map = L.map(mapContainer.value, {
-    zoomControl: false,
-    scrollWheelZoom: false,
-    attributionControl: true
-  })
-
-  // Keep the zoom controls clear of the journey progress overlay.
-  L.control.zoom({
-    position: 'topright'
-  }).addTo(map)
-
-
-  // OpenStreetMap tiles.
-  L.tileLayer(
-    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19
-    }
-  ).addTo(map)
-
-
-  // -------------------------------------------------------
-  // DELIVERY ROUTE
-  // -------------------------------------------------------
-
-  // Draw a softer line underneath the route.
-  L.polyline(
-    routePoints,
-    {
-      color: '#FFFEFC',
-      weight: 9,
-      opacity: 0.85,
-      lineCap: 'round',
-      lineJoin: 'round'
-    }
-  ).addTo(map)
-
-
-  // Draw the colored route last so it stays visible above the underlay.
-  L.polyline(
-    routePoints,
-    {
-      color: '#D17A4A',
-      weight: 5,
-      opacity: 0.82,
-      lineCap: 'round',
-      lineJoin: 'round'
-    }
-  ).addTo(map)
-
-
-  // -------------------------------------------------------
-  // PICKUP MARKER
-  // -------------------------------------------------------
-
-  const pickupIcon = L.divIcon({
-    className: 'connect-tracking-pickup-marker',
-    html: `
-      <div class="connect-tracking-location-marker connect-tracking-pickup-dot">
-        <span></span>
-      </div>
-    `,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15]
-  })
-
-
-  L.marker(
-    pickupLocation,
-    {
-      icon: pickupIcon
-    }
-  )
-    .addTo(map)
-    .bindPopup(
-      `
-        <strong>Supplier Warehouse</strong>
-        <br>
-        Shipment origin
-      `
-    )
-
-
-  // -------------------------------------------------------
-  // DESTINATION MARKER
-  // -------------------------------------------------------
-
-  const destinationIcon = L.divIcon({
-    className: 'connect-tracking-destination-marker',
-    html: `
-      <div class="connect-tracking-location-marker connect-tracking-destination-dot">
-        <span></span>
-      </div>
-    `,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15]
-  })
-
-
-  L.marker(
-    destinationLocation,
-    {
-      icon: destinationIcon
-    }
-  )
-    .addTo(map)
-    .bindPopup(
-      `
-        <strong>Small Business</strong>
-        <br>
-        Delivery destination
-      `
-    )
-
-
-  // -------------------------------------------------------
-  // DELIVERY VEHICLE
-  // -------------------------------------------------------
-
-  const deliveryIcon = L.divIcon({
+// Create the vehicle marker icon.
+function createVehicleIcon() {
+  return L.divIcon({
     className: 'connect-tracking-vehicle-marker',
     html: `
       <div class="connect-tracking-vehicle">
@@ -227,42 +69,97 @@ onMounted(() => {
     iconSize: [64, 64],
     iconAnchor: [32, 32]
   })
+}
 
+// Update the vehicle marker using the real GPS location.
+function updateVehicleLocation(location) {
+  if (!map || !location) {
+    return
+  }
 
-  // Current simulated vehicle location.
-  const startingPoint = routePoints[currentRouteIndex]
+  const latitude = Number(location.latitude)
+  const longitude = Number(location.longitude)
 
+  // Ignore invalid GPS coordinates.
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude)
+  ) {
+    return
+  }
 
-  deliveryMarker = L.marker(
-    startingPoint,
-    {
-      icon: deliveryIcon,
-      zIndexOffset: 1000
-    }
-  )
-    .addTo(map)
-    .bindPopup(
-      `
+  const coordinates = [latitude, longitude]
+
+  // Create the vehicle marker the first time GPS data arrives.
+  if (!deliveryMarker) {
+    deliveryMarker = L.marker(
+      coordinates,
+      {
+        icon: createVehicleIcon(),
+        zIndexOffset: 1000
+      }
+    )
+      .addTo(map)
+      .bindPopup(`
         <strong>Delivery vehicle</strong>
         <br>
-        Currently in transit
-      `
-    )
+        Current GPS location
+      `)
+  } else {
+    // Move the existing vehicle marker to the latest position.
+    deliveryMarker.setLatLng(coordinates)
+  }
 
-
-  // -------------------------------------------------------
-  // FIT ROUTE INTO MAP
-  // -------------------------------------------------------
-
-  const routeBounds = L.latLngBounds(routePoints)
-
-  map.fitBounds(
-    routeBounds,
+  // Centre the map on the current vehicle position.
+  map.setView(
+    coordinates,
+    15,
     {
-      padding: [55, 55]
+      animate: true
     }
   )
 
+  // Tell the parent page that a real GPS position is available.
+  emit('tracking-update', {
+    progress: 0,
+    status: 'GPS Updated',
+    eta: 'Not available'
+  })
+}
+
+// Create the Leaflet map.
+onMounted(() => {
+  map = L.map(mapContainer.value, {
+    zoomControl: false,
+    scrollWheelZoom: false,
+    attributionControl: true
+  })
+
+  // Keep the zoom controls clear of the tracking overlay.
+  L.control.zoom({
+    position: 'topright'
+  }).addTo(map)
+
+  // OpenStreetMap tiles.
+  L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
+    }
+  ).addTo(map)
+
+  // If GPS data was already loaded before the map mounted,
+  // display it immediately.
+  if (props.gpsLocation) {
+    updateVehicleLocation(props.gpsLocation)
+  } else {
+    // Start with a neutral world view until a real GPS position is available.
+    map.setView(
+      [0, 0],
+      2
+    )
+  }
 
   // Give Leaflet a moment to calculate its final size.
   setTimeout(() => {
@@ -270,130 +167,31 @@ onMounted(() => {
       map.invalidateSize()
     }
   }, 250)
-
-
-  // -------------------------------------------------------
-  // INITIAL TRACKING UPDATE
-  // -------------------------------------------------------
-
-  emitTrackingUpdate()
-
-
-  // -------------------------------------------------------
-  // SIMULATED GPS
-  // -------------------------------------------------------
-
-  trackingTimer = setInterval(() => {
-
-    // Move toward the next route point.
-    currentRouteIndex += 1
-
-
-    // Stop at the destination.
-    if (currentRouteIndex >= routePoints.length) {
-      currentRouteIndex = routePoints.length - 1
-    }
-
-
-    const currentLocation = routePoints[currentRouteIndex]
-
-
-    // Update the vehicle marker.
-    deliveryMarker.setLatLng(currentLocation)
-
-
-    // Keep the vehicle visible without constantly changing
-    // the user's zoom level.
-    map.panTo(
-      currentLocation,
-      {
-        animate: true,
-        duration: 0.8
-      }
-    )
-
-
-    // Send the new tracking information to the parent page.
-    emitTrackingUpdate()
-
-
-    // Stop once the destination has been reached.
-    if (
-      currentRouteIndex === routePoints.length - 1
-    ) {
-      clearInterval(trackingTimer)
-      trackingTimer = null
-    }
-
-  }, 3500)
 })
 
-
-// ---------------------------------------------------------
-// TRACKING INFORMATION
-// ---------------------------------------------------------
-
-function emitTrackingUpdate() {
-
-  const progress = Math.round(
-    (currentRouteIndex / (routePoints.length - 1)) * 100
-  )
-
-
-  let status = 'In Transit'
-  let eta = '25 min'
-
-
-  if (progress >= 90) {
-    status = 'Arriving Soon'
-    eta = '5 min'
-  } else if (progress >= 75) {
-    status = 'In Transit'
-    eta = '12 min'
-  } else if (progress >= 50) {
-    status = 'In Transit'
-    eta = '18 min'
-  }
-
-
-  if (progress === 100) {
-    status = 'Delivered'
-    eta = 'Arrived'
-  }
-
-
-  emit(
-    'tracking-update',
-    {
-      progress,
-      status,
-      eta
+// Watch for a new GPS position from TrackingView.
+watch(
+  () => props.gpsLocation,
+  (newLocation) => {
+    if (newLocation) {
+      updateVehicleLocation(newLocation)
     }
-  )
-}
-
-
-// ---------------------------------------------------------
-// CLEANUP
-// ---------------------------------------------------------
-
-onBeforeUnmount(() => {
-
-  // Stop simulated GPS movement.
-  if (trackingTimer) {
-    clearInterval(trackingTimer)
-    trackingTimer = null
+  },
+  {
+    deep: true
   }
+)
 
-
-  // Remove the Leaflet map.
+// Clean up the Leaflet map.
+onBeforeUnmount(() => {
   if (map) {
     map.remove()
     map = null
   }
+
+  deliveryMarker = null
 })
 </script>
-
 
 <style>
 

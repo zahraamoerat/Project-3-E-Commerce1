@@ -25,12 +25,12 @@
         </div>
 
         <div class="connect-tracking-order-value">
-          #ORD-001
+          {{ delivery?.order_number || 'Order' }}
         </div>
 
         <div class="connect-tracking-order-status">
           <span class="connect-tracking-status-dot"></span>
-          Live shipment
+          {{ isCancelled() ? 'Cancelled' : (delivery?.current_status || trackingStatus) }}
         </div>
       </div>
 
@@ -47,8 +47,8 @@
 
         <div>
           <span>DISPATCHED FROM</span>
-          <strong>Supplier Warehouse</strong>
-          <small>Durban</small>
+          <strong>{{ delivery?.supplier_name || 'Supplier' }}</strong>
+          <small>{{ delivery?.supplier_city || 'Location unavailable' }}</small>
         </div>
       </div>
 
@@ -69,8 +69,8 @@
 
         <div>
           <span>DELIVERING TO</span>
-          <strong>Small Business</strong>
-          <small>Durban</small>
+          <strong>{{ delivery?.buyer_name || 'Small Business' }}</strong>
+          <small>{{ delivery?.buyer_city || 'Location unavailable' }}</small>
         </div>
       </div>
 
@@ -112,6 +112,7 @@
         <div class="connect-tracking-map-wrapper">
 
           <TrackingMap
+            :gps-location="latestLocation"
             @tracking-update="handleTrackingUpdate"
           />
 
@@ -165,7 +166,7 @@
           </div>
 
           <div class="connect-tracking-map-note">
-            GPS signal active
+            {{ latestLocation?.location_description || 'GPS location updating' }}
           </div>
 
         </div>
@@ -206,7 +207,13 @@
 
           <div class="connect-tracking-status-list">
 
-            <div class="connect-tracking-status-row connect-tracking-status-complete">
+            <div
+              class="connect-tracking-status-row"
+              :class="{
+                active: isCurrentStatus('Confirmed'),
+                completed: isStatusReached('Confirmed')
+              }"
+            >
               <div class="connect-tracking-status-marker">
                 <font-awesome-icon :icon="faCircleCheck" />
               </div>
@@ -218,7 +225,13 @@
             </div>
 
 
-            <div class="connect-tracking-status-row connect-tracking-status-complete">
+            <div
+              class="connect-tracking-status-row"
+              :class="{
+                active: isCurrentStatus('Dispatched'),
+                completed: isStatusReached('Dispatched')
+              }"
+            >
               <div class="connect-tracking-status-marker">
                 <font-awesome-icon :icon="faCircleCheck" />
               </div>
@@ -230,19 +243,35 @@
             </div>
 
 
-            <div class="connect-tracking-status-row connect-tracking-status-active">
+            <div
+              class="connect-tracking-status-row"
+              :class="{
+                active:
+                  isCurrentStatus('Out for delivery') ||
+                  isCurrentStatus('Shipped'),
+                completed:
+                  isStatusReached('Out for delivery') ||
+                  isStatusReached('Shipped')
+              }"
+            >
               <div class="connect-tracking-status-marker">
                 <span></span>
               </div>
 
               <div>
-                <strong>In transit</strong>
+                <strong>{{ trackingStatus }}</strong>
                 <span>Vehicle is travelling to destination</span>
               </div>
             </div>
 
 
-            <div class="connect-tracking-status-row">
+            <div
+              class="connect-tracking-status-row"
+              :class="{
+                active: isCurrentStatus('Delivered'),
+                completed: isStatusReached('Delivered')
+              }"
+            >
               <div class="connect-tracking-status-marker">
                 <span></span>
               </div>
@@ -269,22 +298,27 @@
 
           <div class="connect-tracking-detail-row">
             <span>Order</span>
-            <strong>#ORD-001</strong>
+            <strong>{{ delivery?.order_number || 'Order' }}</strong>
           </div>
 
           <div class="connect-tracking-detail-row">
             <span>Delivery</span>
-            <strong>#DEL-001</strong>
+            <strong>{{ delivery?.delivery_id || 'Not assigned' }}</strong>
+          </div>
+
+          <div class="connect-tracking-detail-row">
+            <span>Tracking reference</span>
+            <strong>{{ delivery?.tracking_reference || 'Not assigned' }}</strong>
           </div>
 
           <div class="connect-tracking-detail-row">
             <span>From</span>
-            <strong>Supplier Warehouse</strong>
+            <strong>{{ delivery?.supplier_name || 'Supplier' }}</strong>
           </div>
 
           <div class="connect-tracking-detail-row">
             <span>To</span>
-            <strong>Small Business</strong>
+            <strong>{{ delivery?.buyer_name || 'Small Business' }}</strong>
           </div>
 
         </div>
@@ -345,8 +379,8 @@
 
           <div>
             <span>ORIGIN</span>
-            <strong>Supplier Warehouse</strong>
-            <small>Durban</small>
+            <strong>{{ delivery?.supplier_name || 'Supplier' }}</strong>
+            <small>{{ delivery?.supplier_city || 'Location unavailable' }}</small>
           </div>
 
         </div>
@@ -376,8 +410,8 @@
 
           <div>
             <span>DESTINATION</span>
-            <strong>Small Business</strong>
-            <small>Durban</small>
+            <strong>{{ delivery?.buyer_name || 'Small Business' }}</strong>
+            <small>{{ delivery?.buyer_city || 'Location unavailable' }}</small>
           </div>
 
         </div>
@@ -391,7 +425,8 @@
 
 
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 import TrackingMap from '../components/tracking/TrackingMap.vue'
 
@@ -409,23 +444,200 @@ import {
   faWarehouse
 } from '@fortawesome/free-solid-svg-icons'
 
+// Read the delivery ID from the tracking URL.
+const route = useRoute()
 
-// These values are updated by the simulated GPS map.
-const trackingProgress = ref(68)
-const trackingStatus = ref('In Transit')
-const estimatedArrival = ref('25 min')
-const lastUpdated = ref('just now')
+// Store the delivery information returned by the backend.
+const delivery = ref(null)
 
+// Store the latest GPS location for this delivery.
+const latestLocation = ref(null)
+
+// Store loading and error states.
+const isLoading = ref(true)
+const errorMessage = ref('')
+
+// Refresh the GPS position while this tracking page is open.
+let locationTimer = null
+
+// Tracking values shown by the page.
+const trackingProgress = ref(0)
+const trackingStatus = ref('Loading')
+const estimatedArrival = ref('Not available')
+const lastUpdated = ref('Waiting for GPS update')
+
+// Load the delivery connected to the current tracking page.
+async function loadDelivery() {
+  try {
+    const deliveryId = Number(route.params.deliveryId)
+
+    if (!deliveryId) {
+      throw new Error('Invalid delivery ID')
+    }
+
+    // Load the delivery and its related order information.
+    const response = await fetch(
+      'http://localhost:3000/api/deliveries'
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to load delivery')
+    }
+
+    const deliveries = await response.json()
+
+    const selectedDelivery = deliveries.find(
+      item => Number(item.delivery_id) === deliveryId
+    )
+
+    if (!selectedDelivery) {
+      throw new Error('Delivery not found')
+    }
+
+    delivery.value = selectedDelivery
+
+    // Use the real delivery status from the database.
+    trackingStatus.value =
+      selectedDelivery.current_status || 'Pending'
+
+    // Use the real estimated arrival when available.
+    estimatedArrival.value =
+      selectedDelivery.estimated_arrival || 'Not available'
+
+    // Load the latest GPS location for this delivery.
+    await loadLatestLocation(deliveryId)
+
+    // Continue checking for new GPS positions.
+    startLocationPolling(deliveryId)
+  } catch (error) {
+    console.error('Error loading delivery:', error)
+
+    errorMessage.value =
+      'Unable to load the selected delivery.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Load the latest GPS coordinate for the delivery.
+async function loadLatestLocation(deliveryId) {
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/deliveries/${deliveryId}/location`
+    )
+
+    if (response.status === 404) {
+      // A delivery can exist before its first GPS update.
+      latestLocation.value = null
+      lastUpdated.value = 'No GPS update yet'
+      return
+    }
+
+    if (!response.ok) {
+      throw new Error('Failed to load GPS location')
+    }
+
+    const location = await response.json()
+
+    latestLocation.value = location
+
+    // Show when the GPS position was recorded.
+    if (location.recorded_at) {
+      lastUpdated.value = new Date(
+        location.recorded_at
+      ).toLocaleString('en-ZA')
+    }
+  } catch (error) {
+    console.error('Error loading GPS location:', error)
+
+    latestLocation.value = null
+    lastUpdated.value = 'GPS unavailable'
+  }
+}
+
+// Keep checking for GPS while the delivery is still active.
+function startLocationPolling(deliveryId) {
+  locationTimer = setInterval(() => {
+    const status = delivery.value?.current_status
+
+    if (
+      status === 'Delivered' ||
+      status === 'Cancelled'
+    ) {
+      clearInterval(locationTimer)
+      locationTimer = null
+      return
+    }
+
+    loadLatestLocation(deliveryId)
+  }, 5000)
+}
+
+// Check whether a delivery has reached a particular stage.
+function isStatusReached(status) {
+  const currentStatus = delivery.value?.current_status
+
+  const statusOrder = [
+    'Pending',
+    'Confirmed',
+    'Processing',
+    'Dispatched',
+    'Out for delivery',
+    'Shipped',
+    'Delivered'
+  ]
+
+  const currentIndex = statusOrder.indexOf(currentStatus)
+  const statusIndex = statusOrder.indexOf(status)
+
+  if (currentIndex === -1 || statusIndex === -1) {
+    return false
+  }
+
+  return currentIndex >= statusIndex
+}
+
+// Check whether the delivery has been cancelled.
+function isCancelled() {
+  return delivery.value?.current_status === 'Cancelled'
+}
+
+// Check whether this is the current delivery stage.
+function isCurrentStatus(status) {
+  return delivery.value?.current_status === status
+}
 
 // Receive tracking information from TrackingMap.vue.
 function handleTrackingUpdate(data) {
   trackingProgress.value = data.progress
-  trackingStatus.value = data.status
-  estimatedArrival.value = data.eta
-  lastUpdated.value = 'just now'
-}
-</script>
 
+  // Keep the real delivery status from the backend.
+  if (delivery.value?.current_status) {
+    trackingStatus.value = delivery.value.current_status
+  }
+
+  if (data.eta && data.eta !== 'Not available') {
+    estimatedArrival.value = data.eta
+  }
+
+  if (!latestLocation.value?.recorded_at) {
+    lastUpdated.value = 'just now'
+  }
+}
+
+// Load the delivery when the tracking page opens.
+onMounted(() => {
+  loadDelivery()
+})
+
+// Stop GPS polling when the user leaves the page.
+onBeforeUnmount(() => {
+  if (locationTimer) {
+    clearInterval(locationTimer)
+    locationTimer = null
+  }
+})
+</script>
 
 <style scoped>
 

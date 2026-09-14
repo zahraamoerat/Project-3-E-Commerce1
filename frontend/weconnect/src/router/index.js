@@ -6,11 +6,11 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-        redirect: '/tracking',
+        redirect: '/small-business/orders',
     },
-    // Added for the delivery tracking page
+    // Delivery tracking page for a specific delivery.
     {
-      path: '/tracking',
+      path: '/tracking/:deliveryId',
       name: 'tracking',
       component: () => import('../views/TrackingView.vue'),
     },

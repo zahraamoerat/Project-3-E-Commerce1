@@ -220,7 +220,7 @@
               </span>
 
               <strong>
-                {{ delivery.business }}
+                {{ delivery.buyer }}
               </strong>
 
               <p>
@@ -331,7 +331,7 @@
               </span>
 
               <strong>
-                {{ delivery.business }}
+                {{ delivery.buyer }}
               </strong>
 
             </div>
@@ -405,6 +405,16 @@
 
             </button>
 
+            <!-- Open the shared tracking page for this delivery. -->
+            <router-link
+              v-if="delivery.deliveryId"
+              :to="`/tracking/${delivery.deliveryId}`"
+              class="connect-supplier-deliveries-track-button"
+            >
+              <FontAwesomeIcon :icon="faLocationDot" />
+              Track Delivery
+            </router-link>
+
           </div>
 
         </article>
@@ -463,7 +473,7 @@
               </h2>
 
               <span>
-                Delivering to {{ selectedDelivery.business }}
+                Delivering to {{ selectedDelivery.buyer }}
               </span>
 
             </div>
@@ -634,7 +644,7 @@
                 </strong>
 
                 <span>
-                  {{ selectedDelivery.business }}
+                  {{ selectedDelivery.buyer }}
                 </span>
               </div>
 
@@ -692,7 +702,7 @@
                 </span>
 
                 <strong>
-                  {{ selectedDelivery.business }}
+                  {{ selectedDelivery.buyer }}
                 </strong>
 
               </div>
@@ -797,7 +807,7 @@
 
 
           <router-link
-            to="/tracking"
+            :to="`/tracking/${selectedDelivery.deliveryId}`"
             class="connect-supplier-deliveries-open-tracking"
           >
 
@@ -818,7 +828,7 @@
 
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 import {
@@ -834,33 +844,22 @@ import {
   faXmark
 } from '@fortawesome/free-solid-svg-icons'
 
-// Use the same shared order data as the other delivery pages
-import { orders } from '../data/orders'
-
-// Convert shared order information into supplier shipment records
-const deliveries = orders.map(order => ({
-  deliveryId: order.deliveryId,
-  orderNumber: order.orderNumber,
-  business: order.business,
-  deliveryStatus: order.deliveryStatus,
-  paymentStatus: order.paymentStatus,
-  deliveryFee: order.deliveryFee,
-  total: order.total
-}))
+// Store deliveries returned by the backend.
+const deliveries = ref([])
 
 // Store the shipment currently being reviewed
 const selectedDelivery = ref(null)
 
 // Count deliveries that are still active
 const activeDeliveries = computed(() => {
-  return deliveries.filter(delivery => {
+  return deliveries.value.filter(delivery => {
     return delivery.deliveryStatus.toLowerCase() !== 'completed'
   }).length
 })
 
 // Count completed deliveries
 const completedDeliveries = computed(() => {
-  return deliveries.filter(delivery => {
+  return deliveries.value.filter(delivery => {
     return delivery.deliveryStatus.toLowerCase() === 'completed'
   }).length
 })
@@ -873,6 +872,36 @@ function trackDelivery(delivery) {
 // Convert status text into a CSS class
 function getStatusClass(status) {
   return status.toLowerCase().replace(/\s+/g, '-')
+}
+
+// Load deliveries and their related order information.
+async function loadDeliveries() {
+  try {
+    const response = await fetch('http://localhost:3000/api/deliveries')
+
+    if (!response.ok) {
+      throw new Error('Failed to load deliveries')
+    }
+
+    const data = await response.json()
+
+    deliveries.value = data.map(delivery => ({
+      deliveryId: delivery.delivery_id,
+      orderId: delivery.order_id,
+      orderNumber: delivery.order_number || 'N/A',
+      supplier: delivery.supplier_name || 'Supplier',
+      buyer: delivery.buyer_name || 'Buyer',
+      trackingReference: delivery.tracking_reference || null,
+      deliveryStatus: delivery.current_status || 'Not assigned',
+      estimatedArrival: delivery.estimated_arrival || null,
+      paymentStatus: delivery.payment_status || 'Pending',
+      deliveryFee: 0,
+      total: Number(delivery.total_amount || 0)
+    }))
+  } catch (error) {
+    console.error('Error loading supplier deliveries:', error)
+    deliveries.value = []
+  }
 }
 
 // Check whether the shipment has moved beyond the warehouse
@@ -918,6 +947,10 @@ function getJourneyLabel(status) {
 
   return status
 }
+
+onMounted(() => {
+  loadDeliveries()
+})
 </script>
 
 

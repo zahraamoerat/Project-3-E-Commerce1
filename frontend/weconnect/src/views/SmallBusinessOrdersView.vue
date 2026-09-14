@@ -261,14 +261,24 @@
               </button>
 
 
-              <!-- Only show payment when the order is unpaid -->
+              <!-- Show payment for orders that still need payment. -->
               <router-link
-                v-if="order.paymentStatus === 'Unpaid'"
+                v-if="['Pending', 'Overdue', 'Failed'].includes(order.paymentStatus)"
                 :to="`/payment/${order.id}`"
                 class="connect-sb-orders-pay-button"
               >
                 <FontAwesomeIcon :icon="faCreditCard" />
                 Pay Bills
+              </router-link>
+
+              <!-- Only show tracking when a delivery has been assigned. -->
+              <router-link
+                v-if="order.deliveryId"
+                :to="`/tracking/${order.deliveryId}`"
+                class="connect-sb-orders-track-button"
+              >
+                <FontAwesomeIcon :icon="faLocationDot" />
+                Track Delivery
               </router-link>
 
             </div>
@@ -428,9 +438,9 @@
           </router-link>
 
 
-          <!-- Only show payment when the order is unpaid -->
+          <!-- Show payment for orders that still need payment. -->
           <router-link
-            v-if="selectedOrder.paymentStatus === 'Unpaid'"
+            v-if="['Pending', 'Overdue', 'Failed'].includes(selectedOrder.paymentStatus)"
             :to="`/payment/${selectedOrder.id}`"
             class="connect-sb-orders-details-pay-button"
           >
@@ -450,156 +460,255 @@
 
 
 <script setup>
+import { computed, onMounted, ref } from 'vue'
 
-import { computed, ref } from 'vue'
-
-// Font Awesome icons used on the orders page
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-
 import {
   faBoxOpen,
   faCalendarDays,
   faClock,
   faCreditCard,
+  faLocationDot,
   faMagnifyingGlass,
   faTruck,
   faTruckFast
 } from '@fortawesome/free-solid-svg-icons'
 
-// Get the order data
-import { orders } from '../data/orders'
+// Store orders returned by the backend.
+const orders = ref([])
 
+// Store the order currently being viewed.
+const selectedOrder = ref(null)
 
-// Search and filter controls
+// Search and filter controls.
 const searchQuery = ref('')
 const activeFilter = ref('All')
 
-// Keep track of the order the user clicks
-const selectedOrder = ref(null)
+// Store loading and error states.
+const isLoading = ref(true)
+const errorMessage = ref('')
 
+// Filter orders based on the selected status and search text.
+const filteredOrders = computed(() => {
+  const search = searchQuery.value.trim().toLowerCase()
 
-// Count active orders
+  return orders.value.filter(order => {
+    const matchesFilter =
+      activeFilter.value === 'All' ||
+      (activeFilter.value === 'On Process' &&
+        !['Completed', 'Cancelled'].includes(order.status)) ||
+      (activeFilter.value === 'Completed' &&
+        order.status === 'Completed')
+
+    const matchesSearch =
+      !search ||
+      order.orderNumber.toLowerCase().includes(search) ||
+      order.supplier.toLowerCase().includes(search) ||
+      order.status.toLowerCase().includes(search)
+
+    return matchesFilter && matchesSearch
+  })
+})
+
+// Count orders that are currently active.
 const activeOrdersCount = computed(() => {
-  return orders.filter(order => {
-    return order.deliveryStatus?.toLowerCase() !== 'completed'
+  return orders.value.filter(order => {
+    return !['Completed', 'Cancelled'].includes(order.status)
   }).length
 })
 
-
-// Filter the orders shown on screen
-const filteredOrders = computed(() => {
-  let result = [...orders]
-
-  // Apply the selected status tab
-  if (activeFilter.value === 'Completed') {
-    result = result.filter(order => {
-      return (
-        order.status?.toLowerCase() === 'completed' ||
-        order.deliveryStatus?.toLowerCase() === 'completed'
-      )
-    })
+// Calculate the total including the delivery fee.
+const totalWithDelivery = computed(() => {
+  if (!selectedOrder.value) {
+    return '0.00'
   }
 
-  if (activeFilter.value === 'On Process') {
-    result = result.filter(order => {
-      return (
-        order.status?.toLowerCase() !== 'completed' &&
-        order.deliveryStatus?.toLowerCase() !== 'completed'
-      )
-    })
-  }
+  const total =
+    Number(selectedOrder.value.total || 0) +
+    Number(selectedOrder.value.deliveryFee || 0)
 
-
-  // Apply the search
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase().trim()
-
-    result = result.filter(order => {
-      return (
-        order.orderNumber?.toLowerCase().includes(query) ||
-        order.supplier?.toLowerCase().includes(query) ||
-        order.status?.toLowerCase().includes(query) ||
-        order.deliveryStatus?.toLowerCase().includes(query)
-      )
-    })
-  }
-
-  return result
+  return total.toFixed(2)
 })
 
+// Get today's date.
+function getCurrentDate() {
+  return new Date().toLocaleDateString('en-ZA', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  })
+}
 
-// Create a simple avatar from the supplier name
+// Get initials for the supplier avatar.
 function getInitials(name) {
   if (!name) {
-    return 'WC'
+    return 'SU'
   }
 
   return name
     .split(' ')
-    .map(word => word.charAt(0))
+    .filter(Boolean)
     .slice(0, 2)
+    .map(word => word.charAt(0).toUpperCase())
     .join('')
-    .toUpperCase()
 }
 
-
-// Return order items when they exist
-// The fallback keeps the page working with the current sample data
-function getOrderItems(order) {
-  if (Array.isArray(order.items) && order.items.length) {
-    return order.items
-  }
-
-  return [
-    {
-      name: 'Supplier Order',
-      quantity: 1,
-      price: Number(order.total)
-    }
-  ]
-}
-
-
-// Show the order details
-function viewOrder(order) {
-
-  // Clicking the same order again closes its details
-  if (selectedOrder.value?.id === order.id) {
-    selectedOrder.value = null
-    return
-  }
-
-  selectedOrder.value = order
-}
-
-
-// Turn status text into a class name
+// Turn status text into a CSS class.
 function getStatusClass(status) {
   if (!status) {
     return 'pending'
   }
 
-  return status
+  const statusMap = {
+    Pending: 'unpaid',
+    Completed: 'paid',
+    Overdue: 'overdue',
+    Failed: 'failed'
+  }
+
+  return statusMap[status] || status
     .toLowerCase()
     .replace(/\s+/g, '-')
 }
 
+// Get the items already loaded for an order.
+function getOrderItems(order) {
+  return order.items || []
+}
 
-// Add the delivery fee to the order total
-const totalWithDelivery = computed(() => {
+// Open the selected order.
+function viewOrder(order) {
+  selectedOrder.value = order
+}
 
-  if (!selectedOrder.value) {
-    return '0.00'
+async function loadOrderPayment(orderId) {
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/payments/order/${orderId}`
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to load order payment')
+    }
+
+    const payments = await response.json()
+
+    if (!payments.length) {
+      return {
+        status: 'Pending',
+        paymentId: null
+      }
+    }
+
+    // Use the most recent payment for this order.
+    const payment = payments[0]
+
+    return {
+      status: payment.payment_status || 'Pending',
+      paymentId: payment.payment_id || null
+    }
+  } catch (error) {
+    console.error(`Error loading payment for order ${orderId}:`, error)
+
+    return {
+      status: 'Pending',
+      paymentId: null
+    }
   }
+}
 
-  const total = Number(selectedOrder.value.total)
-  const deliveryFee = Number(selectedOrder.value.deliveryFee)
+// Load the items belonging to one order.
+async function loadOrderItems(orderId) {
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/orders/${orderId}/items`
+    )
 
-  return (total + deliveryFee).toFixed(2)
+    if (!response.ok) {
+      throw new Error('Failed to load order items')
+    }
+
+    const items = await response.json()
+
+    return items.map(item => ({
+      name: item.product_name || 'Product',
+      quantity: Number(item.quantity || 0),
+      price: Number(item.unit_price || 0),
+      subtotal: Number(item.subtotal || 0),
+      image: item.product_image || null
+    }))
+  } catch (error) {
+    console.error(`Error loading items for order ${orderId}:`, error)
+
+    return []
+  }
+}
+
+// Load all orders from the backend.
+async function loadOrders() {
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+
+    const response = await fetch('http://localhost:3000/api/orders')
+
+    if (!response.ok) {
+      throw new Error('Failed to load orders')
+    }
+
+    const data = await response.json()
+
+    // Add the real items to each order.
+    const ordersWithItems = await Promise.all(
+      data.map(async order => {
+        const items = await loadOrderItems(order.order_id)
+        const payment = await loadOrderPayment(order.order_id)
+
+        return {
+          id: order.order_id,
+          orderNumber: order.order_number || 'N/A',
+          business: order.buyer_name || 'Buyer',
+          supplier: order.supplier_name || 'Supplier',
+          date: order.order_date
+            ? new Date(order.order_date).toLocaleDateString('en-ZA')
+            : 'N/A',
+          status: order.order_status || 'Pending',
+
+          // Delivery information comes from the related delivery record.
+          deliveryId: order.delivery_id || null,
+          trackingReference: order.tracking_reference || null,
+          deliveryStatus: order.delivery_status || 'Not assigned',
+          estimatedArrival: order.estimated_arrival || null,
+
+          paymentStatus: payment.status,
+          paymentId: payment.paymentId,
+
+          subtotal: Number(order.total_amount || 0),
+          deliveryFee: 0,
+          total: Number(order.total_amount || 0),
+
+          items
+        }
+      })
+    )
+
+    orders.value = ordersWithItems
+  } catch (error) {
+    console.error('Error loading orders:', error)
+
+    errorMessage.value = 'Unable to load orders.'
+    orders.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Load orders when the page opens.
+onMounted(() => {
+  loadOrders()
 })
-
 </script>
-
 
 <style scoped>
 

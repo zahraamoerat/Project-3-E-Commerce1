@@ -362,6 +362,16 @@
               <FontAwesomeIcon :icon="faArrowRight" />
             </button>
 
+            <!-- Allow the supplier to track an assigned delivery. -->
+            <router-link
+              v-if="order.deliveryId"
+              :to="`/tracking/${order.deliveryId}`"
+              class="connect-supplier-orders-track-button"
+            >
+              <FontAwesomeIcon :icon="faLocationDot" />
+              Track Delivery
+            </router-link>
+
           </div>
         </article>
 
@@ -564,7 +574,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 import {
@@ -575,13 +585,14 @@ import {
   faClock,
   faCreditCard,
   faInbox,
+  faLocationDot,
   faMagnifyingGlass,
   faTruckFast,
   faXmark
 } from '@fortawesome/free-solid-svg-icons'
 
-// Use the same shared order data as the other order pages
-import { orders } from '../data/orders'
+// Store orders returned by the backend.
+const orders = ref([])
 
 // Store the order currently being reviewed
 const selectedOrder = ref(null)
@@ -594,14 +605,14 @@ const activeFilter = ref('all')
 
 // Count orders that have not been paid yet
 const unpaidOrders = computed(() => {
-  return orders.filter(order => {
+  return orders.value.filter(order => {
     return order.paymentStatus.toLowerCase() !== 'paid'
   }).length
 })
 
 // Count deliveries that are still active
 const activeDeliveries = computed(() => {
-  return orders.filter(order => {
+  return orders.value.filter(order => {
     return order.deliveryStatus.toLowerCase() !== 'completed'
   }).length
 })
@@ -610,7 +621,7 @@ const activeDeliveries = computed(() => {
 const filteredOrders = computed(() => {
   const search = searchQuery.value.trim().toLowerCase()
 
-  return orders.filter(order => {
+  return orders.value.filter(order => {
     const matchesSearch =
       !search ||
       order.orderNumber.toLowerCase().includes(search) ||
@@ -638,6 +649,114 @@ const filteredOrders = computed(() => {
   })
 })
 
+async function loadOrderPayment(orderId) {
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/payments/order/${orderId}`
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to load order payment')
+    }
+
+    const payments = await response.json()
+
+    if (!payments.length) {
+      return {
+        status: 'Pending',
+        paymentId: null
+      }
+    }
+
+    const payment = payments[0]
+
+    return {
+      status: payment.payment_status || 'Pending',
+      paymentId: payment.payment_id || null
+    }
+  } catch (error) {
+    console.error(`Error loading payment for order ${orderId}:`, error)
+
+    return {
+      status: 'Pending',
+      paymentId: null
+    }
+  }
+}
+
+async function loadOrderItems(orderId) {
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/orders/${orderId}/items`
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to load order items')
+    }
+
+    const items = await response.json()
+
+    return items.map(item => ({
+      name: item.product_name || 'Product',
+      quantity: Number(item.quantity || 0),
+      price: Number(item.unit_price || 0),
+      subtotal: Number(item.subtotal || 0),
+      image: item.product_image || null
+    }))
+  } catch (error) {
+    console.error(`Error loading items for order ${orderId}:`, error)
+
+    return []
+  }
+}
+
+async function loadOrders() {
+  try {
+    const response = await fetch('http://localhost:3000/api/orders')
+
+    if (!response.ok) {
+      throw new Error('Failed to load orders')
+    }
+
+    const data = await response.json()
+
+    orders.value = await Promise.all(
+      data.map(async order => {
+        const items = await loadOrderItems(order.order_id)
+        const payment = await loadOrderPayment(order.order_id)
+
+        return {
+          id: order.order_id,
+          orderNumber: order.order_number || 'N/A',
+          business: order.buyer_name || 'Buyer',
+          supplier: order.supplier_name || 'Supplier',
+          date: order.order_date
+            ? new Date(order.order_date).toLocaleDateString('en-ZA')
+            : 'N/A',
+          status: order.order_status || 'Pending',
+
+          deliveryId: order.delivery_id || null,
+          trackingReference: order.tracking_reference || null,
+          deliveryStatus: order.delivery_status || 'Not assigned',
+          estimatedArrival: order.estimated_arrival || null,
+
+          paymentStatus: payment.status,
+          paymentId: payment.paymentId,
+
+          subtotal: Number(order.total_amount || 0),
+          deliveryFee: 0,
+          total: Number(order.total_amount || 0),
+
+          items
+        }
+      })
+    )
+  } catch (error) {
+    console.error('Error loading supplier orders:', error)
+    orders.value = []
+  }
+}
+
 // Open the selected order
 function viewOrder(order) {
   selectedOrder.value = order
@@ -658,6 +777,10 @@ function getInitials(name) {
 function getStatusClass(status) {
   return status.toLowerCase().replace(/\s+/g, '-')
 }
+
+onMounted(() => {
+  loadOrders()
+})
 </script>
 
 <style scoped>
@@ -1705,4 +1828,26 @@ function getStatusClass(status) {
   }
 }
 
+/* Supplier delivery tracking action */
+.connect-supplier-orders-track-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid rgba(78, 52, 46, 0.16);
+  border-radius: 10px;
+  background: #fffefc;
+  color: #4e342e;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.connect-supplier-orders-track-button:hover {
+  border-color: #d17a4a;
+  color: #d17a4a;
+  transform: translateY(-1px);
+}
 </style>

@@ -679,9 +679,9 @@
 
 
 <script setup>
-import { computed, ref } from 'vue'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { computed, onMounted, ref } from 'vue'
 
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
   faArrowRight,
   faCircleCheck,
@@ -693,48 +693,84 @@ import {
   faXmark
 } from '@fortawesome/free-solid-svg-icons'
 
-// Use the shared order data for delivery information
-import { orders } from '../data/orders'
+// Store deliveries returned by the backend.
+const deliveries = ref([])
 
-// Turn the shared order information into delivery records
-const deliveries = orders.map(order => ({
-  deliveryId: order.deliveryId,
-  orderNumber: order.orderNumber,
-  supplier: order.supplier,
-  deliveryStatus: order.deliveryStatus,
-  paymentStatus: order.paymentStatus,
-  deliveryFee: order.deliveryFee,
-  total: order.total
-}))
-
-// Store the delivery currently being viewed
+// Store the delivery currently being viewed.
 const selectedDelivery = ref(null)
 
-// Count deliveries that are still active
+// Load deliveries from the WeConnect backend.
+async function loadDeliveries() {
+  try {
+    const response = await fetch('http://localhost:3000/api/deliveries')
+
+    if (!response.ok) {
+      throw new Error('Failed to load deliveries')
+    }
+
+    const data = await response.json()
+
+    // Convert database fields into the names used by this page.
+    deliveries.value = data.map(delivery => ({
+      deliveryId: delivery.delivery_id,
+      orderId: delivery.order_id,
+      orderNumber: delivery.order_number,
+      buyer: delivery.buyer_name,
+      supplier: delivery.supplier_name,
+      courier: delivery.courier_name,
+      trackingReference: delivery.tracking_reference,
+      deliveryStatus: delivery.current_status || 'Pending',
+      paymentStatus: delivery.payment_status || 'Pending',
+      deliveryFee: 0,
+      total: Number(delivery.total_amount || 0),
+      estimatedArrival: delivery.estimated_arrival
+    }))
+  } catch (error) {
+    console.error('Error loading deliveries:', error)
+
+    deliveries.value = []
+  }
+}
+
+// Count deliveries that are still active.
 const activeDeliveries = computed(() => {
-  return deliveries.filter(delivery => {
-    return delivery.deliveryStatus.toLowerCase() !== 'completed'
+  return deliveries.value.filter(delivery => {
+    const status = delivery.deliveryStatus.toLowerCase()
+
+    return status !== 'completed' &&
+      status !== 'delivered'
   }).length
 })
 
-// Count completed deliveries
+// Count completed deliveries.
 const completedDeliveries = computed(() => {
-  return deliveries.filter(delivery => {
-    return delivery.deliveryStatus.toLowerCase() === 'completed'
+  return deliveries.value.filter(delivery => {
+    const status = delivery.deliveryStatus.toLowerCase()
+
+    return status === 'completed' ||
+      status === 'delivered'
   }).length
 })
 
-// Open the selected delivery
+// Open the selected delivery.
 function trackDelivery(delivery) {
   selectedDelivery.value = delivery
 }
 
-// Turn status text into a CSS class
+// Turn status text into a CSS class.
 function getStatusClass(status) {
+  if (!status) {
+    return 'pending'
+  }
+
   return status.toLowerCase().replace(/\s+/g, '-')
 }
-</script>
 
+// Load real deliveries when the page opens.
+onMounted(() => {
+  loadDeliveries()
+})
+</script>
 
 <style scoped>
 
