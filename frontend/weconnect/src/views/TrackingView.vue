@@ -1,533 +1,1195 @@
-```vue
 <template>
-  <!-- Main WeConnect delivery tracking page -->
-  <div
-    class="connect-tracking-page"
-    style="
-      min-height: 100vh;
-      background: #E8E2DD;
-      color: #5C3D24;
-      padding: 32px;
-      box-sizing: border-box;
-    "
-  >
+  <div class="connect-tracking-page">
 
-    <!-- Page heading -->
-    <div
-      class="connect-tracking-header"
-      style="
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 24px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-      "
-    >
+    <!-- Page header -->
+    <header class="connect-tracking-header">
 
       <div>
-        <!-- Small label above the main heading -->
-        <div
-          class="connect-tracking-label"
-          style="
-            color: #D17A4A;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            margin-bottom: 7px;
-          "
-        >
-          LIVE DELIVERY
+        <div class="connect-tracking-eyebrow">
+          SHIPMENT TRACKING
         </div>
 
-        <!-- Main page heading -->
-        <h1
-          class="connect-tracking-title"
-          style="
-            margin: 0;
-            color: #4E342E;
-            font-family: Georgia, 'Times New Roman', serif;
-            font-size: 38px;
-            line-height: 1.1;
-            font-weight: 600;
-          "
-        >
+        <h1 class="connect-tracking-title">
           Delivery Tracking
         </h1>
 
-        <!-- Short page description -->
-        <p
-          class="connect-tracking-description"
-          style="
-            margin: 9px 0 0;
-            color: #7A6A61;
-            font-size: 15px;
-            line-height: 1.5;
-          "
-        >
-          Follow your delivery's journey in real time.
+        <p class="connect-tracking-description">
+          Follow the shared journey from supplier warehouse to business.
         </p>
       </div>
 
-      <!-- Order identification -->
-      <div
-        class="connect-tracking-order-badge"
-        style="
-          background: #FFFEFC;
-          border: 1px solid rgba(92, 61, 36, 0.10);
-          border-radius: 12px;
-          padding: 11px 16px;
-          box-shadow: 0 4px 14px rgba(78, 52, 46, 0.05);
-        "
-      >
-        <div
-          style="
-            color: #9A8B82;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            margin-bottom: 3px;
-          "
-        >
-          ORDER
+      <!-- Order reference -->
+      <div class="connect-tracking-order-card">
+        <div class="connect-tracking-order-label">
+          ORDER REFERENCE
         </div>
 
-        <div
-          style="
-            color: #4E342E;
-            font-size: 15px;
-            font-weight: 700;
-          "
-        >
+        <div class="connect-tracking-order-value">
           #ORD-001
         </div>
+
+        <div class="connect-tracking-order-status">
+          <span class="connect-tracking-status-dot"></span>
+          Live shipment
+        </div>
       </div>
 
-    </div>
+    </header>
 
 
-    <!-- Main tracking card -->
-    <div
-      class="connect-tracking-main-card"
-      style="
-        background: #FFFEFC;
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(78, 52, 46, 0.08);
-        border: 1px solid rgba(92, 61, 36, 0.08);
-      "
-    >
+    <!-- Shared journey strip -->
+    <section class="connect-tracking-journey-strip">
 
-      <!-- Map header -->
-      <div
-        class="connect-tracking-map-header"
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 18px 22px;
-          border-bottom: 1px solid rgba(92, 61, 36, 0.08);
-          gap: 16px;
-          flex-wrap: wrap;
-        "
-      >
+      <div class="connect-tracking-party">
+        <div class="connect-tracking-party-icon">
+          <font-awesome-icon :icon="faWarehouse" />
+        </div>
 
         <div>
-          <div
-            style="
-              color: #4E342E;
-              font-size: 17px;
-              font-weight: 700;
-            "
-          >
-            Live Location
-          </div>
+          <span>DISPATCHED FROM</span>
+          <strong>Supplier Warehouse</strong>
+          <small>Durban</small>
+        </div>
+      </div>
 
-          <div
-            style="
-              color: #9A8B82;
-              font-size: 13px;
-              margin-top: 3px;
-            "
-          >
-            Your delivery is currently on the road
-          </div>
+
+      <div class="connect-tracking-journey-line">
+        <div class="connect-tracking-journey-progress"></div>
+
+        <div class="connect-tracking-truck-icon">
+          <font-awesome-icon :icon="faTruckFast" />
+        </div>
+      </div>
+
+
+      <div class="connect-tracking-party connect-tracking-party-destination">
+        <div class="connect-tracking-party-icon">
+          <font-awesome-icon :icon="faLocationDot" />
         </div>
 
-        <!-- Live status indicator -->
-        <div
-          class="connect-tracking-live-status"
-          style="
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #F1F6F1;
-            color: #47704A;
-            border-radius: 999px;
-            padding: 8px 13px;
-            font-size: 12px;
-            font-weight: 700;
-          "
-        >
-          <!-- Small live indicator -->
-          <span
-            style="
-              width: 8px;
-              height: 8px;
-              border-radius: 50%;
-              background: #5C8A60;
-              display: inline-block;
-            "
-          ></span>
+        <div>
+          <span>DELIVERING TO</span>
+          <strong>Small Business</strong>
+          <small>Durban</small>
+        </div>
+      </div>
 
-          Tracking Active
+    </section>
+
+
+    <!-- Main tracking workspace -->
+    <section class="connect-tracking-workspace">
+
+      <!-- Map section -->
+      <div class="connect-tracking-map-panel">
+
+        <div class="connect-tracking-map-header">
+
+          <div>
+            <div class="connect-tracking-section-eyebrow">
+              LIVE LOCATION
+            </div>
+
+            <h2>
+              Delivery vehicle
+            </h2>
+
+            <p>
+              The vehicle location updates automatically while the shipment is in transit.
+            </p>
+          </div>
+
+          <!-- Live indicator -->
+          <div class="connect-tracking-live-badge">
+            <span></span>
+            LIVE
+          </div>
+
+        </div>
+
+
+        <!-- Map wrapper -->
+        <div class="connect-tracking-map-wrapper">
+
+          <TrackingMap
+            @tracking-update="handleTrackingUpdate"
+          />
+
+          <!-- Current delivery overlay -->
+          <div class="connect-tracking-map-overlay">
+
+            <div class="connect-tracking-overlay-top">
+
+              <div class="connect-tracking-overlay-icon">
+                <font-awesome-icon :icon="faTruckFast" />
+              </div>
+
+              <div>
+                <strong>{{ trackingStatus }}</strong>
+                <span>Delivery vehicle</span>
+              </div>
+
+            </div>
+
+
+            <div class="connect-tracking-overlay-progress">
+
+              <div class="connect-tracking-progress-header">
+                <span>Journey progress</span>
+                <strong>{{ trackingProgress }}%</strong>
+              </div>
+
+              <div class="connect-tracking-progress-track">
+                <div
+                  class="connect-tracking-progress-fill"
+                  :style="{ width: `${trackingProgress}%` }"
+                ></div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Map footer -->
+        <div class="connect-tracking-map-footer">
+
+          <div class="connect-tracking-location-update">
+            <font-awesome-icon :icon="faLocationCrosshairs" />
+
+            <span>
+              Last updated {{ lastUpdated }}
+            </span>
+          </div>
+
+          <div class="connect-tracking-map-note">
+            GPS signal active
+          </div>
+
         </div>
 
       </div>
 
 
-      <!-- Map area -->
-      <!-- Keeps the square map visually centred inside the tracking card -->
-       <div
-       class="connect-tracking-map-wrapper"
-       style="
-       position: relative;
-       width: 100%;
-       background: #E8E2DD;
-       padding: 18px;
-       box-sizing: border-box;
-      "
->
+      <!-- Delivery information panel -->
+      <aside class="connect-tracking-side-panel">
 
-        <!-- Interactive Leaflet map -->
-        <TrackingMap />
+        <!-- ETA -->
+        <div class="connect-tracking-eta-card">
 
-        <!-- Floating delivery status card -->
-        <div
-          class="connect-tracking-floating-card"
-          style="
-            position: absolute;
-            top: 18px;
-            left: 18px;
-            z-index: 500;
-            width: 210px;
-            background: rgba(255, 254, 252, 0.96);
-            backdrop-filter: blur(8px);
-            border-radius: 14px;
-            padding: 14px;
-            box-shadow: 0 8px 25px rgba(78, 52, 46, 0.16);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-sizing: border-box;
-          "
-        >
+          <div class="connect-tracking-eta-top">
+            <span>ESTIMATED ARRIVAL</span>
 
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              margin-bottom: 10px;
-            "
-          >
+            <font-awesome-icon :icon="faClock" />
+          </div>
 
-            <!-- Delivery icon -->
-            <div
-              style="
-                width: 34px;
-                height: 34px;
-                border-radius: 10px;
-                background: #D17A4A;
-                color: #FFFEFC;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 17px;
-              "
-            >
-              🚚
-            </div>
+          <strong>
+            {{ estimatedArrival }}
+          </strong>
 
-            <div>
-              <div
-                style="
-                  color: #4E342E;
-                  font-size: 13px;
-                  font-weight: 800;
-                "
-              >
-                Out for Delivery
+          <p>
+            Based on the vehicle's current simulated location.
+          </p>
+
+        </div>
+
+
+        <!-- Delivery status -->
+        <div class="connect-tracking-info-card">
+
+          <div class="connect-tracking-card-heading">
+            <span>DELIVERY STATUS</span>
+            <font-awesome-icon :icon="faRoute" />
+          </div>
+
+          <div class="connect-tracking-status-list">
+
+            <div class="connect-tracking-status-row connect-tracking-status-complete">
+              <div class="connect-tracking-status-marker">
+                <font-awesome-icon :icon="faCircleCheck" />
               </div>
 
-              <div
-                style="
-                  color: #9A8B82;
-                  font-size: 11px;
-                  margin-top: 2px;
-                "
-              >
-                Driver is on the way
+              <div>
+                <strong>Order confirmed</strong>
+                <span>Shipment accepted</span>
+              </div>
+            </div>
+
+
+            <div class="connect-tracking-status-row connect-tracking-status-complete">
+              <div class="connect-tracking-status-marker">
+                <font-awesome-icon :icon="faCircleCheck" />
+              </div>
+
+              <div>
+                <strong>Dispatched</strong>
+                <span>Supplier has handed over the shipment</span>
+              </div>
+            </div>
+
+
+            <div class="connect-tracking-status-row connect-tracking-status-active">
+              <div class="connect-tracking-status-marker">
+                <span></span>
+              </div>
+
+              <div>
+                <strong>In transit</strong>
+                <span>Vehicle is travelling to destination</span>
+              </div>
+            </div>
+
+
+            <div class="connect-tracking-status-row">
+              <div class="connect-tracking-status-marker">
+                <span></span>
+              </div>
+
+              <div>
+                <strong>Delivered</strong>
+                <span>Awaiting arrival</span>
               </div>
             </div>
 
           </div>
 
-          <!-- Delivery progress -->
-          <div
-            style="
-              height: 5px;
-              background: #E8E2DD;
-              border-radius: 10px;
-              overflow: hidden;
-            "
-          >
+        </div>
+
+
+        <!-- Shipment details -->
+        <div class="connect-tracking-info-card">
+
+          <div class="connect-tracking-card-heading">
+            <span>SHIPMENT DETAILS</span>
+            <font-awesome-icon :icon="faBoxOpen" />
+          </div>
+
+
+          <div class="connect-tracking-detail-row">
+            <span>Order</span>
+            <strong>#ORD-001</strong>
+          </div>
+
+          <div class="connect-tracking-detail-row">
+            <span>Delivery</span>
+            <strong>#DEL-001</strong>
+          </div>
+
+          <div class="connect-tracking-detail-row">
+            <span>From</span>
+            <strong>Supplier Warehouse</strong>
+          </div>
+
+          <div class="connect-tracking-detail-row">
+            <span>To</span>
+            <strong>Small Business</strong>
+          </div>
+
+        </div>
+
+
+        <!-- Shared tracking notice -->
+        <div class="connect-tracking-shared-card">
+
+          <div class="connect-tracking-shared-icon">
+            <font-awesome-icon :icon="faLink" />
+          </div>
+
+          <div>
+            <strong>Shared delivery tracking</strong>
+
+            <p>
+              This shipment can be viewed by both the supplier and the receiving business.
+            </p>
+          </div>
+
+        </div>
+
+      </aside>
+
+    </section>
+
+
+    <!-- Bottom route summary -->
+    <section class="connect-tracking-bottom-card">
+
+      <div class="connect-tracking-bottom-heading">
+
+        <div>
+          <div class="connect-tracking-section-eyebrow">
+            DELIVERY JOURNEY
+          </div>
+
+          <h2>
+            Supplier to business
+          </h2>
+        </div>
+
+        <div class="connect-tracking-bottom-status">
+          <span></span>
+          {{ trackingStatus }}
+        </div>
+
+      </div>
+
+
+      <div class="connect-tracking-route">
+
+        <div class="connect-tracking-route-point connect-tracking-route-complete">
+
+          <div class="connect-tracking-route-icon">
+            <font-awesome-icon :icon="faWarehouse" />
+          </div>
+
+          <div>
+            <span>ORIGIN</span>
+            <strong>Supplier Warehouse</strong>
+            <small>Durban</small>
+          </div>
+
+        </div>
+
+
+        <div class="connect-tracking-route-middle">
+
+          <div class="connect-tracking-route-line">
             <div
-              style="
-                width: 68%;
-                height: 100%;
-                background: #D17A4A;
-                border-radius: 10px;
-              "
+              class="connect-tracking-route-line-fill"
+              :style="{ width: `${trackingProgress}%` }"
             ></div>
           </div>
 
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              margin-top: 7px;
-              color: #9A8B82;
-              font-size: 10px;
-            "
-          >
-            <span>In transit</span>
-            <span>68%</span>
+          <div class="connect-tracking-route-truck">
+            <font-awesome-icon :icon="faTruckFast" />
           </div>
 
         </div>
 
-      </div>
 
+        <div class="connect-tracking-route-point">
 
-      <!-- Information below the map -->
-      <div
-        class="connect-tracking-information"
-        style="
-          padding: 20px 22px 22px;
-        "
-      >
+          <div class="connect-tracking-route-icon destination">
+            <font-awesome-icon :icon="faLocationDot" />
+          </div>
 
-        <!-- Route summary -->
-        <div
-          class="connect-tracking-route-summary"
-          style="
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 18px;
-          "
-        >
-
-          <!-- Pickup -->
           <div>
-            <div
-              style="
-                color: #9A8B82;
-                font-size: 10px;
-                font-weight: 700;
-                letter-spacing: 1px;
-                margin-bottom: 5px;
-              "
-            >
-              PICKUP
-            </div>
-
-            <div
-              style="
-                color: #4E342E;
-                font-size: 14px;
-                font-weight: 700;
-              "
-            >
-              Supplier Warehouse
-            </div>
-
-            <div
-              style="
-                color: #9A8B82;
-                font-size: 12px;
-                margin-top: 3px;
-              "
-            >
-              Durban
-            </div>
-          </div>
-
-          <!-- Route arrow -->
-          <div
-            style="
-              color: #D17A4A;
-              font-size: 20px;
-              font-weight: 700;
-            "
-          >
-            →
-          </div>
-
-          <!-- Destination -->
-          <div style="text-align: right;">
-            <div
-              style="
-                color: #9A8B82;
-                font-size: 10px;
-                font-weight: 700;
-                letter-spacing: 1px;
-                margin-bottom: 5px;
-              "
-            >
-              DESTINATION
-            </div>
-
-            <div
-              style="
-                color: #4E342E;
-                font-size: 14px;
-                font-weight: 700;
-              "
-            >
-              Your Business
-            </div>
-
-            <div
-              style="
-                color: #9A8B82;
-                font-size: 12px;
-                margin-top: 3px;
-              "
-            >
-              Durban
-            </div>
-          </div>
-
-        </div>
-
-
-        <!-- Tracking statistics -->
-        <div
-          class="connect-tracking-stats"
-          style="
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-          "
-        >
-
-          <!-- Status -->
-          <div
-            style="
-              background: #F8F5F2;
-              border-radius: 12px;
-              padding: 13px 15px;
-            "
-          >
-            <div
-              style="
-                color: #9A8B82;
-                font-size: 10px;
-                font-weight: 700;
-                letter-spacing: 1px;
-                margin-bottom: 5px;
-              "
-            >
-              STATUS
-            </div>
-
-            <div
-              style="
-                color: #4E342E;
-                font-size: 14px;
-                font-weight: 700;
-              "
-            >
-              In Transit
-            </div>
-          </div>
-
-
-          <!-- GPS -->
-          <div
-            style="
-              background: #F8F5F2;
-              border-radius: 12px;
-              padding: 13px 15px;
-            "
-          >
-            <div
-              style="
-                color: #9A8B82;
-                font-size: 10px;
-                font-weight: 700;
-                letter-spacing: 1px;
-                margin-bottom: 5px;
-              "
-            >
-              GPS
-            </div>
-
-            <div
-              style="
-                color: #47704A;
-                font-size: 14px;
-                font-weight: 700;
-              "
-            >
-              Location Active
-            </div>
-          </div>
-
-
-          <!-- Estimated arrival -->
-          <div
-            style="
-              background: #F8F5F2;
-              border-radius: 12px;
-              padding: 13px 15px;
-            "
-          >
-            <div
-              style="
-                color: #9A8B82;
-                font-size: 10px;
-                font-weight: 700;
-                letter-spacing: 1px;
-                margin-bottom: 5px;
-              "
-            >
-              EST. ARRIVAL
-            </div>
-
-            <div
-              style="
-                color: #4E342E;
-                font-size: 14px;
-                font-weight: 700;
-              "
-            >
-              ~ 25 minutes
-            </div>
+            <span>DESTINATION</span>
+            <strong>Small Business</strong>
+            <small>Durban</small>
           </div>
 
         </div>
 
       </div>
 
-    </div>
+    </section>
 
   </div>
 </template>
 
 
 <script setup>
-// Import the reusable tracking map component.
+import { ref } from 'vue'
+
 import TrackingMap from '../components/tracking/TrackingMap.vue'
+
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+
+import {
+  faBoxOpen,
+  faCircleCheck,
+  faClock,
+  faLink,
+  faLocationCrosshairs,
+  faLocationDot,
+  faRoute,
+  faTruckFast,
+  faWarehouse
+} from '@fortawesome/free-solid-svg-icons'
+
+
+// These values are updated by the simulated GPS map.
+const trackingProgress = ref(68)
+const trackingStatus = ref('In Transit')
+const estimatedArrival = ref('25 min')
+const lastUpdated = ref('just now')
+
+
+// Receive tracking information from TrackingMap.vue.
+function handleTrackingUpdate(data) {
+  trackingProgress.value = data.progress
+  trackingStatus.value = data.status
+  estimatedArrival.value = data.eta
+  lastUpdated.value = 'just now'
+}
 </script>
+
+
+<style scoped>
+
+/* Main page */
+.connect-tracking-page {
+  min-height: 100vh;
+  padding: 34px;
+  box-sizing: border-box;
+  background: #E8E2DD;
+  color: #5C3D24;
+}
+
+
+/* Header */
+.connect-tracking-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.connect-tracking-eyebrow,
+.connect-tracking-section-eyebrow {
+  color: #D17A4A;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.connect-tracking-title {
+  margin: 7px 0 0;
+  color: #4E342E;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 42px;
+  line-height: 1.05;
+  font-weight: 600;
+}
+
+.connect-tracking-description {
+  margin: 10px 0 0;
+  color: #7A6A61;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.connect-tracking-order-card {
+  min-width: 190px;
+  padding: 14px 16px;
+  background: #FFFEFC;
+  border: 1px solid rgba(92, 61, 36, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 5px 18px rgba(78, 52, 46, 0.06);
+}
+
+.connect-tracking-order-label {
+  color: #9A8B82;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.connect-tracking-order-value {
+  margin-top: 4px;
+  color: #4E342E;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.connect-tracking-order-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  color: #47704A;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.connect-tracking-status-dot,
+.connect-tracking-live-badge span,
+.connect-tracking-bottom-status span {
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+  border-radius: 50%;
+  background: #5C8A60;
+}
+
+
+/* Shared journey */
+.connect-tracking-journey-strip {
+  display: grid;
+  grid-template-columns: 1fr minmax(120px, 0.6fr) 1fr;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 16px 20px;
+  background: rgba(255, 254, 252, 0.65);
+  border: 1px solid rgba(92, 61, 36, 0.07);
+  border-radius: 16px;
+}
+
+.connect-tracking-party {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.connect-tracking-party-destination {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.connect-tracking-party-icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F3EAE4;
+  border-radius: 11px;
+  color: #D17A4A;
+}
+
+.connect-tracking-party span,
+.connect-tracking-party small {
+  display: block;
+  color: #9A8B82;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.connect-tracking-party strong {
+  display: block;
+  margin: 3px 0;
+  color: #4E342E;
+  font-size: 13px;
+}
+
+.connect-tracking-journey-line {
+  position: relative;
+  height: 2px;
+  background: #D8CEC7;
+}
+
+.connect-tracking-journey-progress {
+  width: 68%;
+  height: 100%;
+  background: #D17A4A;
+}
+
+.connect-tracking-truck-icon {
+  position: absolute;
+  top: 50%;
+  left: 68%;
+  transform: translate(-50%, -50%);
+  width: 31px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFEFC;
+  border: 2px solid #D17A4A;
+  border-radius: 50%;
+  color: #D17A4A;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(78, 52, 46, 0.14);
+}
+
+
+/* Main workspace */
+.connect-tracking-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+.connect-tracking-map-panel,
+.connect-tracking-info-card,
+.connect-tracking-bottom-card {
+  background: #FFFEFC;
+  border: 1px solid rgba(92, 61, 36, 0.08);
+  box-shadow: 0 8px 28px rgba(78, 52, 46, 0.06);
+}
+
+.connect-tracking-map-panel {
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.connect-tracking-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 22px;
+  border-bottom: 1px solid rgba(92, 61, 36, 0.08);
+}
+
+.connect-tracking-map-header h2 {
+  margin: 5px 0 0;
+  color: #4E342E;
+  font-size: 17px;
+}
+
+.connect-tracking-map-header p {
+  margin: 4px 0 0;
+  color: #9A8B82;
+  font-size: 12px;
+}
+
+.connect-tracking-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #F1F6F1;
+  color: #47704A;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+
+/* Map area */
+.connect-tracking-map-wrapper {
+  position: relative;
+  padding: 18px;
+  background: #E8E2DD;
+}
+
+.connect-tracking-map-overlay {
+  position: absolute;
+  z-index: 500;
+  top: 30px;
+  left: 30px;
+  width: 225px;
+  padding: 14px;
+  box-sizing: border-box;
+  background: rgba(255, 254, 252, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 14px;
+  box-shadow: 0 9px 24px rgba(78, 52, 46, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.connect-tracking-overlay-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.connect-tracking-overlay-icon {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #D17A4A;
+  color: #FFFEFC;
+}
+
+.connect-tracking-overlay-top strong,
+.connect-tracking-overlay-top span {
+  display: block;
+}
+
+.connect-tracking-overlay-top strong {
+  color: #4E342E;
+  font-size: 12px;
+}
+
+.connect-tracking-overlay-top span {
+  margin-top: 2px;
+  color: #9A8B82;
+  font-size: 10px;
+}
+
+.connect-tracking-overlay-progress {
+  margin-top: 14px;
+}
+
+.connect-tracking-progress-header {
+  display: flex;
+  justify-content: space-between;
+  color: #9A8B82;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.connect-tracking-progress-header strong {
+  color: #4E342E;
+}
+
+.connect-tracking-progress-track {
+  height: 5px;
+  margin-top: 6px;
+  overflow: hidden;
+  background: #E8E2DD;
+  border-radius: 999px;
+}
+
+.connect-tracking-progress-fill {
+  height: 100%;
+  background: #D17A4A;
+  border-radius: inherit;
+  transition: width 0.7s ease;
+}
+
+.connect-tracking-map-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 18px;
+  color: #8D7D74;
+  font-size: 10px;
+}
+
+.connect-tracking-location-update,
+.connect-tracking-map-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.connect-tracking-location-update svg {
+  color: #D17A4A;
+}
+
+
+/* Side panel */
+.connect-tracking-side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.connect-tracking-eta-card {
+  padding: 18px;
+  background: #4E342E;
+  border-radius: 16px;
+  color: #FFFEFC;
+  box-shadow: 0 8px 24px rgba(78, 52, 46, 0.14);
+}
+
+.connect-tracking-eta-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: rgba(255, 254, 252, 0.62);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.connect-tracking-eta-top svg {
+  color: #D17A4A;
+  font-size: 14px;
+}
+
+.connect-tracking-eta-card > strong {
+  display: block;
+  margin-top: 7px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 30px;
+  font-weight: 500;
+}
+
+.connect-tracking-eta-card p {
+  margin: 4px 0 0;
+  color: rgba(255, 254, 252, 0.62);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+
+/* Information cards */
+.connect-tracking-info-card {
+  padding: 17px;
+  border-radius: 16px;
+}
+
+.connect-tracking-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  color: #9A8B82;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.connect-tracking-card-heading svg {
+  color: #D17A4A;
+  font-size: 13px;
+}
+
+.connect-tracking-status-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.connect-tracking-status-row {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  padding-bottom: 16px;
+}
+
+.connect-tracking-status-row:last-child {
+  padding-bottom: 0;
+}
+
+.connect-tracking-status-marker {
+  position: relative;
+  width: 21px;
+  height: 21px;
+  flex: 0 0 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #C9BCB5;
+  font-size: 13px;
+}
+
+.connect-tracking-status-row:not(:last-child) .connect-tracking-status-marker::after {
+  content: '';
+  position: absolute;
+  top: 21px;
+  left: 10px;
+  width: 1px;
+  height: 25px;
+  background: #E1D8D2;
+}
+
+.connect-tracking-status-complete .connect-tracking-status-marker {
+  color: #5C8A60;
+}
+
+.connect-tracking-status-active .connect-tracking-status-marker {
+  color: #D17A4A;
+}
+
+.connect-tracking-status-active .connect-tracking-status-marker span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #D17A4A;
+  box-shadow: 0 0 0 5px rgba(209, 122, 74, 0.13);
+}
+
+.connect-tracking-status-row strong,
+.connect-tracking-status-row span {
+  display: block;
+}
+
+.connect-tracking-status-row strong {
+  color: #4E342E;
+  font-size: 11px;
+}
+
+.connect-tracking-status-row > div:last-child span {
+  margin-top: 3px;
+  color: #9A8B82;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.connect-tracking-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(92, 61, 36, 0.06);
+}
+
+.connect-tracking-detail-row:last-child {
+  border-bottom: 0;
+}
+
+.connect-tracking-detail-row span {
+  color: #9A8B82;
+  font-size: 10px;
+}
+
+.connect-tracking-detail-row strong {
+  color: #4E342E;
+  font-size: 10px;
+  text-align: right;
+}
+
+
+/* Shared tracking */
+.connect-tracking-shared-card {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  background: #F3EAE4;
+  border-radius: 14px;
+}
+
+.connect-tracking-shared-icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #D17A4A;
+  border-radius: 9px;
+  color: #FFFEFC;
+  font-size: 11px;
+}
+
+.connect-tracking-shared-card strong {
+  color: #4E342E;
+  font-size: 11px;
+}
+
+.connect-tracking-shared-card p {
+  margin: 4px 0 0;
+  color: #806F65;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+
+/* Bottom route card */
+.connect-tracking-bottom-card {
+  margin-top: 18px;
+  padding: 20px;
+  border-radius: 18px;
+}
+
+.connect-tracking-bottom-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.connect-tracking-bottom-heading h2 {
+  margin: 5px 0 0;
+  color: #4E342E;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.connect-tracking-bottom-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #47704A;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.connect-tracking-route {
+  display: grid;
+  grid-template-columns: 1fr minmax(100px, 0.8fr) 1fr;
+  align-items: center;
+  gap: 18px;
+}
+
+.connect-tracking-route-point {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.connect-tracking-route-point:last-child {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.connect-tracking-route-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: #F3EAE4;
+  color: #D17A4A;
+}
+
+.connect-tracking-route-icon.destination {
+  background: #F1F6F1;
+  color: #5C8A60;
+}
+
+.connect-tracking-route-point span,
+.connect-tracking-route-point small {
+  display: block;
+  color: #9A8B82;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.connect-tracking-route-point strong {
+  display: block;
+  margin: 3px 0;
+  color: #4E342E;
+  font-size: 11px;
+}
+
+.connect-tracking-route-middle {
+  position: relative;
+}
+
+.connect-tracking-route-line {
+  height: 2px;
+  background: #DDD3CD;
+}
+
+.connect-tracking-route-line-fill {
+  height: 100%;
+  background: #D17A4A;
+  transition: width 0.7s ease;
+}
+
+.connect-tracking-route-truck {
+  position: absolute;
+  top: 50%;
+  left: 68%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFEFC;
+  border: 2px solid #D17A4A;
+  border-radius: 50%;
+  color: #D17A4A;
+  font-size: 10px;
+  box-shadow: 0 3px 10px rgba(78, 52, 46, 0.12);
+  transition: left 0.7s ease;
+}
+
+
+/* Tablet */
+@media (max-width: 1100px) {
+
+  .connect-tracking-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .connect-tracking-side-panel {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .connect-tracking-eta-card {
+    grid-column: span 2;
+  }
+
+  .connect-tracking-shared-card {
+    grid-column: span 2;
+  }
+}
+
+
+/* Smaller tablet */
+@media (max-width: 760px) {
+
+  .connect-tracking-page {
+    padding: 22px 16px;
+  }
+
+  .connect-tracking-title {
+    font-size: 34px;
+  }
+
+  .connect-tracking-journey-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .connect-tracking-party-destination {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .connect-tracking-journey-line {
+    display: none;
+  }
+
+  .connect-tracking-side-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .connect-tracking-eta-card,
+  .connect-tracking-shared-card {
+    grid-column: span 1;
+  }
+
+  .connect-tracking-route {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .connect-tracking-route-point,
+  .connect-tracking-route-point:last-child {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .connect-tracking-route-middle {
+    display: none;
+  }
+}
+
+
+/* Mobile */
+@media (max-width: 560px) {
+
+  .connect-tracking-page {
+    padding: 18px 12px;
+  }
+
+  .connect-tracking-title {
+    font-size: 31px;
+  }
+
+  .connect-tracking-order-card {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .connect-tracking-map-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .connect-tracking-map-overlay {
+    top: 28px;
+    left: 28px;
+    width: calc(100% - 56px);
+  }
+
+  .connect-tracking-map-footer {
+    flex-direction: column;
+  }
+
+  .connect-tracking-bottom-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .connect-tracking-party {
+    align-items: flex-start;
+  }
+}
+
+</style>

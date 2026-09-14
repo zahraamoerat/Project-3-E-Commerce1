@@ -1,56 +1,91 @@
 <template>
-  <!-- Square map container keeps the tracking view compact and balanced -->
-  <div
-    ref="mapContainer"
-    class="connect-tracking-map"
-    style="
-      width: min(100%, 560px);
-      aspect-ratio: 1 / 1;
-      margin: 0 auto;
-      background: #E8E2DD;
-    "
-  ></div>
+  <div class="connect-tracking-map-shell">
+
+    <!-- Leaflet map -->
+    <div
+      ref="mapContainer"
+      class="connect-tracking-map"
+    ></div>
+
+    <!-- Map information badge -->
+    <div class="connect-tracking-map-location-badge">
+      <span class="connect-tracking-map-signal"></span>
+
+      <div>
+        <strong>GPS ACTIVE</strong>
+        <small>Vehicle location updating</small>
+      </div>
+    </div>
+
+  </div>
 </template>
 
+
 <script setup>
-// Vue functions used to create and clean up the map.
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 
-// Leaflet handles the interactive map, markers and route.
 import L from 'leaflet'
-
-// Leaflet's CSS is required for the map controls and tiles.
 import 'leaflet/dist/leaflet.css'
 
+// Font Awesome icon used inside the vehicle marker.
+import { faTruckFast } from '@fortawesome/free-solid-svg-icons'
 
-// Reference to the HTML element where Leaflet creates the map.
+
+// TrackingView listens for this event and updates the page information.
+const emit = defineEmits(['tracking-update'])
+
+
+// HTML element used by Leaflet.
 const mapContainer = ref(null)
 
-// Store the Leaflet map instance.
+
+// Leaflet map instance.
 let map = null
 
-// Store the moving delivery marker.
+// Moving vehicle marker.
 let deliveryMarker = null
 
-// Store the timer used for simulated GPS movement.
+// Simulated GPS timer.
 let trackingTimer = null
 
 
 // ---------------------------------------------------------
-// MOCK DELIVERY LOCATIONS
+// DELIVERY ROUTE
 // ---------------------------------------------------------
 
-// Starting position of the delivery vehicle.
-// These are temporary Durban coordinates for the prototype.
-let latitude = -29.8587
-let longitude = 31.0218
-
-// Supplier warehouse / pickup point.
+// Supplier warehouse.
 const pickupLocation = [-29.8587, 31.0218]
 
-// Small business / destination point.
-const destinationLocation = [-29.8780, 31.0300]
+// Points between the supplier and business.
+// More points make the simulated vehicle movement smoother.
+const routePoints = [
+  pickupLocation,
+  [-29.8610, 31.0228],
+  [-29.8640, 31.0240],
+  [-29.8670, 31.0250],
+  [-29.8700, 31.0265],
+  [-29.8730, 31.0280],
+  [-29.8755, 31.0290],
+  [-29.8780, 31.0300]
+]
 
+// Small business destination.
+const destinationLocation = routePoints[routePoints.length - 1]
+
+
+// Start the vehicle partway through the journey.
+// This makes the prototype open looking like an active delivery.
+let currentRouteIndex = 4
+
+
+// ---------------------------------------------------------
+// VEHICLE ICON
+// ---------------------------------------------------------
+
+// Simple truck icon for the Leaflet marker.
+// Keeping the marker HTML simple prevents Leaflet from
+// depending on the Font Awesome rendering system.
+const truckIcon = '🚚'
 
 // ---------------------------------------------------------
 // CREATE MAP
@@ -58,20 +93,25 @@ const destinationLocation = [-29.8780, 31.0300]
 
 onMounted(() => {
 
-  // Create the Leaflet map using the delivery's starting position.
+  // Create the Leaflet map.
   map = L.map(mapContainer.value, {
-    zoomControl: true
-  }).setView(
-    [latitude, longitude],
-    13
-  )
+    zoomControl: false,
+    scrollWheelZoom: false,
+    attributionControl: true
+  })
+
+  // Keep the zoom controls clear of the journey progress overlay.
+  L.control.zoom({
+    position: 'topright'
+  }).addTo(map)
 
 
-  // Add OpenStreetMap as the map background.
+  // OpenStreetMap tiles.
   L.tileLayer(
     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
     }
   ).addTo(map)
 
@@ -80,22 +120,26 @@ onMounted(() => {
   // DELIVERY ROUTE
   // -------------------------------------------------------
 
-  // These points create a simple visual route between
-  // the supplier and the business.
-  const routePoints = [
-    pickupLocation,
-    [-29.8650, 31.0240],
-    [-29.8710, 31.0270],
-    destinationLocation
-  ]
+  // Draw a softer line underneath the route.
+  L.polyline(
+    routePoints,
+    {
+      color: '#FFFEFC',
+      weight: 9,
+      opacity: 0.85,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }
+  ).addTo(map)
 
-  // Draw the delivery route on the map.
+
+  // Draw the colored route last so it stays visible above the underlay.
   L.polyline(
     routePoints,
     {
       color: '#D17A4A',
       weight: 5,
-      opacity: 0.85,
+      opacity: 0.82,
       lineCap: 'round',
       lineJoin: 'round'
     }
@@ -106,15 +150,18 @@ onMounted(() => {
   // PICKUP MARKER
   // -------------------------------------------------------
 
-  // Create a simple circular icon for the supplier.
   const pickupIcon = L.divIcon({
-    className: 'connect-pickup-marker',
-    html: '<div class="connect-pickup-dot"></div>',
-    iconSize: [26, 26],
-    iconAnchor: [13, 13]
+    className: 'connect-tracking-pickup-marker',
+    html: `
+      <div class="connect-tracking-location-marker connect-tracking-pickup-dot">
+        <span></span>
+      </div>
+    `,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
   })
 
-  // Add the supplier marker to the map.
+
   L.marker(
     pickupLocation,
     {
@@ -123,7 +170,11 @@ onMounted(() => {
   )
     .addTo(map)
     .bindPopup(
-      '<strong>Supplier Warehouse</strong><br>Pickup location'
+      `
+        <strong>Supplier Warehouse</strong>
+        <br>
+        Shipment origin
+      `
     )
 
 
@@ -131,15 +182,18 @@ onMounted(() => {
   // DESTINATION MARKER
   // -------------------------------------------------------
 
-  // Create a terracotta icon for the destination.
   const destinationIcon = L.divIcon({
-    className: 'connect-destination-marker',
-    html: '<div class="connect-destination-dot"></div>',
-    iconSize: [26, 26],
-    iconAnchor: [13, 13]
+    className: 'connect-tracking-destination-marker',
+    html: `
+      <div class="connect-tracking-location-marker connect-tracking-destination-dot">
+        <span></span>
+      </div>
+    `,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
   })
 
-  // Add the destination marker.
+
   L.marker(
     destinationLocation,
     {
@@ -148,7 +202,11 @@ onMounted(() => {
   )
     .addTo(map)
     .bindPopup(
-      '<strong>Your Business</strong><br>Delivery destination'
+      `
+        <strong>Small Business</strong>
+        <br>
+        Delivery destination
+      `
     )
 
 
@@ -156,37 +214,46 @@ onMounted(() => {
   // DELIVERY VEHICLE
   // -------------------------------------------------------
 
-  // Create a custom vehicle icon.
-  // Using a simple text character keeps this independent
-  // from external icon libraries.
   const deliveryIcon = L.divIcon({
-    className: 'connect-delivery-marker',
-    html: '<div class="connect-delivery-circle">🚚</div>',
-    iconSize: [52, 52],
-    iconAnchor: [26, 26]
+    className: 'connect-tracking-vehicle-marker',
+    html: `
+      <div class="connect-tracking-vehicle">
+        <div class="connect-tracking-vehicle-pulse"></div>
+        <div class="connect-tracking-vehicle-circle">
+          ${truckIcon}
+        </div>
+      </div>
+    `,
+    iconSize: [64, 64],
+    iconAnchor: [32, 32]
   })
 
-  // Add the moving vehicle marker.
+
+  // Current simulated vehicle location.
+  const startingPoint = routePoints[currentRouteIndex]
+
+
   deliveryMarker = L.marker(
-    [latitude, longitude],
+    startingPoint,
     {
-      icon: deliveryIcon
+      icon: deliveryIcon,
+      zIndexOffset: 1000
     }
   )
     .addTo(map)
     .bindPopup(
-      '<strong>Delivery vehicle</strong><br>Currently in transit'
+      `
+        <strong>Delivery vehicle</strong>
+        <br>
+        Currently in transit
+      `
     )
-
-  // Open the vehicle popup when the map loads.
-  deliveryMarker.openPopup()
 
 
   // -------------------------------------------------------
   // FIT ROUTE INTO MAP
   // -------------------------------------------------------
 
-  // Make sure the complete delivery route is visible.
   const routeBounds = L.latLngBounds(routePoints)
 
   map.fitBounds(
@@ -197,59 +264,113 @@ onMounted(() => {
   )
 
 
+  // Give Leaflet a moment to calculate its final size.
+  setTimeout(() => {
+    if (map) {
+      map.invalidateSize()
+    }
+  }, 250)
+
+
+  // -------------------------------------------------------
+  // INITIAL TRACKING UPDATE
+  // -------------------------------------------------------
+
+  emitTrackingUpdate()
+
+
   // -------------------------------------------------------
   // SIMULATED GPS
   // -------------------------------------------------------
 
-  // The backend is not providing live coordinates yet.
-  // This simulates a delivery vehicle moving every 3 seconds.
   trackingTimer = setInterval(() => {
 
-    // Move the vehicle toward the destination.
-    latitude += 0.00065
-    longitude += 0.00030
+    // Move toward the next route point.
+    currentRouteIndex += 1
 
 
-    // Stop latitude from moving beyond the destination.
-    if (latitude >= destinationLocation[0]) {
-      latitude = destinationLocation[0]
-    }
-
-    // Stop longitude from moving beyond the destination.
-    if (longitude >= destinationLocation[1]) {
-      longitude = destinationLocation[1]
+    // Stop at the destination.
+    if (currentRouteIndex >= routePoints.length) {
+      currentRouteIndex = routePoints.length - 1
     }
 
 
-    // Update the vehicle marker's position.
-    deliveryMarker.setLatLng([
-      latitude,
-      longitude
-    ])
+    const currentLocation = routePoints[currentRouteIndex]
 
 
-    // Keep the map following the delivery vehicle.
+    // Update the vehicle marker.
+    deliveryMarker.setLatLng(currentLocation)
+
+
+    // Keep the vehicle visible without constantly changing
+    // the user's zoom level.
     map.panTo(
-      [latitude, longitude],
+      currentLocation,
       {
         animate: true,
-        duration: 1
+        duration: 0.8
       }
     )
 
 
-    // Stop the simulation once the vehicle reaches
-    // the destination.
+    // Send the new tracking information to the parent page.
+    emitTrackingUpdate()
+
+
+    // Stop once the destination has been reached.
     if (
-      latitude === destinationLocation[0] &&
-      longitude === destinationLocation[1]
+      currentRouteIndex === routePoints.length - 1
     ) {
       clearInterval(trackingTimer)
       trackingTimer = null
     }
 
-  }, 3000)
+  }, 3500)
 })
+
+
+// ---------------------------------------------------------
+// TRACKING INFORMATION
+// ---------------------------------------------------------
+
+function emitTrackingUpdate() {
+
+  const progress = Math.round(
+    (currentRouteIndex / (routePoints.length - 1)) * 100
+  )
+
+
+  let status = 'In Transit'
+  let eta = '25 min'
+
+
+  if (progress >= 90) {
+    status = 'Arriving Soon'
+    eta = '5 min'
+  } else if (progress >= 75) {
+    status = 'In Transit'
+    eta = '12 min'
+  } else if (progress >= 50) {
+    status = 'In Transit'
+    eta = '18 min'
+  }
+
+
+  if (progress === 100) {
+    status = 'Delivered'
+    eta = 'Arrived'
+  }
+
+
+  emit(
+    'tracking-update',
+    {
+      progress,
+      status,
+      eta
+    }
+  )
+}
 
 
 // ---------------------------------------------------------
@@ -258,13 +379,14 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
 
-  // Stop the simulated GPS timer.
+  // Stop simulated GPS movement.
   if (trackingTimer) {
     clearInterval(trackingTimer)
     trackingTimer = null
   }
 
-  // Remove the Leaflet map when leaving the page.
+
+  // Remove the Leaflet map.
   if (map) {
     map.remove()
     map = null
@@ -272,48 +394,243 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style>
-/*
-  These three tiny Leaflet marker styles are kept here because
-  Leaflet's custom div icons need CSS to control their appearance.
-  They are uniquely named for the WeConnect tracking component.
-*/
 
-.connect-pickup-marker,
-.connect-destination-marker,
-.connect-delivery-marker {
+<style>
+
+.connect-tracking-map-shell {
+  position: relative;
+  width: min(100%, 560px);
+  height: min(100vw, 560px);
+  min-height: 320px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #E8E2DD;
+  border-radius: 14px;
+}
+
+.connect-tracking-map {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+}
+
+
+/* Actual map */
+.connect-tracking-map {
+  width: 100%;
+  height: 100%;
+}
+
+
+/* Small GPS badge */
+.connect-tracking-map-location-badge {
+  position: absolute;
+  z-index: 500;
+  right: 14px;
+  bottom: 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 10px;
+
+  background: rgba(255, 254, 252, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+
+  box-shadow: 0 5px 16px rgba(78, 52, 46, 0.13);
+
+  backdrop-filter: blur(7px);
+}
+
+
+.connect-tracking-map-location-badge strong,
+.connect-tracking-map-location-badge small {
+  display: block;
+}
+
+
+.connect-tracking-map-location-badge strong {
+  color: #4E342E;
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+
+
+.connect-tracking-map-location-badge small {
+  margin-top: 2px;
+  color: #9A8B82;
+  font-size: 8px;
+}
+
+
+.connect-tracking-map-signal {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5C8A60;
+  box-shadow: 0 0 0 4px rgba(92, 138, 96, 0.13);
+}
+
+
+/* Pickup and destination markers */
+.connect-tracking-pickup-marker,
+.connect-tracking-destination-marker,
+.connect-tracking-vehicle-marker {
   background: transparent;
   border: none;
 }
 
-.connect-pickup-dot {
-  width: 18px;
-  height: 18px;
-  background: #4E342E;
-  border: 4px solid #FFFEFC;
-  border-radius: 50%;
-  box-shadow: 0 3px 10px rgba(78, 52, 46, 0.35);
-}
 
-.connect-destination-dot {
-  width: 18px;
-  height: 18px;
-  background: #D17A4A;
-  border: 4px solid #FFFEFC;
-  border-radius: 50%;
-  box-shadow: 0 3px 10px rgba(78, 52, 46, 0.35);
-}
+.connect-tracking-location-marker {
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
 
-.connect-delivery-circle {
-  width: 42px;
-  height: 42px;
-  background: #FFFEFC;
-  border: 3px solid #D17A4A;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  box-shadow: 0 5px 16px rgba(78, 52, 46, 0.30);
+
+  border: 4px solid #FFFEFC;
+  border-radius: 50%;
+
+  box-shadow: 0 3px 12px rgba(78, 52, 46, 0.28);
 }
+
+
+.connect-tracking-location-marker span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+
+.connect-tracking-pickup-dot {
+  background: #4E342E;
+}
+
+
+.connect-tracking-pickup-dot span {
+  background: #FFFEFC;
+}
+
+
+.connect-tracking-destination-dot {
+  background: #D17A4A;
+}
+
+
+.connect-tracking-destination-dot span {
+  background: #FFFEFC;
+}
+
+
+/* Delivery vehicle marker */
+.connect-tracking-vehicle {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.connect-tracking-vehicle-pulse {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(209, 122, 74, 0.16);
+  animation: connect-tracking-pulse 2s ease-out infinite;
+}
+
+
+.connect-tracking-vehicle-circle {
+  position: relative;
+  z-index: 2;
+
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #FFFEFC;
+  border: 3px solid #D17A4A;
+  border-radius: 50%;
+
+  color: #D17A4A;
+
+  box-shadow:
+    0 5px 16px rgba(78, 52, 46, 0.28);
+}
+
+
+@keyframes connect-tracking-pulse {
+
+  0% {
+    transform: scale(0.65);
+    opacity: 0.8;
+  }
+
+  70% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+
+/* Keep Leaflet controls consistent with the page */
+.connect-tracking-map-shell .leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 5px 15px rgba(78, 52, 46, 0.16) !important;
+}
+
+
+.connect-tracking-map-shell .leaflet-control-zoom a {
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  color: #4E342E;
+  background: #FFFEFC;
+  border: none;
+}
+
+
+.connect-tracking-map-shell .leaflet-control-zoom a:hover {
+  color: #D17A4A;
+  background: #FFFEFC;
+}
+
+
+.connect-tracking-map-shell .leaflet-control-attribution {
+  font-size: 8px;
+  background: rgba(255, 254, 252, 0.8);
+}
+
+
+/* Smaller screens */
+@media (max-width: 560px) {
+
+  .connect-tracking-map-shell {
+    width: 100%;
+    height: calc(100vw - 56px);
+    min-height: 300px;
+    max-height: 500px;
+  }
+
+  .connect-tracking-map-location-badge {
+    right: 10px;
+    bottom: 10px;
+  }
+}
+
 </style>

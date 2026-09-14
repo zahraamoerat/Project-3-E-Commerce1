@@ -1,14 +1,12 @@
 <template>
-
-  <!-- Small Business Deliveries page -->
   <div class="connect-sb-deliveries-page">
 
-    <!-- Page heading -->
-    <header class="connect-sb-deliveries-header">
+    <!-- Delivery dashboard header -->
+    <header class="connect-sb-deliveries-hero">
 
-      <div>
+      <div class="connect-sb-deliveries-hero-copy">
         <p class="connect-sb-deliveries-eyebrow">
-          DELIVERY MANAGEMENT
+          DELIVERY CENTRE
         </p>
 
         <h1 class="connect-sb-deliveries-title">
@@ -16,167 +14,306 @@
         </h1>
 
         <p class="connect-sb-deliveries-description">
-          Follow your orders from supplier to delivery and keep track of their progress.
+          Stay on top of every shipment and follow your orders as they make their way to your business.
         </p>
+      </div>
+
+      <!-- Current delivery indicator -->
+      <div class="connect-sb-deliveries-live-indicator">
+        <span class="connect-sb-deliveries-live-dot"></span>
+
+        <div>
+          <span>DELIVERY STATUS</span>
+          <strong>
+            {{ activeDeliveries }} active
+          </strong>
+        </div>
       </div>
 
     </header>
 
 
-    <!-- Delivery summary -->
-    <section class="connect-sb-deliveries-summary">
+    <!-- Delivery overview -->
+    <section class="connect-sb-deliveries-overview">
 
-      <!-- Total deliveries -->
-      <div class="connect-sb-deliveries-summary-card">
-        <span class="connect-sb-deliveries-summary-icon">
-          📦
-        </span>
+      <article
+        class="connect-sb-deliveries-overview-card connect-sb-deliveries-overview-main"
+      >
+        <div class="connect-sb-deliveries-overview-icon">
+          <FontAwesomeIcon :icon="faTruckFast" />
+        </div>
 
         <div>
-          <p>Total Deliveries</p>
-          <strong>{{ deliveries.length }}</strong>
+          <span>Total Deliveries</span>
+
+          <strong>
+            {{ deliveries.length }}
+          </strong>
+
+          <p>
+            Shipments connected to your orders
+          </p>
         </div>
-      </div>
+      </article>
 
 
-      <!-- Deliveries still in progress -->
-      <div class="connect-sb-deliveries-summary-card">
-        <span class="connect-sb-deliveries-summary-icon">
-          🚚
-        </span>
+      <article class="connect-sb-deliveries-overview-card">
 
-        <div>
-          <p>In Progress</p>
-          <strong>{{ activeDeliveries }}</strong>
+        <div class="connect-sb-deliveries-overview-top">
+          <span>In Progress</span>
+
+          <FontAwesomeIcon :icon="faRoute" />
         </div>
-      </div>
+
+        <strong class="connect-sb-deliveries-overview-number">
+          {{ activeDeliveries }}
+        </strong>
+
+        <p>
+          Currently moving
+        </p>
+
+      </article>
 
 
-      <!-- Completed deliveries -->
-      <div class="connect-sb-deliveries-summary-card">
-        <span class="connect-sb-deliveries-summary-icon">
-          ✓
-        </span>
+      <article class="connect-sb-deliveries-overview-card">
 
-        <div>
-          <p>Completed</p>
-          <strong>{{ completedDeliveries }}</strong>
+        <div class="connect-sb-deliveries-overview-top">
+          <span>Completed</span>
+
+          <FontAwesomeIcon :icon="faCircleCheck" />
         </div>
-      </div>
+
+        <strong class="connect-sb-deliveries-overview-number">
+          {{ completedDeliveries }}
+        </strong>
+
+        <p>
+          Successfully delivered
+        </p>
+
+      </article>
 
     </section>
 
 
-    <!-- Deliveries table -->
-    <section class="connect-sb-deliveries-table-card">
+    <!-- Delivery workspace -->
+    <section class="connect-sb-deliveries-workspace">
 
-      <div class="connect-sb-deliveries-table-heading">
+      <div class="connect-sb-deliveries-workspace-header">
 
         <div>
-          <h2>Delivery Overview</h2>
+          <p class="connect-sb-deliveries-section-eyebrow">
+            DELIVERY ACTIVITY
+          </p>
+
+          <h2>
+            Your shipments
+          </h2>
 
           <p>
-            Deliveries connected to your supplier orders.
+            Follow each delivery from supplier collection to your business.
           </p>
         </div>
 
-        <span class="connect-sb-deliveries-table-accent"></span>
+        <div class="connect-sb-deliveries-count">
+          <strong>{{ deliveries.length }}</strong>
+          <span>deliveries</span>
+        </div>
 
       </div>
 
 
-      <!-- Allows the table to scroll on smaller screens -->
-      <div class="connect-sb-deliveries-table-wrapper">
+      <!-- Delivery cards -->
+      <div class="connect-sb-deliveries-card-grid">
 
-        <table class="connect-sb-deliveries-table">
+        <article
+          v-for="delivery in deliveries"
+          :key="delivery.deliveryId"
+          class="connect-sb-deliveries-card"
+          :class="{
+            selected:
+              selectedDelivery?.deliveryId === delivery.deliveryId
+          }"
+        >
 
-          <thead>
-            <tr>
-              <th>Delivery Number</th>
-              <th>Order Number</th>
-              <th>Supplier</th>
-              <th>Delivery Status</th>
-              <th>Payment</th>
-              <th>Action</th>
-            </tr>
-          </thead>
+          <!-- Delivery card heading -->
+          <div class="connect-sb-deliveries-card-heading">
+
+            <div class="connect-sb-deliveries-card-reference">
+
+              <div class="connect-sb-deliveries-card-icon">
+                <FontAwesomeIcon :icon="faTruckFast" />
+              </div>
+
+              <div>
+                <span>
+                  DELIVERY
+                </span>
+
+                <h3>
+                  {{ delivery.deliveryId }}
+                </h3>
+
+                <p>
+                  Order {{ delivery.orderNumber }}
+                </p>
+              </div>
+
+            </div>
 
 
-          <tbody>
+            <span
+              class="connect-sb-deliveries-status"
+              :class="getStatusClass(delivery.deliveryStatus)"
+            >
+              <span class="connect-sb-deliveries-status-dot"></span>
+              {{ delivery.deliveryStatus }}
+            </span>
 
-            <tr
-              v-for="delivery in deliveries"
-              :key="delivery.deliveryId"
-              class="connect-sb-deliveries-row"
+          </div>
+
+
+          <!-- Route visual -->
+          <div class="connect-sb-deliveries-route">
+
+            <div class="connect-sb-deliveries-route-point">
+              <span class="connect-sb-deliveries-route-marker pickup">
+                <FontAwesomeIcon :icon="faWarehouse" />
+              </span>
+
+              <div>
+                <span>FROM</span>
+                <strong>{{ delivery.supplier }}</strong>
+              </div>
+            </div>
+
+
+            <div class="connect-sb-deliveries-route-line">
+
+              <span
+                class="connect-sb-deliveries-route-progress"
+                :class="{
+                  complete:
+                    delivery.deliveryStatus.toLowerCase() === 'completed'
+                }"
+              ></span>
+
+              <FontAwesomeIcon :icon="faTruckFast" />
+
+            </div>
+
+
+            <div class="connect-sb-deliveries-route-point">
+
+              <span class="connect-sb-deliveries-route-marker destination">
+                <FontAwesomeIcon :icon="faLocationDot" />
+              </span>
+
+              <div>
+                <span>TO</span>
+                <strong>Your Business</strong>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- Delivery information -->
+          <div class="connect-sb-deliveries-card-info">
+
+            <div>
+              <span>ORDER</span>
+
+              <strong>
+                {{ delivery.orderNumber }}
+              </strong>
+            </div>
+
+            <div>
+              <span>PAYMENT</span>
+
+              <strong
+                :class="getStatusClass(delivery.paymentStatus)"
+              >
+                {{ delivery.paymentStatus }}
+              </strong>
+            </div>
+
+            <div>
+              <span>DELIVERY FEE</span>
+
+              <strong>
+                R {{ Number(delivery.deliveryFee).toFixed(2) }}
+              </strong>
+            </div>
+
+          </div>
+
+
+          <!-- Delivery footer -->
+          <div class="connect-sb-deliveries-card-footer">
+
+            <div class="connect-sb-deliveries-delivery-value">
+
+              <span>
+                ORDER VALUE
+              </span>
+
+              <strong>
+                R {{ Number(delivery.total).toFixed(2) }}
+              </strong>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="connect-sb-deliveries-track-button"
+              :class="{
+                active:
+                  selectedDelivery?.deliveryId === delivery.deliveryId
+              }"
+              @click="trackDelivery(delivery)"
             >
 
-              <!-- Delivery number -->
-              <td>
-                <span class="connect-sb-deliveries-number">
-                  {{ delivery.deliveryId }}
-                </span>
-              </td>
+              <span>
+                {{
+                  selectedDelivery?.deliveryId === delivery.deliveryId
+                    ? 'Viewing Delivery'
+                    : 'Track Delivery'
+                }}
+              </span>
+
+              <FontAwesomeIcon :icon="faArrowRight" />
+
+            </button>
+
+          </div>
+
+        </article>
 
 
-              <!-- Related order -->
-              <td>
-                <span class="connect-sb-deliveries-order">
-                  {{ delivery.orderNumber }}
-                </span>
-              </td>
+        <!-- Empty state -->
+        <div
+          v-if="deliveries.length === 0"
+          class="connect-sb-deliveries-empty"
+        >
 
+          <div class="connect-sb-deliveries-empty-icon">
+            <FontAwesomeIcon :icon="faTruckFast" />
+          </div>
 
-              <!-- Supplier -->
-              <td>
-                <span class="connect-sb-deliveries-supplier">
-                  {{ delivery.supplier }}
-                </span>
-              </td>
+          <h3>
+            No deliveries yet
+          </h3>
 
+          <p>
+            Deliveries connected to your supplier orders will appear here.
+          </p>
 
-              <!-- Delivery status -->
-              <td>
-                <span
-                  class="connect-sb-deliveries-status"
-                  :class="getStatusClass(delivery.deliveryStatus)"
-                >
-                  <span class="connect-sb-deliveries-status-dot"></span>
-                  {{ delivery.deliveryStatus }}
-                </span>
-              </td>
-
-
-              <!-- Payment status -->
-              <td>
-                <span
-                  class="connect-sb-deliveries-status"
-                  :class="getStatusClass(delivery.paymentStatus)"
-                >
-                  <span class="connect-sb-deliveries-status-dot"></span>
-                  {{ delivery.paymentStatus }}
-                </span>
-              </td>
-
-
-              <!-- Track delivery -->
-              <td class="connect-sb-deliveries-actions">
-
-                <button
-                  type="button"
-                  class="connect-sb-deliveries-track-button"
-                  @click="trackDelivery(delivery)"
-                >
-                  Track
-                  <span>→</span>
-                </button>
-
-              </td>
-
-            </tr>
-
-          </tbody>
-
-        </table>
+        </div>
 
       </div>
 
@@ -188,121 +325,347 @@
 
       <section
         v-if="selectedDelivery"
-        class="connect-sb-deliveries-details-card"
+        class="connect-sb-deliveries-details"
       >
 
+        <!-- Details heading -->
         <div class="connect-sb-deliveries-details-header">
 
-          <div>
-            <p class="connect-sb-deliveries-details-eyebrow">
-              DELIVERY DETAILS
-            </p>
+          <div class="connect-sb-deliveries-details-title">
 
-            <h2>
-              {{ selectedDelivery.deliveryId }}
-            </h2>
+            <div class="connect-sb-deliveries-details-icon">
+              <FontAwesomeIcon :icon="faRoute" />
+            </div>
 
-            <p>
-              {{ selectedDelivery.supplier }}
-            </p>
+            <div>
+
+              <p>
+                DELIVERY TRACKING
+              </p>
+
+              <h2>
+                {{ selectedDelivery.deliveryId }}
+              </h2>
+
+              <span>
+                From {{ selectedDelivery.supplier }}
+              </span>
+
+            </div>
+
           </div>
 
 
-          <!-- Close the delivery details -->
           <button
             type="button"
-            class="connect-sb-deliveries-close-button"
+            class="connect-sb-deliveries-close"
             aria-label="Close delivery details"
             @click="selectedDelivery = null"
           >
-            ×
+            <FontAwesomeIcon :icon="faXmark" />
           </button>
 
         </div>
 
 
-        <!-- Delivery information -->
-        <div class="connect-sb-deliveries-details-grid">
+        <!-- Current delivery state -->
+        <div class="connect-sb-deliveries-current-status">
 
-          <div class="connect-sb-deliveries-detail-item">
-            <span>Delivery Number</span>
-            <strong>{{ selectedDelivery.deliveryId }}</strong>
-          </div>
+          <div>
 
-
-          <div class="connect-sb-deliveries-detail-item">
-            <span>Order Number</span>
-            <strong>{{ selectedDelivery.orderNumber }}</strong>
-          </div>
-
-
-          <div class="connect-sb-deliveries-detail-item">
-            <span>Supplier</span>
-            <strong>{{ selectedDelivery.supplier }}</strong>
-          </div>
-
-
-          <div class="connect-sb-deliveries-detail-item">
-            <span>Delivery Status</span>
+            <span>
+              CURRENT STATUS
+            </span>
 
             <strong>
               {{ selectedDelivery.deliveryStatus }}
             </strong>
+
           </div>
 
 
-          <div class="connect-sb-deliveries-detail-item">
-            <span>Payment Status</span>
+          <span
+            class="connect-sb-deliveries-status"
+            :class="getStatusClass(selectedDelivery.deliveryStatus)"
+          >
+            <span class="connect-sb-deliveries-status-dot"></span>
 
-            <strong>
-              {{ selectedDelivery.paymentStatus }}
-            </strong>
+            {{ selectedDelivery.deliveryStatus }}
+          </span>
+
+        </div>
+
+
+        <!-- Delivery journey -->
+        <div class="connect-sb-deliveries-journey">
+
+          <div class="connect-sb-deliveries-journey-heading">
+
+            <div>
+              <p>
+                DELIVERY JOURNEY
+              </p>
+
+              <h3>
+                From supplier to your business
+              </h3>
+            </div>
+
+            <span>
+              {{ selectedDelivery.orderNumber }}
+            </span>
+
           </div>
 
 
-          <div class="connect-sb-deliveries-detail-item">
-            <span>Delivery Fee</span>
+          <div class="connect-sb-deliveries-journey-track">
 
-            <strong>
-              R {{ Number(selectedDelivery.deliveryFee).toFixed(2) }}
-            </strong>
+            <!-- Step 1 -->
+            <div
+              class="connect-sb-deliveries-journey-step complete"
+            >
+
+              <div class="connect-sb-deliveries-journey-node">
+                <FontAwesomeIcon :icon="faWarehouse" />
+              </div>
+
+              <div>
+                <strong>
+                  Supplier
+                </strong>
+
+                <span>
+                  {{ selectedDelivery.supplier }}
+                </span>
+              </div>
+
+            </div>
+
+
+            <!-- Connector -->
+            <div class="connect-sb-deliveries-journey-connector">
+              <span
+                :class="{
+                  active:
+                    selectedDelivery.deliveryStatus.toLowerCase() !==
+                    'pending'
+                }"
+              ></span>
+            </div>
+
+
+            <!-- Step 2 -->
+            <div
+              class="connect-sb-deliveries-journey-step"
+              :class="{
+                complete:
+                  selectedDelivery.deliveryStatus.toLowerCase() ===
+                    'in transit' ||
+                  selectedDelivery.deliveryStatus.toLowerCase() ===
+                    'out for delivery' ||
+                  selectedDelivery.deliveryStatus.toLowerCase() ===
+                    'completed'
+              }"
+            >
+
+              <div class="connect-sb-deliveries-journey-node">
+                <FontAwesomeIcon :icon="faTruckFast" />
+              </div>
+
+              <div>
+                <strong>
+                  In Transit
+                </strong>
+
+                <span>
+                  Delivery in progress
+                </span>
+              </div>
+
+            </div>
+
+
+            <!-- Connector -->
+            <div class="connect-sb-deliveries-journey-connector">
+
+              <span
+                :class="{
+                  active:
+                    selectedDelivery.deliveryStatus.toLowerCase() ===
+                      'out for delivery' ||
+                    selectedDelivery.deliveryStatus.toLowerCase() ===
+                      'completed'
+                }"
+              ></span>
+
+            </div>
+
+
+            <!-- Step 3 -->
+            <div
+              class="connect-sb-deliveries-journey-step"
+              :class="{
+                complete:
+                  selectedDelivery.deliveryStatus.toLowerCase() ===
+                  'completed'
+              }"
+            >
+
+              <div class="connect-sb-deliveries-journey-node">
+                <FontAwesomeIcon :icon="faLocationDot" />
+              </div>
+
+              <div>
+                <strong>
+                  Your Business
+                </strong>
+
+                <span>
+                  Final destination
+                </span>
+              </div>
+
+            </div>
+
           </div>
 
         </div>
 
 
-        <!-- Cost information -->
-        <div class="connect-sb-deliveries-price-section">
+        <!-- Delivery information and pricing -->
+        <div class="connect-sb-deliveries-details-layout">
 
-          <div class="connect-sb-deliveries-price-row">
-            <span>Order Total</span>
+          <div class="connect-sb-deliveries-information-panel">
 
-            <strong>
-              R {{ Number(selectedDelivery.total).toFixed(2) }}
-            </strong>
+            <div class="connect-sb-deliveries-panel-heading">
+              <span>
+                DELIVERY INFORMATION
+              </span>
+            </div>
+
+
+            <div class="connect-sb-deliveries-detail-grid">
+
+              <div class="connect-sb-deliveries-detail-item">
+                <span>Delivery Number</span>
+                <strong>
+                  {{ selectedDelivery.deliveryId }}
+                </strong>
+              </div>
+
+              <div class="connect-sb-deliveries-detail-item">
+                <span>Order Number</span>
+                <strong>
+                  {{ selectedDelivery.orderNumber }}
+                </strong>
+              </div>
+
+              <div class="connect-sb-deliveries-detail-item">
+                <span>Supplier</span>
+                <strong>
+                  {{ selectedDelivery.supplier }}
+                </strong>
+              </div>
+
+              <div class="connect-sb-deliveries-detail-item">
+                <span>Payment Status</span>
+                <strong>
+                  {{ selectedDelivery.paymentStatus }}
+                </strong>
+              </div>
+
+            </div>
+
           </div>
 
 
-          <div class="connect-sb-deliveries-price-row connect-sb-deliveries-price-total">
-            <span>Delivery Fee</span>
+          <!-- Pricing panel -->
+          <div class="connect-sb-deliveries-pricing-panel">
 
-            <strong>
-              R {{ Number(selectedDelivery.deliveryFee).toFixed(2) }}
-            </strong>
+            <div class="connect-sb-deliveries-panel-heading">
+              <span>
+                DELIVERY COST
+              </span>
+            </div>
+
+
+            <div class="connect-sb-deliveries-price-row">
+
+              <span>
+                Order total
+              </span>
+
+              <strong>
+                R {{ Number(selectedDelivery.total).toFixed(2) }}
+              </strong>
+
+            </div>
+
+
+            <div class="connect-sb-deliveries-price-row">
+
+              <span>
+                Delivery fee
+              </span>
+
+              <strong>
+                R {{ Number(selectedDelivery.deliveryFee).toFixed(2) }}
+              </strong>
+
+            </div>
+
+
+            <div class="connect-sb-deliveries-price-divider"></div>
+
+
+            <div class="connect-sb-deliveries-price-row total">
+
+              <span>
+                Delivery reference
+              </span>
+
+              <strong>
+                {{ selectedDelivery.deliveryId }}
+              </strong>
+
+            </div>
+
           </div>
 
         </div>
 
 
-        <!-- Open the actual live tracking page -->
-        <div class="connect-sb-deliveries-detail-actions">
+        <!-- Live tracking connection -->
+        <div class="connect-sb-deliveries-live-banner">
+
+          <div class="connect-sb-deliveries-live-banner-icon">
+            <FontAwesomeIcon :icon="faLocationArrow" />
+          </div>
+
+          <div class="connect-sb-deliveries-live-banner-content">
+
+            <span>
+              LIVE DELIVERY TRACKING
+            </span>
+
+            <strong>
+              Follow this shipment on the map
+            </strong>
+
+            <p>
+              View the current delivery route and vehicle location through WeConnect tracking.
+            </p>
+
+          </div>
+
 
           <router-link
             to="/tracking"
-            class="connect-sb-deliveries-tracking-link"
+            class="connect-sb-deliveries-open-tracking"
           >
-            <span>🚚</span>
-            Open Live Tracking
+            Open Tracking
+
+            <FontAwesomeIcon :icon="faArrowRight" />
           </router-link>
 
         </div>
@@ -312,19 +675,28 @@
     </Transition>
 
   </div>
-
 </template>
 
 
 <script setup>
-
 import { computed, ref } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-// Get the shared order data
+import {
+  faArrowRight,
+  faCircleCheck,
+  faLocationArrow,
+  faLocationDot,
+  faRoute,
+  faTruckFast,
+  faWarehouse,
+  faXmark
+} from '@fortawesome/free-solid-svg-icons'
+
+// Use the shared order data for delivery information
 import { orders } from '../data/orders'
 
-
-// Turn the order information into delivery information
+// Turn the shared order information into delivery records
 const deliveries = orders.map(order => ({
   deliveryId: order.deliveryId,
   orderNumber: order.orderNumber,
@@ -335,10 +707,8 @@ const deliveries = orders.map(order => ({
   total: order.total
 }))
 
-
-// Keep track of the delivery the user selects
+// Store the delivery currently being viewed
 const selectedDelivery = ref(null)
-
 
 // Count deliveries that are still active
 const activeDeliveries = computed(() => {
@@ -347,7 +717,6 @@ const activeDeliveries = computed(() => {
   }).length
 })
 
-
 // Count completed deliveries
 const completedDeliveries = computed(() => {
   return deliveries.filter(delivery => {
@@ -355,257 +724,385 @@ const completedDeliveries = computed(() => {
   }).length
 })
 
-
-// Show the selected delivery details
+// Open the selected delivery
 function trackDelivery(delivery) {
   selectedDelivery.value = delivery
 }
 
-
-// Turn status text into a class name
+// Turn status text into a CSS class
 function getStatusClass(status) {
   return status.toLowerCase().replace(/\s+/g, '-')
 }
-
 </script>
 
 
 <style scoped>
 
-/* Main page */
+/* Main delivery page */
 .connect-sb-deliveries-page {
   min-height: 100vh;
   padding: 34px;
   box-sizing: border-box;
   background: #E8E2DD;
   color: #5C3D24;
-
-  /* Keep the interface text clean while headings use a serif */
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 
-/* Header */
-.connect-sb-deliveries-header {
-  margin-bottom: 28px;
+/* Delivery dashboard header */
+.connect-sb-deliveries-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 27px;
 }
 
-.connect-sb-deliveries-eyebrow,
-.connect-sb-deliveries-details-eyebrow {
-  margin: 0 0 7px;
+.connect-sb-deliveries-hero-copy {
+  max-width: 690px;
+}
+
+.connect-sb-deliveries-eyebrow {
+  margin: 0 0 8px;
   color: #D17A4A;
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 1.7px;
+  letter-spacing: 1.9px;
 }
 
 .connect-sb-deliveries-title {
-  margin: 0 0 8px;
+  margin: 0 0 9px;
   color: #4E342E;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 40px;
+  font-size: 42px;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.05;
 }
 
 .connect-sb-deliveries-description {
+  max-width: 620px;
   margin: 0;
-  max-width: 650px;
   color: #7A665B;
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.65;
 }
 
 
-/* Delivery summary */
-.connect-sb-deliveries-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 22px;
-}
-
-.connect-sb-deliveries-summary-card {
+/* Live delivery indicator */
+.connect-sb-deliveries-live-indicator {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 78px;
-  padding: 16px 18px;
+  gap: 11px;
+  min-width: 165px;
+  padding: 13px 16px;
   box-sizing: border-box;
-  border: 1px solid rgba(78, 52, 46, 0.07);
+  border: 1px solid rgba(78, 52, 46, 0.06);
+  border-radius: 12px;
+  background: #FFFEFC;
+  box-shadow: 0 5px 18px rgba(78, 52, 46, 0.06);
+}
+
+.connect-sb-deliveries-live-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #5C8B62;
+  box-shadow: 0 0 0 5px rgba(92, 139, 98, 0.1);
+  animation: connect-sb-deliveries-pulse 2s infinite;
+}
+
+.connect-sb-deliveries-live-indicator span:not(.connect-sb-deliveries-live-dot) {
+  display: block;
+  margin-bottom: 3px;
+  color: #9A887D;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+}
+
+.connect-sb-deliveries-live-indicator strong {
+  color: #4E342E;
+  font-size: 13px;
+}
+
+@keyframes connect-sb-deliveries-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 5px rgba(92, 139, 98, 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(92, 139, 98, 0.04);
+  }
+}
+
+
+/* Delivery overview cards */
+.connect-sb-deliveries-overview {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.connect-sb-deliveries-overview-card {
+  min-height: 125px;
+  padding: 18px 20px;
+  box-sizing: border-box;
+  border: 1px solid rgba(78, 52, 46, 0.05);
   border-radius: 15px;
   background: #FFFEFC;
-  box-shadow: 0 5px 18px rgba(78, 52, 46, 0.055);
+  box-shadow: 0 4px 18px rgba(78, 52, 46, 0.055);
   transition:
     transform 180ms ease,
     box-shadow 180ms ease;
 }
 
-.connect-sb-deliveries-summary-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 9px 24px rgba(78, 52, 46, 0.1);
+.connect-sb-deliveries-overview-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(78, 52, 46, 0.09);
 }
 
-.connect-sb-deliveries-summary-icon {
+.connect-sb-deliveries-overview-main {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-top: 3px solid #D17A4A;
+}
+
+.connect-sb-deliveries-overview-icon {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
   place-items: center;
   border-radius: 12px;
   background: #F3E7D9;
-  font-size: 18px;
+  color: #D17A4A;
+  font-size: 16px;
 }
 
-.connect-sb-deliveries-summary-card p {
-  margin: 0 0 3px;
-  color: #8A766B;
-  font-size: 12px;
-  font-weight: 600;
+.connect-sb-deliveries-overview-main > div:last-child > span,
+.connect-sb-deliveries-overview-top span {
+  color: #7A665B;
+  font-size: 11px;
+  font-weight: 650;
 }
 
-.connect-sb-deliveries-summary-card strong {
+.connect-sb-deliveries-overview-main strong {
+  display: block;
+  margin-top: 6px;
   color: #4E342E;
-  font-size: 21px;
-  font-weight: 750;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
 }
 
-
-/* Deliveries table */
-.connect-sb-deliveries-table-card {
-  overflow: hidden;
-  border: 1px solid rgba(78, 52, 46, 0.07);
-  border-radius: 18px;
-  background: #FFFEFC;
-  box-shadow: 0 7px 24px rgba(78, 52, 46, 0.07);
+.connect-sb-deliveries-overview-main p,
+.connect-sb-deliveries-overview-card p {
+  margin: 6px 0 0;
+  color: #9A887D;
+  font-size: 10px;
 }
 
-.connect-sb-deliveries-table-heading {
+.connect-sb-deliveries-overview-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 24px 18px;
 }
 
-.connect-sb-deliveries-table-heading h2 {
+.connect-sb-deliveries-overview-top svg {
+  color: #D17A4A;
+  font-size: 12px;
+}
+
+.connect-sb-deliveries-overview-number {
+  display: block;
+  margin-top: 15px;
+  color: #4E342E;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 29px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+
+/* Main delivery workspace */
+.connect-sb-deliveries-workspace {
+  overflow: hidden;
+  border-radius: 17px;
+  background: #FFFEFC;
+  box-shadow: 0 5px 22px rgba(78, 52, 46, 0.08);
+}
+
+.connect-sb-deliveries-workspace-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 25px 25px 20px;
+  border-bottom: 1px solid #E8E2DD;
+}
+
+.connect-sb-deliveries-section-eyebrow {
+  margin: 0 0 5px;
+  color: #D17A4A;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+}
+
+.connect-sb-deliveries-workspace-header h2 {
   margin: 0 0 4px;
   color: #4E342E;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 23px;
+  font-size: 25px;
   font-weight: 600;
 }
 
-.connect-sb-deliveries-table-heading p {
+.connect-sb-deliveries-workspace-header p:last-child {
   margin: 0;
-  color: #8A766B;
+  color: #8A776C;
+  font-size: 12px;
+}
+
+.connect-sb-deliveries-count {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  color: #9A887D;
+  font-size: 11px;
+}
+
+.connect-sb-deliveries-count strong {
+  color: #4E342E;
+  font-size: 18px;
+}
+
+
+/* Delivery cards */
+.connect-sb-deliveries-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 17px;
+  padding: 22px 25px 25px;
+}
+
+.connect-sb-deliveries-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 18px;
+  border: 1px solid #E6DDD7;
+  border-radius: 15px;
+  background: #FFFEFC;
+  box-shadow: 0 3px 12px rgba(78, 52, 46, 0.045);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.connect-sb-deliveries-card:hover {
+  transform: translateY(-3px);
+  border-color: #D8C8BE;
+  box-shadow: 0 9px 24px rgba(78, 52, 46, 0.09);
+}
+
+.connect-sb-deliveries-card.selected {
+  border-color: #D17A4A;
+  box-shadow:
+    0 0 0 2px rgba(209, 122, 74, 0.11),
+    0 9px 24px rgba(78, 52, 46, 0.09);
+}
+
+
+/* Delivery card heading */
+.connect-sb-deliveries-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.connect-sb-deliveries-card-reference {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+
+.connect-sb-deliveries-card-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 12px;
+  background: #F3E7D9;
+  color: #D17A4A;
   font-size: 13px;
 }
 
-.connect-sb-deliveries-table-accent {
-  width: 42px;
-  height: 5px;
-  border-radius: 999px;
-  background: #D17A4A;
+.connect-sb-deliveries-card-reference > div:last-child {
+  min-width: 0;
 }
 
-
-/* Keeps the table usable on phones */
-.connect-sb-deliveries-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+.connect-sb-deliveries-card-reference span {
+  display: block;
+  margin-bottom: 3px;
+  color: #9A887D;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
 
-.connect-sb-deliveries-table {
-  width: 100%;
-  min-width: 800px;
-  border-collapse: collapse;
-}
-
-.connect-sb-deliveries-table thead {
-  background: #4E342E;
-}
-
-.connect-sb-deliveries-table th {
-  padding: 14px 17px;
-  color: #FFFEFC;
-  text-align: left;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
+.connect-sb-deliveries-card-reference h3 {
+  overflow: hidden;
+  margin: 0 0 3px;
+  color: #4E342E;
+  font-size: 13px;
+  font-weight: 750;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.connect-sb-deliveries-row {
-  border-bottom: 1px solid #EEE7E2;
-  transition: background 180ms ease;
-}
-
-.connect-sb-deliveries-row:last-child {
-  border-bottom: none;
-}
-
-.connect-sb-deliveries-row:hover {
-  background: #FCF8F4;
-}
-
-.connect-sb-deliveries-row td {
-  padding: 16px 17px;
-  color: #5C3D24;
-  font-size: 13px;
-  vertical-align: middle;
-}
-
-.connect-sb-deliveries-number {
-  color: #4E342E;
-  font-weight: 750;
-}
-
-.connect-sb-deliveries-order {
-  color: #8A766B;
-}
-
-.connect-sb-deliveries-supplier {
-  font-weight: 600;
+.connect-sb-deliveries-card-reference p {
+  margin: 0;
+  color: #9A887D;
+  font-size: 10px;
 }
 
 
 /* Status badges */
 .connect-sb-deliveries-status {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
-  gap: 7px;
-  padding: 6px 10px;
+  gap: 5px;
+  padding: 5px 8px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 750;
   white-space: nowrap;
 }
 
 .connect-sb-deliveries-status-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: currentColor;
 }
 
-
-/* Completed deliveries and paid orders */
 .connect-sb-deliveries-status.completed,
 .connect-sb-deliveries-status.paid {
   background: #E6F0E8;
   color: #3F6847;
 }
 
-
-/* Unpaid deliveries */
-.connect-sb-deliveries-status.unpaid {
-  background: #F8E2DD;
-  color: #9A4938;
-}
-
-
-/* Deliveries that are still moving */
 .connect-sb-deliveries-status.processing,
 .connect-sb-deliveries-status.pending,
 .connect-sb-deliveries-status.in-progress,
@@ -615,50 +1112,237 @@ function getStatusClass(status) {
   color: #8A5A32;
 }
 
+.connect-sb-deliveries-status.unpaid {
+  background: #F8E2DD;
+  color: #9A4938;
+}
 
-/* Table action */
-.connect-sb-deliveries-actions {
+
+/* Route section */
+.connect-sb-deliveries-route {
+  padding: 14px 12px;
+  border-radius: 11px;
+  background: #FBF7F3;
+}
+
+.connect-sb-deliveries-route-point {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.connect-sb-deliveries-route-marker {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 9px;
+}
+
+.connect-sb-deliveries-route-marker.pickup {
+  background: #E9DDD3;
+  color: #6C4A39;
+}
+
+.connect-sb-deliveries-route-marker.destination {
+  background: #F3E7D9;
+  color: #D17A4A;
+}
+
+.connect-sb-deliveries-route-point span:not(.connect-sb-deliveries-route-marker) {
+  display: block;
+  margin-bottom: 2px;
+  color: #9A887D;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+}
+
+.connect-sb-deliveries-route-point strong {
+  display: block;
+  overflow: hidden;
+  color: #5C3D24;
+  font-size: 10px;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.connect-sb-deliveries-route-line {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 22px;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px dashed #CFC2BA;
+  color: #D17A4A;
+  font-size: 9px;
+}
+
+.connect-sb-deliveries-route-progress {
+  position: absolute;
+  top: 0;
+  bottom: 50%;
+  left: -1px;
+  width: 1px;
+  background: #D17A4A;
+}
+
+.connect-sb-deliveries-route-progress.complete {
+  bottom: 0;
+}
+
+
+/* Card information */
+.connect-sb-deliveries-card-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  padding: 15px 0;
+  border-bottom: 1px solid #E8E2DD;
+}
+
+.connect-sb-deliveries-card-info div {
+  min-width: 0;
+}
+
+.connect-sb-deliveries-card-info span {
+  display: block;
+  margin-bottom: 4px;
+  color: #9A887D;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.connect-sb-deliveries-card-info strong {
+  display: block;
+  overflow: hidden;
+  color: #5C3D24;
+  font-size: 9px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connect-sb-deliveries-card-info strong.paid,
+.connect-sb-deliveries-card-info strong.completed {
+  color: #3F6847;
+}
+
+.connect-sb-deliveries-card-info strong.unpaid {
+  color: #9A4938;
+}
+
+
+/* Card footer */
+.connect-sb-deliveries-card-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.connect-sb-deliveries-delivery-value span {
+  display: block;
+  margin-bottom: 4px;
+  color: #9A887D;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+}
+
+.connect-sb-deliveries-delivery-value strong {
+  color: #4E342E;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .connect-sb-deliveries-track-button {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 7px;
-  min-height: 34px;
-  padding: 8px 13px;
-  box-sizing: border-box;
+  padding: 9px 12px;
   border: 1px solid #D17A4A;
-  border-radius: 9px;
+  border-radius: 8px;
   background: #D17A4A;
   color: #FFFEFC;
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(209, 122, 74, 0.16);
+  box-shadow: 0 4px 10px rgba(209, 122, 74, 0.14);
   transition:
-    transform 160ms ease,
-    background 160ms ease,
-    box-shadow 160ms ease;
+    transform 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.connect-sb-deliveries-track-button svg {
+  font-size: 8px;
+  transition: transform 180ms ease;
 }
 
 .connect-sb-deliveries-track-button:hover {
   transform: translateY(-1px);
   background: #BF683A;
-  box-shadow: 0 6px 14px rgba(209, 122, 74, 0.24);
+  box-shadow: 0 6px 14px rgba(209, 122, 74, 0.22);
+}
+
+.connect-sb-deliveries-track-button:hover svg {
+  transform: translateX(2px);
+}
+
+.connect-sb-deliveries-track-button.active {
+  background: #4E342E;
+  border-color: #4E342E;
 }
 
 
-/* Delivery details */
-.connect-sb-deliveries-details-card {
-  margin-top: 22px;
-  padding: 25px;
-  border: 1px solid rgba(78, 52, 46, 0.07);
-  border-radius: 18px;
+/* Empty state */
+.connect-sb-deliveries-empty {
+  grid-column: 1 / -1;
+  padding: 55px 25px;
+  text-align: center;
+}
+
+.connect-sb-deliveries-empty-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 13px;
+  place-items: center;
+  border-radius: 14px;
+  background: #F3E7D9;
+  color: #D17A4A;
+}
+
+.connect-sb-deliveries-empty h3 {
+  margin: 0 0 6px;
+  color: #4E342E;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+}
+
+.connect-sb-deliveries-empty p {
+  margin: 0;
+  color: #8A776C;
+  font-size: 12px;
+}
+
+
+/* Selected delivery details */
+.connect-sb-deliveries-details {
+  margin-top: 24px;
+  padding: 26px;
+  border-radius: 17px;
   background: #FFFEFC;
-  box-shadow: 0 8px 26px rgba(78, 52, 46, 0.08);
+  box-shadow: 0 5px 22px rgba(78, 52, 46, 0.08);
 }
 
 .connect-sb-deliveries-details-header {
@@ -666,150 +1350,372 @@ function getStatusClass(status) {
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 22px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #E8E2DD;
 }
 
-.connect-sb-deliveries-details-header h2 {
+.connect-sb-deliveries-details-title {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.connect-sb-deliveries-details-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 12px;
+  background: #F3E7D9;
+  color: #D17A4A;
+}
+
+.connect-sb-deliveries-details-title p {
+  margin: 0 0 4px;
+  color: #D17A4A;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.connect-sb-deliveries-details-title h2 {
   margin: 0 0 3px;
   color: #4E342E;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 26px;
+  font-size: 25px;
   font-weight: 600;
 }
 
-.connect-sb-deliveries-details-header p:last-child {
-  margin: 0;
-  color: #8A766B;
-  font-size: 13px;
+.connect-sb-deliveries-details-title span {
+  color: #8A776C;
+  font-size: 12px;
 }
 
-
-/* Close button */
-.connect-sb-deliveries-close-button {
+.connect-sb-deliveries-close {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 33px;
+  height: 33px;
   flex-shrink: 0;
   place-items: center;
-  border: 1px solid #DDD2CB;
+  border: 1px solid #D8CCC4;
   border-radius: 50%;
-  background: transparent;
-  color: #7A665B;
-  font-family: inherit;
-  font-size: 22px;
-  line-height: 1;
+  background: #FFFEFC;
+  color: #5C3D24;
   cursor: pointer;
   transition:
-    transform 160ms ease,
-    background 160ms ease;
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
 }
 
-.connect-sb-deliveries-close-button:hover {
-  transform: rotate(90deg);
+.connect-sb-deliveries-close:hover {
+  transform: rotate(5deg);
+  border-color: #D17A4A;
   background: #F3E7D9;
 }
 
 
-/* Delivery information grid */
-.connect-sb-deliveries-details-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  overflow: hidden;
-  border: 1px solid #EEE7E2;
+/* Current delivery status */
+.connect-sb-deliveries-current-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 20px 0;
+  padding: 14px 16px;
+  border: 1px solid #E8DDD5;
+  border-radius: 11px;
+  background: #FBF7F3;
+}
+
+.connect-sb-deliveries-current-status > div span {
+  display: block;
+  margin-bottom: 4px;
+  color: #9A887D;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.connect-sb-deliveries-current-status > div strong {
+  color: #4E342E;
+  font-size: 13px;
+}
+
+
+/* Delivery journey */
+.connect-sb-deliveries-journey {
+  margin-bottom: 20px;
+  padding: 20px;
   border-radius: 13px;
-  background: #EEE7E2;
+  background: #FBF7F3;
+}
+
+.connect-sb-deliveries-journey-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.connect-sb-deliveries-journey-heading p {
+  margin: 0 0 4px;
+  color: #D17A4A;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.connect-sb-deliveries-journey-heading h3 {
+  margin: 0;
+  color: #4E342E;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.connect-sb-deliveries-journey-heading > span {
+  color: #9A887D;
+  font-size: 10px;
+}
+
+.connect-sb-deliveries-journey-track {
+  display: grid;
+  grid-template-columns: 1fr 0.45fr 1fr 0.45fr 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.connect-sb-deliveries-journey-step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  opacity: 0.48;
+}
+
+.connect-sb-deliveries-journey-step.complete {
+  opacity: 1;
+}
+
+.connect-sb-deliveries-journey-node {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 1px solid #D8CCC4;
+  border-radius: 50%;
+  background: #FFFEFC;
+  color: #A99A91;
+  font-size: 10px;
+}
+
+.connect-sb-deliveries-journey-step.complete .connect-sb-deliveries-journey-node {
+  border-color: #D17A4A;
+  background: #D17A4A;
+  color: #FFFEFC;
+}
+
+.connect-sb-deliveries-journey-step strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #5C3D24;
+  font-size: 10px;
+}
+
+.connect-sb-deliveries-journey-step span:last-child {
+  display: block;
+  overflow: hidden;
+  color: #9A887D;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connect-sb-deliveries-journey-connector {
+  height: 1px;
+  background: #D8CCC4;
+}
+
+.connect-sb-deliveries-journey-connector span {
+  display: block;
+  width: 0;
+  height: 1px;
+  background: #D17A4A;
+  transition: width 300ms ease;
+}
+
+.connect-sb-deliveries-journey-connector span.active {
+  width: 100%;
+}
+
+
+/* Details panels */
+.connect-sb-deliveries-details-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  gap: 18px;
+}
+
+.connect-sb-deliveries-information-panel,
+.connect-sb-deliveries-pricing-panel {
+  overflow: hidden;
+  border: 1px solid #E8E2DD;
+  border-radius: 12px;
+}
+
+.connect-sb-deliveries-panel-heading {
+  padding: 12px 15px;
+  border-bottom: 1px solid #E8E2DD;
+  background: #F8F3EF;
+}
+
+.connect-sb-deliveries-panel-heading span {
+  color: #8A776C;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.connect-sb-deliveries-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: #E8E2DD;
 }
 
 .connect-sb-deliveries-detail-item {
-  padding: 15px;
+  min-height: 65px;
+  padding: 13px 15px;
+  box-sizing: border-box;
   background: #FFFEFC;
 }
 
 .connect-sb-deliveries-detail-item span {
   display: block;
   margin-bottom: 5px;
-  color: #8A766B;
-  font-size: 11px;
+  color: #9A887D;
+  font-size: 10px;
 }
 
 .connect-sb-deliveries-detail-item strong {
   color: #5C3D24;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 
-/* Cost information */
-.connect-sb-deliveries-price-section {
-  margin-top: 18px;
-  padding: 15px 17px;
-  border-radius: 12px;
-  background: #F8F2ED;
+/* Delivery pricing */
+.connect-sb-deliveries-pricing-panel {
+  padding-bottom: 8px;
 }
 
 .connect-sb-deliveries-price-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 5px 0;
+  gap: 15px;
+  padding: 10px 15px;
   color: #7A665B;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .connect-sb-deliveries-price-row strong {
   color: #5C3D24;
 }
 
-.connect-sb-deliveries-price-total {
-  margin-top: 6px;
-  padding-top: 11px;
-  border-top: 1px solid #E2D7CF;
+.connect-sb-deliveries-price-divider {
+  height: 1px;
+  margin: 6px 15px;
+  background: #E8E2DD;
 }
 
-.connect-sb-deliveries-price-total strong {
+.connect-sb-deliveries-price-row.total {
+  color: #4E342E;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.connect-sb-deliveries-price-row.total strong {
+  color: #D17A4A;
+  font-size: 12px;
+}
+
+
+/* Live tracking banner */
+.connect-sb-deliveries-live-banner {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 18px;
+  padding: 15px 17px;
+  border-radius: 12px;
+  background: #4E342E;
+  color: #FFFEFC;
+}
+
+.connect-sb-deliveries-live-banner-icon {
+  display: grid;
+  width: 39px;
+  height: 39px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255, 254, 252, 0.11);
   color: #D17A4A;
 }
 
-
-/* Live tracking button */
-.connect-sb-deliveries-detail-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
+.connect-sb-deliveries-live-banner-content {
+  flex: 1;
 }
 
-.connect-sb-deliveries-tracking-link {
+.connect-sb-deliveries-live-banner-content > span {
+  display: block;
+  margin-bottom: 3px;
+  color: #D7C8BF;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+}
+
+.connect-sb-deliveries-live-banner-content strong {
+  display: block;
+  font-size: 12px;
+}
+
+.connect-sb-deliveries-live-banner-content p {
+  margin: 3px 0 0;
+  color: #C9BBB3;
+  font-size: 10px;
+}
+
+.connect-sb-deliveries-open-tracking {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 10px 17px;
-  box-sizing: border-box;
-  border-radius: 10px;
-  background: #4E342E;
-  color: #FFFEFC;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 254, 252, 0.2);
+  border-radius: 8px;
+  background: #FFFEFC;
+  color: #4E342E;
+  font-size: 9px;
+  font-weight: 800;
   text-decoration: none;
-  box-shadow: 0 5px 14px rgba(78, 52, 46, 0.14);
+  white-space: nowrap;
   transition:
-    transform 160ms ease,
-    background 160ms ease,
-    box-shadow 160ms ease;
+    transform 180ms ease,
+    background 180ms ease;
 }
 
-.connect-sb-deliveries-tracking-link:hover {
-  transform: translateY(-2px);
-  background: #3E2924;
-  box-shadow: 0 7px 17px rgba(78, 52, 46, 0.2);
+.connect-sb-deliveries-open-tracking:hover {
+  transform: translateY(-1px);
+  background: #F3E7D9;
 }
 
 
-/* Delivery details animation */
+/* Details animation */
 .connect-sb-deliveries-details-enter-active,
 .connect-sb-deliveries-details-leave-active {
   transition:
@@ -820,74 +1726,130 @@ function getStatusClass(status) {
 .connect-sb-deliveries-details-enter-from,
 .connect-sb-deliveries-details-leave-to {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(8px);
 }
 
 
 /* Tablet */
-@media (max-width: 900px) {
-
-  .connect-sb-deliveries-page {
-    padding: 26px;
-  }
-
-  .connect-sb-deliveries-summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .connect-sb-deliveries-details-grid {
+@media (max-width: 1100px) {
+  .connect-sb-deliveries-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 
-/* Phone */
-@media (max-width: 640px) {
-
+@media (max-width: 900px) {
   .connect-sb-deliveries-page {
-    padding: 20px 15px;
+    padding: 25px;
   }
 
-  .connect-sb-deliveries-title {
-    font-size: 32px;
+  .connect-sb-deliveries-hero {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .connect-sb-deliveries-description {
-    font-size: 14px;
+  .connect-sb-deliveries-live-indicator {
+    width: 100%;
   }
 
-  .connect-sb-deliveries-summary {
+  .connect-sb-deliveries-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .connect-sb-deliveries-details-layout {
     grid-template-columns: 1fr;
-    gap: 10px;
   }
 
-  .connect-sb-deliveries-summary-card {
-    min-height: 70px;
+  .connect-sb-deliveries-journey-track {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 
-  .connect-sb-deliveries-table-heading {
-    padding: 19px 17px 16px;
+  .connect-sb-deliveries-journey-connector {
+    width: 1px;
+    height: 25px;
+    margin-left: 15px;
   }
 
-  .connect-sb-deliveries-table-heading h2 {
-    font-size: 21px;
+  .connect-sb-deliveries-journey-connector span {
+    width: 1px;
+    height: 0;
   }
 
-  /* Keep the table scrollable instead of squeezing the columns */
-  .connect-sb-deliveries-table {
-    min-width: 760px;
+  .connect-sb-deliveries-journey-connector span.active {
+    width: 1px;
+    height: 100%;
   }
+}
 
-  .connect-sb-deliveries-details-card {
+
+/* Mobile */
+@media (max-width: 700px) {
+  .connect-sb-deliveries-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 640px) {
+  .connect-sb-deliveries-page {
     padding: 20px 16px;
   }
 
-  .connect-sb-deliveries-details-grid {
+  .connect-sb-deliveries-title {
+    font-size: 33px;
+  }
+
+  .connect-sb-deliveries-overview {
     grid-template-columns: 1fr;
   }
 
-  .connect-sb-deliveries-tracking-link {
+  .connect-sb-deliveries-workspace-header {
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .connect-sb-deliveries-card-grid {
+    padding: 18px 20px 20px;
+  }
+
+  .connect-sb-deliveries-card-heading {
+    align-items: flex-start;
+  }
+
+  .connect-sb-deliveries-card-info {
+    gap: 5px;
+  }
+
+  .connect-sb-deliveries-details {
+    padding: 20px;
+  }
+
+  .connect-sb-deliveries-details-title {
+    align-items: flex-start;
+  }
+
+  .connect-sb-deliveries-details-title h2 {
+    font-size: 22px;
+  }
+
+  .connect-sb-deliveries-current-status {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .connect-sb-deliveries-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .connect-sb-deliveries-live-banner {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .connect-sb-deliveries-open-tracking {
     width: 100%;
+    justify-content: center;
   }
 }
 

@@ -1,20 +1,20 @@
+```vue
 <template>
-  <!-- Main payment page -->
   <div class="connect-payments-page">
-
-    <!-- Page heading -->
+    <!-- Page header -->
     <header class="connect-payments-header">
-      <p class="connect-payments-eyebrow">
-        PAYMENT
-      </p>
+      <div class="connect-payments-header-copy">
+        <p class="connect-payments-eyebrow">SECURE CHECKOUT</p>
+        <h1 class="connect-payments-title">Complete Payment</h1>
+        <p class="connect-payments-description">
+          Review your order and choose how you would like to pay.
+        </p>
+      </div>
 
-      <h1 class="connect-payments-title">
-        Complete Payment
-      </h1>
-
-      <p class="connect-payments-description">
-        Securely pay for your Connect order.
-      </p>
+      <div class="connect-payments-header-badge">
+        <FontAwesomeIcon :icon="faShieldHalved" />
+        <span>Secure checkout</span>
+      </div>
     </header>
 
     <!-- Show an error if the order does not exist -->
@@ -23,12 +23,12 @@
       class="connect-payments-error-card"
     >
       <div class="connect-payments-error-icon">
-        !
+        <FontAwesomeIcon :icon="faCircleExclamation" />
       </div>
 
-      <h2>
-        Order Not Found
-      </h2>
+      <p class="connect-payments-error-eyebrow">ORDER ERROR</p>
+
+      <h2>Order Not Found</h2>
 
       <p>
         The selected order could not be found.
@@ -38,6 +38,7 @@
         to="/small-business/orders"
         class="connect-payments-return-link"
       >
+        <FontAwesomeIcon :icon="faArrowLeft" />
         Return to Orders
       </router-link>
     </section>
@@ -47,291 +48,346 @@
       v-else-if="!paymentSuccess"
       class="connect-payments-layout"
     >
+      <!-- LEFT: Order summary -->
+      <section class="connect-payments-order-panel">
+        <div class="connect-payments-panel-top">
+          <div>
+            <p class="connect-payments-section-label">ORDER SUMMARY</p>
+            <h2>{{ selectedOrder.orderNumber }}</h2>
+          </div>
 
-      <!-- Order summary -->
-      <section class="connect-payments-order-summary">
-
-        <div class="connect-payments-section-heading">
-          <span class="connect-payments-section-label">
-            ORDER
-          </span>
-
-          <h2 class="connect-payments-order-number">
-            {{ selectedOrder.orderNumber }}
-          </h2>
-
-          <span class="connect-payments-order-status">
+          <span class="connect-payments-pending-pill">
+            <span></span>
             Payment Required
           </span>
         </div>
 
-        <!-- Supplier and delivery information -->
-        <div class="connect-payments-supplier-information">
+        <!-- Supplier and delivery -->
+        <div class="connect-payments-order-identity">
+          <div class="connect-payments-identity-item">
+            <div class="connect-payments-identity-icon">
+              <FontAwesomeIcon :icon="faStore" />
+            </div>
 
-          <div class="connect-payments-info-row">
-            <span>Supplier</span>
-            <strong>
-              {{ selectedOrder.supplier }}
-            </strong>
+            <div>
+              <span>SUPPLIER</span>
+              <strong>{{ selectedOrder.supplier }}</strong>
+            </div>
           </div>
 
-          <div class="connect-payments-info-row">
-            <span>Delivery</span>
-            <strong>
-              {{ selectedOrder.deliveryId }}
-            </strong>
+          <div class="connect-payments-identity-item">
+            <div class="connect-payments-identity-icon">
+              <FontAwesomeIcon :icon="faTruckFast" />
+            </div>
+
+            <div>
+              <span>DELIVERY</span>
+              <strong>{{ selectedOrder.deliveryId }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order amount -->
+        <div class="connect-payments-amount-card">
+          <div class="connect-payments-amount-heading">
+            <span>AMOUNT DUE</span>
+            <FontAwesomeIcon :icon="faReceipt" />
           </div>
 
+          <strong>
+            R {{ formatPrice(selectedOrder.total) }}
+          </strong>
+
+          <p>
+            Includes your order and delivery fee.
+          </p>
         </div>
 
         <!-- Price breakdown -->
         <div class="connect-payments-price-breakdown">
-
           <div class="connect-payments-price-row">
             <span>Order subtotal</span>
-            <span>
+            <strong>
               R {{ formatPrice(selectedOrder.subtotal) }}
-            </span>
+            </strong>
           </div>
 
           <div class="connect-payments-price-row">
             <span>Delivery fee</span>
-            <span>
+            <strong>
               R {{ formatPrice(selectedOrder.deliveryFee) }}
-            </span>
+            </strong>
           </div>
 
-          <!-- Final amount -->
+          <div class="connect-payments-price-divider"></div>
+
           <div class="connect-payments-total-row">
             <span>Total</span>
-
             <strong>
               R {{ formatPrice(selectedOrder.total) }}
             </strong>
           </div>
-
         </div>
 
-        <!-- Small payment note -->
+        <!-- Payment note -->
         <div class="connect-payments-summary-note">
-          <span class="connect-payments-summary-note-icon">
-            ✓
-          </span>
+          <div class="connect-payments-summary-note-icon">
+            <FontAwesomeIcon :icon="faCircleCheck" />
+          </div>
 
+          <div>
+            <strong>Ready for payment</strong>
+            <p>
+              Once payment is completed, your order will be marked as paid.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Payment section -->
+      <section class="connect-payments-payment-panel">
+        <div class="connect-payments-panel-heading">
+          <p class="connect-payments-section-label">PAYMENT METHOD</p>
+          <h2>How would you like to pay?</h2>
           <p>
-            Your order will be marked as paid after the payment
-            request is completed.
+            Select a payment method below to continue.
           </p>
         </div>
 
-      </section>
-
-      <!-- Payment section -->
-      <section class="connect-payments-form-section">
-
-        <div class="connect-payments-section-heading">
-          <span class="connect-payments-section-label">
-            PAYMENT METHOD
-          </span>
-
-          <h2 class="connect-payments-form-title">
-            Choose Payment Method
-          </h2>
-        </div>
-
-        <!-- Payment method buttons -->
+        <!-- Payment method selector -->
         <div class="connect-payments-methods">
-
           <button
             type="button"
             class="connect-payments-method-card"
-            :class="{ 'connect-payments-method-active': paymentMethod === 'card' }"
+            :class="{
+              'connect-payments-method-active': paymentMethod === 'card'
+            }"
             @click="paymentMethod = 'card'"
           >
-            <span class="connect-payments-method-icon">
-              CARD
-            </span>
+            <div class="connect-payments-method-icon">
+              <FontAwesomeIcon :icon="faCreditCard" />
+            </div>
 
-            <span class="connect-payments-method-content">
-              <strong>Card</strong>
+            <div class="connect-payments-method-content">
+              <strong>Bank Card</strong>
+              <small>Visa, Mastercard or debit card</small>
+            </div>
 
-              <small>
-                Pay using a bank card
-              </small>
-            </span>
-
-            <span
-              v-if="paymentMethod === 'card'"
-              class="connect-payments-method-check"
+            <div
+              class="connect-payments-method-selector"
+              :class="{
+                selected: paymentMethod === 'card'
+              }"
             >
-              ✓
-            </span>
+              <FontAwesomeIcon
+                v-if="paymentMethod === 'card'"
+                :icon="faCheck"
+              />
+            </div>
           </button>
 
           <button
             type="button"
             class="connect-payments-method-card"
-            :class="{ 'connect-payments-method-active': paymentMethod === 'eft' }"
+            :class="{
+              'connect-payments-method-active': paymentMethod === 'eft'
+            }"
             @click="paymentMethod = 'eft'"
           >
-            <span class="connect-payments-method-icon">
-              EFT
-            </span>
+            <div class="connect-payments-method-icon eft">
+              <FontAwesomeIcon :icon="faBuildingColumns" />
+            </div>
 
-            <span class="connect-payments-method-content">
+            <div class="connect-payments-method-content">
               <strong>EFT</strong>
+              <small>Pay directly from your bank account</small>
+            </div>
 
-              <small>
-                Pay using electronic transfer
-              </small>
-            </span>
-
-            <span
-              v-if="paymentMethod === 'eft'"
-              class="connect-payments-method-check"
+            <div
+              class="connect-payments-method-selector"
+              :class="{
+                selected: paymentMethod === 'eft'
+              }"
             >
-              ✓
-            </span>
+              <FontAwesomeIcon
+                v-if="paymentMethod === 'eft'"
+                :icon="faCheck"
+              />
+            </div>
           </button>
-
         </div>
 
-        <!-- Card payment form -->
-        <div
-          v-if="paymentMethod === 'card'"
-          class="connect-payments-card-fields"
-        >
+        <!-- Card payment -->
+        <Transition name="connect-payments-form">
+          <div
+            v-if="paymentMethod === 'card'"
+            class="connect-payments-payment-form"
+          >
+            <div class="connect-payments-form-intro">
+              <div>
+                <h3>Card details</h3>
+                <p>Enter the details shown on your bank card.</p>
+              </div>
 
-          <label class="connect-payments-field">
-            <span>
-              Cardholder Name
-            </span>
-
-            <input
-              v-model="cardName"
-              type="text"
-              autocomplete="cc-name"
-              placeholder="Enter cardholder name"
-            >
-          </label>
-
-          <label class="connect-payments-field">
-            <span>
-              Card Number
-            </span>
-
-            <input
-              v-model="cardNumber"
-              type="text"
-              inputmode="numeric"
-              autocomplete="cc-number"
-              maxlength="19"
-              placeholder="1234 5678 9012 3456"
-              @input="formatCardNumber"
-            >
-          </label>
-
-          <!-- Expiry date and CVV sit beside each other -->
-          <div class="connect-payments-card-row">
+              <FontAwesomeIcon :icon="faLock" />
+            </div>
 
             <label class="connect-payments-field">
-              <span>
-                Expiry Date
-              </span>
+              <span>Cardholder Name</span>
 
-              <input
-                v-model="expiryDate"
-                type="text"
-                inputmode="numeric"
-                autocomplete="cc-exp"
-                maxlength="5"
-                placeholder="MM/YY"
-                @input="formatExpiryDate"
-              >
+              <div class="connect-payments-input-wrapper">
+                <FontAwesomeIcon :icon="faUser" />
+
+                <input
+                  v-model="cardName"
+                  type="text"
+                  autocomplete="cc-name"
+                  placeholder="Enter cardholder name"
+                />
+              </div>
             </label>
 
             <label class="connect-payments-field">
-              <span>
-                CVV
-              </span>
+              <span>Card Number</span>
 
-              <input
-                v-model="cvv"
-                type="password"
-                inputmode="numeric"
-                autocomplete="cc-csc"
-                maxlength="4"
-                placeholder="123"
-              >
+              <div class="connect-payments-input-wrapper">
+                <FontAwesomeIcon :icon="faCreditCard" />
+
+                <input
+                  v-model="cardNumber"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="cc-number"
+                  maxlength="19"
+                  placeholder="1234 5678 9012 3456"
+                  @input="formatCardNumber"
+                />
+              </div>
             </label>
 
+            <div class="connect-payments-card-row">
+              <label class="connect-payments-field">
+                <span>Expiry Date</span>
+
+                <div class="connect-payments-input-wrapper">
+                  <FontAwesomeIcon :icon="faCalendarDays" />
+
+                  <input
+                    v-model="expiryDate"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="cc-exp"
+                    maxlength="5"
+                    placeholder="MM/YY"
+                    @input="formatExpiryDate"
+                  />
+                </div>
+              </label>
+
+              <label class="connect-payments-field">
+                <span>CVV</span>
+
+                <div class="connect-payments-input-wrapper">
+                  <FontAwesomeIcon :icon="faLock" />
+
+                  <input
+                    v-model="cvv"
+                    type="password"
+                    inputmode="numeric"
+                    autocomplete="cc-csc"
+                    maxlength="4"
+                    placeholder="123"
+                  />
+                </div>
+              </label>
+            </div>
+
+            <div class="connect-payments-card-security">
+              <FontAwesomeIcon :icon="faShieldHalved" />
+
+              <span>
+                Your card details are protected during this prototype checkout.
+              </span>
+            </div>
           </div>
+        </Transition>
 
-        </div>
+        <!-- EFT payment -->
+        <Transition name="connect-payments-form">
+          <div
+            v-if="paymentMethod === 'eft'"
+            class="connect-payments-eft-information"
+          >
+            <div class="connect-payments-eft-heading">
+              <div class="connect-payments-eft-icon">
+                <FontAwesomeIcon :icon="faBuildingColumns" />
+              </div>
 
-        <!-- EFT information -->
-        <div
-          v-if="paymentMethod === 'eft'"
-          class="connect-payments-eft-information"
-        >
+              <div>
+                <p class="connect-payments-section-label">BANK TRANSFER</p>
+                <h3>Electronic Funds Transfer</h3>
+                <p>
+                  Use the order reference below when making your transfer.
+                </p>
+              </div>
+            </div>
 
-          <div class="connect-payments-eft-heading">
-            <span class="connect-payments-eft-icon">
-              EFT
-            </span>
+            <div class="connect-payments-reference-box">
+              <div>
+                <span>PAYMENT REFERENCE</span>
+                <strong>{{ selectedOrder.orderNumber }}</strong>
+              </div>
 
-            <div>
-              <h3>
-                Electronic Transfer
-              </h3>
+              <FontAwesomeIcon :icon="faCopy" />
+            </div>
+
+            <div class="connect-payments-eft-note">
+              <FontAwesomeIcon :icon="faCircleInfo" />
 
               <p>
-                Use the reference below when making your bank transfer.
+                Your payment will be confirmed once the transfer is received.
+                This prototype currently simulates that process.
               </p>
             </div>
           </div>
+        </Transition>
 
-          <div class="connect-payments-reference-box">
-            <span>
-              Payment Reference
+        <!-- Payment action -->
+        <div class="connect-payments-action">
+          <button
+            type="button"
+            class="connect-payments-submit-button"
+            :disabled="isProcessing"
+            @click="processPayment"
+          >
+            <span v-if="isProcessing">
+              <FontAwesomeIcon
+                :icon="faSpinner"
+                spin
+              />
+              Processing payment...
             </span>
 
-            <strong>
-              {{ selectedOrder.orderNumber }}
-            </strong>
+            <span v-else>
+              Pay R {{ formatPrice(selectedOrder.total) }}
+              <FontAwesomeIcon :icon="faArrowRight" />
+            </span>
+          </button>
+
+          <div class="connect-payments-trust-row">
+            <FontAwesomeIcon :icon="faLock" />
+            <span>Secure checkout</span>
+            <span class="connect-payments-trust-divider"></span>
+            <span>WeConnect Payments</span>
           </div>
-
-          <p class="connect-payments-eft-note">
-            Your payment will be confirmed once the transfer is
-            received. This prototype currently simulates that process.
-          </p>
-
         </div>
 
-        <!-- Payment button -->
-        <button
-          type="button"
-          class="connect-payments-submit-button"
-          :disabled="isProcessing"
-          @click="processPayment"
-        >
-          <span v-if="isProcessing">
-            Processing...
-          </span>
-
-          <span v-else>
-            Pay R {{ formatPrice(selectedOrder.total) }}
-          </span>
-        </button>
-
-        <!-- Prototype payment notice -->
-        <p class="connect-payments-secure-message">
-          This is a frontend prototype. Real payment processing will
-          be connected through a payment provider when the backend is ready.
+        <!-- Prototype notice -->
+        <p class="connect-payments-prototype-message">
+          This is a frontend prototype. Real payment processing will be
+          connected through a payment provider when the backend is ready.
         </p>
-
       </section>
-
     </div>
 
     <!-- Successful payment receipt -->
@@ -340,84 +396,105 @@
         v-if="paymentSuccess"
         class="connect-payments-success-card"
       >
-
         <div class="connect-payments-success-icon">
-          ✓
+          <FontAwesomeIcon :icon="faCheck" />
         </div>
 
         <p class="connect-payments-success-eyebrow">
           PAYMENT COMPLETE
         </p>
 
-        <h2>
-          Payment Successful
-        </h2>
+        <h2>Payment Successful</h2>
 
         <p class="connect-payments-success-message">
-          {{ selectedOrder.orderNumber }} has been marked as paid.
+          Your payment has been recorded and
+          {{ selectedOrder.orderNumber }} is now marked as paid.
         </p>
 
-        <!-- Payment receipt information -->
+        <!-- Receipt -->
         <div class="connect-payments-receipt">
+          <div class="connect-payments-receipt-header">
+            <div>
+              <span>PAYMENT RECEIPT</span>
+              <strong>{{ paymentReference }}</strong>
+            </div>
+
+            <FontAwesomeIcon :icon="faReceipt" />
+          </div>
 
           <div class="connect-payments-receipt-row">
             <span>Order</span>
+            <strong>{{ selectedOrder.orderNumber }}</strong>
+          </div>
 
-            <strong>
-              {{ selectedOrder.orderNumber }}
-            </strong>
+          <div class="connect-payments-receipt-row">
+            <span>Supplier</span>
+            <strong>{{ selectedOrder.supplier }}</strong>
           </div>
 
           <div class="connect-payments-receipt-row">
             <span>Payment Method</span>
-
             <strong>
-              {{ paymentMethod === 'card' ? 'Card' : 'EFT' }}
+              {{ paymentMethod === 'card' ? 'Bank Card' : 'EFT' }}
             </strong>
           </div>
 
           <div class="connect-payments-receipt-row">
             <span>Payment Reference</span>
-
-            <strong>
-              {{ paymentReference }}
-            </strong>
+            <strong>{{ paymentReference }}</strong>
           </div>
 
           <div class="connect-payments-receipt-total">
             <span>Total Paid</span>
-
             <strong>
               R {{ formatPrice(selectedOrder.total) }}
             </strong>
           </div>
-
         </div>
 
-        <router-link
-          to="/small-business/orders"
-          class="connect-payments-success-link"
-        >
-          Return to Orders
-        </router-link>
-
+        <div class="connect-payments-success-actions">
+          <router-link
+            to="/small-business/orders"
+            class="connect-payments-success-link primary"
+          >
+            <FontAwesomeIcon :icon="faArrowLeft" />
+            Return to Orders
+          </router-link>
+        </div>
       </section>
     </Transition>
-
   </div>
 </template>
 
 <script setup>
-// Import the Vue functions needed for this page
 import { computed, ref } from 'vue'
-
-// Import the route information
 import { useRoute } from 'vue-router'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-// Import the shared order data
+import {
+  faArrowLeft,
+  faArrowRight,
+  faBuildingColumns,
+  faCalendarDays,
+  faCheck,
+  faCircleCheck,
+  faCircleExclamation,
+  faCircleInfo,
+  faCopy,
+  faCreditCard,
+  faLock,
+  faReceipt,
+  faShieldHalved,
+  faSpinner,
+  faStore,
+  faTruckFast,
+  faUser
+} from '@fortawesome/free-solid-svg-icons'
+
+// Shared order data
 import { orders } from '../data/orders'
 
-// SweetAlert2 handles the payment confirmation and feedback
+// SweetAlert2 handles payment confirmation and feedback
 import Swal from 'sweetalert2'
 
 // Get the current route
@@ -431,16 +508,14 @@ const selectedOrder = computed(() => {
 // Store the selected payment method
 const paymentMethod = ref('card')
 
-// Store the card information entered by the user
+// Store card information entered by the user
 const cardName = ref('')
 const cardNumber = ref('')
 const expiryDate = ref('')
 const cvv = ref('')
 
-// Store the payment processing state
+// Store payment state
 const isProcessing = ref(false)
-
-// Store whether the payment was successful
 const paymentSuccess = ref(false)
 
 // Store the payment reference after payment
@@ -457,10 +532,12 @@ function formatCardNumber(event) {
     .replace(/\D/g, '')
     .slice(0, 16)
 
-  cardNumber.value = numbersOnly.replace(/(.{4})/g, '$1 ').trim()
+  cardNumber.value = numbersOnly
+    .replace(/(.{4})/g, '$1 ')
+    .trim()
 }
 
-// Format the expiry date as MM/YY
+// Format expiry date as MM/YY
 function formatExpiryDate(event) {
   const numbersOnly = event.target.value
     .replace(/\D/g, '')
@@ -486,6 +563,7 @@ function validateCardDetails() {
     return 'Please enter a valid 16-digit card number.'
   }
 
+  // Check that the expiry follows MM/YY format
   if (!/^\d{2}\/\d{2}$/.test(expiryDate.value)) {
     return 'Please enter the expiry date in MM/YY format.'
   }
@@ -499,7 +577,6 @@ function validateCardDetails() {
 
 // Simulate the payment process
 async function processPayment() {
-
   // Stop the process if there is no selected order
   if (!selectedOrder.value) {
     return
@@ -521,7 +598,7 @@ async function processPayment() {
     }
   }
 
-  // Ask for confirmation before processing the payment
+  // Ask for confirmation before processing
   const confirmation = await Swal.fire({
     title: 'Confirm payment',
     text: `You are about to pay R ${formatPrice(selectedOrder.value.total)} for ${selectedOrder.value.orderNumber}.`,
@@ -538,10 +615,10 @@ async function processPayment() {
     return
   }
 
-  // Show the processing state on the page
+  // Show processing state
   isProcessing.value = true
 
-  // Show a loading SweetAlert while the prototype processes
+  // Show loading feedback
   Swal.fire({
     title: 'Processing payment',
     text: 'Please wait while your payment is being processed.',
@@ -555,7 +632,6 @@ async function processPayment() {
 
   // Simulate a short payment request
   setTimeout(async () => {
-
     // Mark the order as paid for the frontend prototype
     selectedOrder.value.paymentStatus = 'Paid'
 
@@ -565,13 +641,13 @@ async function processPayment() {
     // Store the temporary payment reference
     selectedOrder.value.paymentId = paymentReference.value
 
-    // Stop the processing state
+    // Stop processing
     isProcessing.value = false
 
-    // Close the loading alert
+    // Close loading alert
     Swal.close()
 
-    // Show the successful payment notification
+    // Show success notification
     await Swal.fire({
       icon: 'success',
       title: 'Payment Successful',
@@ -580,208 +656,377 @@ async function processPayment() {
       confirmButtonColor: '#4E342E'
     })
 
-    // Show the on-page receipt after the SweetAlert
+    // Show the on-page receipt
     paymentSuccess.value = true
-
   }, 1500)
 }
 </script>
 
 <style scoped>
-
-/* Main page */
+/* Main payment page */
 .connect-payments-page {
   min-height: 100vh;
-  padding: 32px;
+  padding: 38px 40px 60px;
   box-sizing: border-box;
   background: #E8E2DD;
   color: #5C3D24;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Page heading */
+/* Header */
 .connect-payments-header {
-  max-width: 1100px;
-  margin: 0 auto 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  max-width: 1180px;
+  margin: 0 auto 30px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #D8CBC4;
+}
+
+.connect-payments-header-copy {
+  min-width: 0;
 }
 
 .connect-payments-eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 9px;
   color: #D17A4A;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
 }
 
 .connect-payments-title {
   margin: 0 0 8px;
   color: #4E342E;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 38px;
+  font-size: 40px;
   font-weight: 600;
   line-height: 1.1;
 }
 
 .connect-payments-description {
-  max-width: 650px;
+  max-width: 620px;
   margin: 0;
   color: #7A665B;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.6;
 }
 
-/* Main payment layout */
-.connect-payments-layout {
-  display: grid;
-  grid-template-columns: minmax(300px, 0.85fr) minmax(400px, 1.15fr);
-  gap: 24px;
-  max-width: 1100px;
-  margin: 0 auto;
-  align-items: start;
-}
-
-/* Shared card styling */
-.connect-payments-order-summary,
-.connect-payments-form-section {
-  padding: 28px;
-  background: #FFFEFC;
-  border-radius: 16px;
-  box-shadow: 0 4px 18px rgba(78, 52, 46, 0.08);
-  box-sizing: border-box;
-}
-
-/* Section headings */
-.connect-payments-section-label {
-  color: #D17A4A;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.7px;
-}
-
-.connect-payments-order-number,
-.connect-payments-form-title {
-  margin: 7px 0 0;
-  color: #4E342E;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 27px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.connect-payments-order-status {
+.connect-payments-header-badge {
   display: inline-flex;
-  margin-top: 12px;
-  padding: 6px 10px;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border: 1px solid #DDD0C9;
   border-radius: 999px;
-  background: #F8E8D9;
-  color: #8A5A32;
+  background: rgba(255, 254, 252, 0.72);
+  color: #5C3D24;
   font-size: 11px;
   font-weight: 700;
 }
 
-/* Supplier and delivery information */
-.connect-payments-supplier-information {
-  margin: 28px 0;
-  padding: 17px 0;
-  border-top: 1px solid #E8E2DD;
-  border-bottom: 1px solid #E8E2DD;
+.connect-payments-header-badge svg {
+  color: #3F6847;
 }
 
-.connect-payments-info-row {
+/* Main checkout layout */
+.connect-payments-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.82fr) minmax(450px, 1.18fr);
+  gap: 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* Main panels */
+.connect-payments-order-panel,
+.connect-payments-payment-panel {
+  border: 1px solid rgba(220, 205, 197, 0.8);
+  border-radius: 18px;
+  background: #FFFEFC;
+  box-shadow: 0 8px 26px rgba(78, 52, 46, 0.07);
+  box-sizing: border-box;
+}
+
+.connect-payments-order-panel {
+  padding: 27px;
+}
+
+.connect-payments-payment-panel {
+  padding: 29px;
+}
+
+/* Panel heading */
+.connect-payments-panel-top,
+.connect-payments-panel-heading {
+  margin-bottom: 24px;
+}
+
+.connect-payments-panel-top {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
-  padding: 9px 0;
+  gap: 15px;
+}
+
+.connect-payments-section-label {
+  margin: 0 0 7px;
+  color: #D17A4A;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
+}
+
+.connect-payments-panel-top h2 {
+  margin: 0;
+  color: #4E342E;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.connect-payments-panel-heading h2 {
+  margin: 0 0 7px;
+  color: #4E342E;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 27px;
+  font-weight: 600;
+}
+
+.connect-payments-panel-heading > p:last-child {
+  margin: 0;
+  color: #8A776C;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.connect-payments-pending-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #F8E8D9;
+  color: #8A5A32;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.connect-payments-pending-pill span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #D17A4A;
+}
+
+/* Supplier and delivery identity */
+.connect-payments-order-identity {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 19px;
+}
+
+.connect-payments-identity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #E8E2DD;
+  border-radius: 11px;
+  background: #FCF9F6;
+}
+
+.connect-payments-identity-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: #F1E5DE;
+  color: #8A5A32;
+  font-size: 12px;
+}
+
+.connect-payments-identity-item div:last-child {
+  min-width: 0;
+}
+
+.connect-payments-identity-item span {
+  display: block;
+  margin-bottom: 3px;
+  color: #9A887E;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.connect-payments-identity-item strong {
+  display: block;
+  overflow: hidden;
+  color: #4E342E;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Amount highlight */
+.connect-payments-amount-card {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 21px;
+  padding: 20px;
+  border-radius: 14px;
+  background: #4E342E;
+  color: #FFFEFC;
+}
+
+.connect-payments-amount-card::after {
+  position: absolute;
+  right: -35px;
+  bottom: -45px;
+  width: 130px;
+  height: 130px;
+  border: 1px solid rgba(255, 254, 252, 0.08);
+  border-radius: 50%;
+  content: "";
+}
+
+.connect-payments-amount-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #DCCDC5;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.connect-payments-amount-heading svg {
+  color: #D17A4A;
   font-size: 13px;
 }
 
-.connect-payments-info-row span {
-  color: #8A776C;
+.connect-payments-amount-card > strong {
+  display: block;
+  margin-top: 8px;
+  color: #FFFEFC;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 32px;
+  font-weight: 500;
 }
 
-.connect-payments-info-row strong {
-  color: #4E342E;
-  text-align: right;
+.connect-payments-amount-card p {
+  margin: 6px 0 0;
+  color: #CDBFB8;
+  font-size: 10px;
 }
 
 /* Price breakdown */
 .connect-payments-price-breakdown {
-  margin-top: 20px;
+  margin-top: 4px;
 }
 
 .connect-payments-price-row {
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  padding: 10px 0;
+  padding: 9px 0;
   color: #7A665B;
-  font-size: 14px;
+  font-size: 12px;
+}
+
+.connect-payments-price-row strong {
+  color: #5C3D24;
+  font-weight: 600;
+}
+
+.connect-payments-price-divider {
+  height: 1px;
+  margin: 7px 0;
+  background: #E5DCD6;
 }
 
 .connect-payments-total-row {
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  margin-top: 12px;
-  padding-top: 18px;
-  border-top: 1px solid #DCCDC5;
+  padding-top: 10px;
   color: #4E342E;
-  font-size: 21px;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .connect-payments-total-row strong {
   font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
 }
 
-/* Small note inside the order summary */
+/* Payment readiness note */
 .connect-payments-summary-note {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-top: 24px;
+  margin-top: 22px;
   padding: 13px;
-  border-radius: 10px;
-  background: #F6EEE9;
+  border: 1px solid #E4DCD6;
+  border-radius: 11px;
+  background: #F8F3EF;
 }
 
 .connect-payments-summary-note-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   border-radius: 50%;
   background: #E6F0E8;
   color: #3F6847;
+  font-size: 10px;
+}
+
+.connect-payments-summary-note strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #5C3D24;
   font-size: 11px;
-  font-weight: 700;
 }
 
 .connect-payments-summary-note p {
   margin: 0;
-  color: #7A665B;
-  font-size: 12px;
+  color: #8A776C;
+  font-size: 10px;
   line-height: 1.5;
 }
 
-/* Payment method choices */
+/* Payment methods */
 .connect-payments-methods {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 25px 0;
+  gap: 11px;
+  margin-bottom: 23px;
 }
 
 .connect-payments-method-card {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 76px;
-  padding: 14px;
+  gap: 11px;
+  min-height: 75px;
+  padding: 13px;
   border: 1px solid #DCCDC5;
-  border-radius: 11px;
+  border-radius: 12px;
   background: #FFFEFC;
   color: #4E342E;
   text-align: left;
@@ -797,77 +1042,136 @@ async function processPayment() {
 .connect-payments-method-card:hover {
   border-color: #D17A4A;
   transform: translateY(-1px);
-  box-shadow: 0 5px 14px rgba(78, 52, 46, 0.07);
+  box-shadow: 0 6px 16px rgba(78, 52, 46, 0.07);
 }
 
 .connect-payments-method-active {
-  border: 2px solid #D17A4A;
-  background: #F8EEE8;
+  border-color: #D17A4A;
+  background: #FBF1EB;
+  box-shadow: 0 0 0 1px #D17A4A;
 }
 
 .connect-payments-method-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 39px;
+  height: 39px;
   flex-shrink: 0;
   border-radius: 9px;
   background: #4E342E;
   color: #FFFEFC;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+  font-size: 14px;
+}
+
+.connect-payments-method-icon.eft {
+  background: #5C3D24;
 }
 
 .connect-payments-method-content {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
 .connect-payments-method-content strong {
   color: #4E342E;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .connect-payments-method-content small {
-  color: #7A665B;
-  font-size: 11px;
+  color: #8A776C;
+  font-size: 9px;
   line-height: 1.4;
 }
 
-.connect-payments-method-check {
+.connect-payments-method-selector {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   margin-left: auto;
-  color: #D17A4A;
-  font-size: 17px;
-  font-weight: 800;
+  border: 1px solid #CFC0B8;
+  border-radius: 50%;
+  color: #FFFEFC;
+  font-size: 9px;
+  box-sizing: border-box;
 }
 
-/* Card fields */
+.connect-payments-method-selector.selected {
+  border-color: #D17A4A;
+  background: #D17A4A;
+}
+
+/* Card form */
+.connect-payments-payment-form {
+  padding-top: 1px;
+}
+
+.connect-payments-form-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 19px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #E8E2DD;
+}
+
+.connect-payments-form-intro h3 {
+  margin: 0 0 3px;
+  color: #4E342E;
+  font-size: 14px;
+}
+
+.connect-payments-form-intro p {
+  margin: 0;
+  color: #8A776C;
+  font-size: 10px;
+}
+
+.connect-payments-form-intro > svg {
+  color: #8A5A32;
+  font-size: 14px;
+}
+
 .connect-payments-card-fields {
   display: grid;
-  gap: 17px;
+  gap: 15px;
 }
 
 .connect-payments-field {
   display: grid;
-  gap: 7px;
-  color: #4E342E;
-  font-size: 13px;
-  font-weight: 600;
+  gap: 6px;
+  color: #5C3D24;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.connect-payments-input-wrapper {
+  position: relative;
+}
+
+.connect-payments-input-wrapper > svg {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  color: #A18E84;
+  font-size: 12px;
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .connect-payments-field input {
   width: 100%;
-  padding: 13px 14px;
+  padding: 12px 13px 12px 36px;
   border: 1px solid #DCCDC5;
   border-radius: 8px;
   outline: none;
   background: #FFFEFC;
   color: #4E342E;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 12px;
   box-sizing: border-box;
   transition:
     border-color 180ms ease,
@@ -888,15 +1192,28 @@ async function processPayment() {
 .connect-payments-card-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 13px;
 }
 
-/* EFT information */
+.connect-payments-card-security {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 1px;
+  color: #7C897F;
+  font-size: 9px;
+}
+
+.connect-payments-card-security svg {
+  color: #4F7458;
+}
+
+/* EFT */
 .connect-payments-eft-information {
-  padding: 20px;
-  border: 1px solid #E8D9D0;
-  border-radius: 11px;
-  background: #F6EEE9;
+  padding: 19px;
+  border: 1px solid #E6D7CE;
+  border-radius: 12px;
+  background: #F8F2EE;
 }
 
 .connect-payments-eft-heading {
@@ -915,26 +1232,29 @@ async function processPayment() {
   border-radius: 9px;
   background: #4E342E;
   color: #FFFEFC;
-  font-size: 9px;
-  font-weight: 800;
+  font-size: 14px;
 }
 
-.connect-payments-eft-information h3 {
-  margin: 0 0 5px;
+.connect-payments-eft-heading h3 {
+  margin: 0 0 4px;
   color: #4E342E;
-  font-size: 16px;
+  font-size: 15px;
 }
 
-.connect-payments-eft-information p {
+.connect-payments-eft-heading > div:last-child > p:last-child {
   margin: 0;
   color: #7A665B;
-  font-size: 13px;
+  font-size: 10px;
   line-height: 1.5;
 }
 
 .connect-payments-reference-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
   margin-top: 17px;
-  padding: 14px;
+  padding: 13px;
   border: 1px solid #E0D2CA;
   border-radius: 8px;
   background: #FFFEFC;
@@ -942,33 +1262,55 @@ async function processPayment() {
 
 .connect-payments-reference-box span {
   display: block;
-  margin-bottom: 5px;
-  color: #8A776C;
-  font-size: 11px;
+  margin-bottom: 4px;
+  color: #9A887E;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
 
 .connect-payments-reference-box strong {
   color: #4E342E;
-  font-size: 14px;
+  font-size: 13px;
+}
+
+.connect-payments-reference-box > svg {
+  color: #8A776C;
+  font-size: 12px;
 }
 
 .connect-payments-eft-note {
-  margin-top: 14px !important;
-  font-size: 11px !important;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 13px 0 0;
+  color: #8A776C;
+  font-size: 9px;
+  line-height: 1.5;
 }
 
-/* Main payment button */
+.connect-payments-eft-note svg {
+  margin-top: 2px;
+  flex-shrink: 0;
+  color: #D17A4A;
+}
+
+/* Payment action */
+.connect-payments-action {
+  margin-top: 24px;
+}
+
 .connect-payments-submit-button {
   width: 100%;
-  margin-top: 25px;
-  padding: 15px;
+  min-height: 49px;
+  padding: 13px 16px;
   border: none;
   border-radius: 9px;
   background: #D17A4A;
   color: #FFFEFC;
   font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   cursor: pointer;
   box-sizing: border-box;
   transition:
@@ -977,10 +1319,17 @@ async function processPayment() {
     box-shadow 180ms ease;
 }
 
+.connect-payments-submit-button span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
 .connect-payments-submit-button:hover:not(:disabled) {
   background: #C46C3E;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(209, 122, 74, 0.2);
+  box-shadow: 0 7px 18px rgba(209, 122, 74, 0.22);
 }
 
 .connect-payments-submit-button:active:not(:disabled) {
@@ -992,24 +1341,58 @@ async function processPayment() {
   cursor: not-allowed;
 }
 
-/* Prototype notice */
-.connect-payments-secure-message {
+.connect-payments-trust-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 11px;
+  color: #96857B;
+  font-size: 8px;
+}
+
+.connect-payments-trust-row svg {
+  color: #55715B;
+}
+
+.connect-payments-trust-divider {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #B9AAA2;
+}
+
+.connect-payments-prototype-message {
   margin: 13px 0 0;
-  color: #8A776D;
-  font-size: 11px;
+  color: #9A887E;
+  font-size: 8px;
   line-height: 1.5;
   text-align: center;
 }
 
-/* Error card */
+/* Form transitions */
+.connect-payments-form-enter-active,
+.connect-payments-form-leave-active {
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.connect-payments-form-enter-from,
+.connect-payments-form-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* Error state */
 .connect-payments-error-card {
   max-width: 600px;
-  margin: 50px auto;
-  padding: 32px;
-  background: #FFFEFC;
+  margin: 55px auto;
+  padding: 38px;
   border: 1px solid #E3D7D0;
-  border-radius: 16px;
-  box-shadow: 0 4px 18px rgba(78, 52, 46, 0.08);
+  border-radius: 18px;
+  background: #FFFEFC;
+  box-shadow: 0 8px 25px rgba(78, 52, 46, 0.07);
   text-align: center;
   box-sizing: border-box;
 }
@@ -1018,27 +1401,34 @@ async function processPayment() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   margin-bottom: 15px;
   border-radius: 50%;
   background: #F8E2DD;
   color: #9A4938;
-  font-size: 20px;
+  font-size: 18px;
+}
+
+.connect-payments-error-eyebrow {
+  margin: 0 0 6px;
+  color: #D17A4A;
+  font-size: 9px;
   font-weight: 800;
+  letter-spacing: 1.5px;
 }
 
 .connect-payments-error-card h2 {
   margin: 0 0 9px;
   color: #4E342E;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 25px;
+  font-size: 26px;
 }
 
-.connect-payments-error-card p {
-  margin: 0 0 20px;
+.connect-payments-error-card p:not(.connect-payments-error-eyebrow) {
+  margin: 0 0 21px;
   color: #7A665B;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .connect-payments-return-link,
@@ -1046,12 +1436,12 @@ async function processPayment() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 11px 18px;
-  border-radius: 9px;
-  background: #4E342E;
-  color: #FFFEFC;
+  gap: 8px;
+  min-height: 40px;
+  padding: 10px 17px;
+  border-radius: 8px;
   text-decoration: none;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   transition:
     background 180ms ease,
@@ -1059,21 +1449,26 @@ async function processPayment() {
     box-shadow 180ms ease;
 }
 
-.connect-payments-return-link:hover,
-.connect-payments-success-link:hover {
+.connect-payments-return-link {
+  background: #4E342E;
+  color: #FFFEFC;
+}
+
+.connect-payments-return-link:hover {
   background: #5C3D24;
   transform: translateY(-1px);
   box-shadow: 0 5px 14px rgba(78, 52, 46, 0.16);
 }
 
-/* Successful payment receipt */
+/* Success receipt */
 .connect-payments-success-card {
-  max-width: 600px;
-  margin: 30px auto 0;
-  padding: 35px;
+  max-width: 650px;
+  margin: 35px auto 0;
+  padding: 40px;
+  border: 1px solid #DDD2CB;
+  border-radius: 20px;
   background: #FFFEFC;
-  border-radius: 16px;
-  box-shadow: 0 4px 18px rgba(78, 52, 46, 0.08);
+  box-shadow: 0 10px 30px rgba(78, 52, 46, 0.08);
   text-align: center;
   box-sizing: border-box;
 }
@@ -1082,124 +1477,205 @@ async function processPayment() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 58px;
-  height: 58px;
-  margin-bottom: 15px;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
   border-radius: 50%;
   background: #E6F0E8;
   color: #3F6847;
-  font-size: 27px;
-  font-weight: 700;
+  font-size: 25px;
 }
 
 .connect-payments-success-eyebrow {
   margin: 0 0 6px;
   color: #D17A4A;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.6px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
 }
 
 .connect-payments-success-card h2 {
   margin: 0 0 9px;
   color: #4E342E;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 29px;
+  font-size: 31px;
   font-weight: 600;
 }
 
 .connect-payments-success-message {
-  margin: 0 0 22px;
+  max-width: 450px;
+  margin: 0 auto 25px;
   color: #7A665B;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
-/* Simple payment receipt */
+/* Receipt */
 .connect-payments-receipt {
-  margin-bottom: 24px;
-  padding: 15px 18px;
+  margin-bottom: 25px;
+  padding: 18px 20px;
   border: 1px solid #E8E2DD;
-  border-radius: 11px;
+  border-radius: 12px;
   background: #FCF9F6;
   text-align: left;
 }
 
-.connect-payments-receipt-row,
-.connect-payments-receipt-total {
+.connect-payments-receipt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 9px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #E2D8D2;
+}
+
+.connect-payments-receipt-header div {
+  display: grid;
+  gap: 3px;
+}
+
+.connect-payments-receipt-header span {
+  color: #9A887E;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.connect-payments-receipt-header strong {
+  color: #4E342E;
+  font-size: 12px;
+}
+
+.connect-payments-receipt-header > svg {
+  color: #D17A4A;
+  font-size: 15px;
+}
+
+.connect-payments-receipt-row {
   display: flex;
   justify-content: space-between;
   gap: 20px;
   padding: 9px 0;
-  font-size: 12px;
-}
-
-.connect-payments-receipt-row {
   color: #8A776C;
+  font-size: 10px;
 }
 
 .connect-payments-receipt-row strong {
   color: #5C3D24;
+  font-weight: 700;
   text-align: right;
 }
 
 .connect-payments-receipt-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
   margin-top: 5px;
-  padding-top: 13px;
+  padding-top: 14px;
   border-top: 1px solid #E0D2CA;
   color: #4E342E;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .connect-payments-receipt-total strong {
+  color: #4E342E;
   font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
 }
 
-/* Success card animation */
+.connect-payments-success-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.connect-payments-success-link.primary {
+  background: #4E342E;
+  color: #FFFEFC;
+}
+
+.connect-payments-success-link.primary:hover {
+  background: #5C3D24;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(78, 52, 46, 0.16);
+}
+
+/* Success animation */
 .connect-payments-success-enter-active {
   transition:
-    opacity 250ms ease,
-    transform 250ms ease;
+    opacity 280ms ease,
+    transform 280ms ease;
 }
 
 .connect-payments-success-enter-from {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(12px);
 }
 
 /* Tablet */
-@media (max-width: 900px) {
+@media (max-width: 950px) {
   .connect-payments-page {
-    padding: 24px;
+    padding: 28px 24px 50px;
   }
 
   .connect-payments-layout {
     grid-template-columns: 1fr;
   }
 
-  .connect-payments-order-summary {
+  .connect-payments-order-panel {
     order: 1;
   }
 
-  .connect-payments-form-section {
+  .connect-payments-payment-panel {
     order: 2;
   }
 }
 
+/* Smaller tablet */
+@media (max-width: 700px) {
+  .connect-payments-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 17px;
+  }
+
+  .connect-payments-header-badge {
+    align-self: flex-start;
+  }
+
+  .connect-payments-order-identity {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Mobile */
-@media (max-width: 640px) {
+@media (max-width: 560px) {
   .connect-payments-page {
-    padding: 20px 16px;
+    padding: 22px 16px 40px;
   }
 
   .connect-payments-title {
-    font-size: 31px;
+    font-size: 32px;
   }
 
-  .connect-payments-order-summary,
-  .connect-payments-form-section {
-    padding: 20px;
-    border-radius: 14px;
+  .connect-payments-header {
+    margin-bottom: 22px;
+    padding-bottom: 20px;
+  }
+
+  .connect-payments-order-panel,
+  .connect-payments-payment-panel {
+    padding: 21px;
+    border-radius: 15px;
+  }
+
+  .connect-payments-panel-top {
+    flex-direction: column;
+  }
+
+  .connect-payments-pending-pill {
+    align-self: flex-start;
   }
 
   .connect-payments-methods {
@@ -1210,18 +1686,8 @@ async function processPayment() {
     grid-template-columns: 1fr;
   }
 
-  .connect-payments-info-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .connect-payments-info-row strong {
-    text-align: left;
-  }
-
   .connect-payments-success-card {
-    padding: 26px 20px;
+    padding: 30px 20px;
   }
 
   .connect-payments-receipt-row,
@@ -1235,5 +1701,4 @@ async function processPayment() {
     text-align: left;
   }
 }
-
 </style>

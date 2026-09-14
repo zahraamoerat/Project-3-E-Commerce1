@@ -1,194 +1,302 @@
-
 <template>
 
   <!-- Small Business Orders page -->
   <div class="connect-sb-orders-page">
 
-    <!-- Page heading -->
+    <!-- Main page heading -->
     <header class="connect-sb-orders-header">
-      <div>
+
+      <!-- Main title area -->
+      <div class="connect-sb-orders-heading">
         <p class="connect-sb-orders-eyebrow">
           ORDER MANAGEMENT
         </p>
 
         <h1 class="connect-sb-orders-title">
-          My Orders
+          Orders
         </h1>
+      </div>
 
-        <p class="connect-sb-orders-description">
-          Keep track of your supplier orders, payments and deliveries.
+      <!-- Date sits neatly in the top-right -->
+      <div class="connect-sb-orders-date-wrapper">
+        <FontAwesomeIcon
+          :icon="faCalendarDays"
+          class="connect-sb-orders-calendar-icon"
+        />
+
+        <p class="connect-sb-orders-date">
+          Tuesday, September 1, 2026
         </p>
       </div>
+
+      <!-- Full-width divider separates the header from the search -->
+      <span class="connect-sb-orders-header-divider"></span>
+
+      <!-- Search sits below the divider -->
+      <div class="connect-sb-orders-search">
+        <FontAwesomeIcon
+          :icon="faMagnifyingGlass"
+          class="connect-sb-orders-search-icon"
+        />
+
+        <input
+          v-model="searchQuery"
+          type="search"
+          placeholder="Search orders..."
+          aria-label="Search orders"
+        />
+      </div>
+
     </header>
 
 
-    <!-- Quick order summary -->
-    <section class="connect-sb-orders-summary">
+    <!-- Order filters -->
+    <section class="connect-sb-orders-toolbar">
 
-      <!-- Total orders -->
-      <div class="connect-sb-orders-summary-card">
-        <span class="connect-sb-orders-summary-icon">📦</span>
+      <div class="connect-sb-orders-tabs">
 
-        <div>
-          <p>Total Orders</p>
-          <strong>{{ orders.length }}</strong>
-        </div>
+        <button
+          type="button"
+          class="connect-sb-orders-tab"
+          :class="{ active: activeFilter === 'All' }"
+          @click="activeFilter = 'All'"
+        >
+          All
+        </button>
+
+        <button
+          type="button"
+          class="connect-sb-orders-tab"
+          :class="{ active: activeFilter === 'On Process' }"
+          @click="activeFilter = 'On Process'"
+        >
+          On Process
+        </button>
+
+        <button
+          type="button"
+          class="connect-sb-orders-tab"
+          :class="{ active: activeFilter === 'Completed' }"
+          @click="activeFilter = 'Completed'"
+        >
+          Completed
+        </button>
+
       </div>
 
-      <!-- Orders that still need payment -->
-      <div class="connect-sb-orders-summary-card">
-        <span class="connect-sb-orders-summary-icon">💳</span>
+      <!-- Active order count -->
+      <div class="connect-sb-orders-count">
+        <strong>{{ activeOrdersCount }}</strong>
+        <span>active orders</span>
 
-        <div>
-          <p>Awaiting Payment</p>
-          <strong>{{ unpaidOrders }}</strong>
-        </div>
-      </div>
+        <span class="connect-sb-orders-count-divider">
+          of
+        </span>
 
-      <!-- Orders that are still being delivered -->
-      <div class="connect-sb-orders-summary-card">
-        <span class="connect-sb-orders-summary-icon">🚚</span>
-
-        <div>
-          <p>Active Deliveries</p>
-          <strong>{{ activeDeliveries }}</strong>
-        </div>
+        <strong>{{ orders.length }}</strong>
+        <span>total</span>
       </div>
 
     </section>
 
 
-    <!-- Orders table -->
-    <section class="connect-sb-orders-table-card">
+    <!-- Orders -->
+    <section class="connect-sb-orders-content">
 
-      <div class="connect-sb-orders-table-heading">
+      <div class="connect-sb-orders-section-heading">
+
         <div>
-          <h2>Recent Orders</h2>
-
-          <p>
-            Your latest purchases from suppliers.
+          <p class="connect-sb-orders-section-eyebrow">
+            YOUR ORDERS
           </p>
+
+          <h2>
+            Recent Orders
+          </h2>
         </div>
 
-        <span class="connect-sb-orders-table-accent"></span>
+        <span class="connect-sb-orders-heading-line"></span>
+
       </div>
 
 
-      <!-- Allows the table to scroll on small screens -->
-      <div class="connect-sb-orders-table-wrapper">
+      <!-- Order cards -->
+      <div
+        v-if="filteredOrders.length"
+        class="connect-sb-orders-grid"
+      >
 
-        <table class="connect-sb-orders-table">
+        <article
+          v-for="order in filteredOrders"
+          :key="order.id"
+          class="connect-sb-orders-card"
+          :class="{
+            'connect-sb-orders-card-selected':
+              selectedOrder?.id === order.id
+          }"
+        >
 
-          <thead>
-            <tr>
-              <th>Order Number</th>
-              <th>Supplier</th>
-              <th>Order Date</th>
-              <th>Order Status</th>
-              <th>Delivery</th>
-              <th>Payment</th>
-              <th>Action</th>
-            </tr>
-          </thead>
+          <!-- Selected order indicator -->
+          <div
+            v-if="selectedOrder?.id === order.id"
+            class="connect-sb-orders-selected-label"
+          >
+            <span></span>
+            Viewing details
+          </div>
 
 
-          <tbody>
+          <!-- Card top -->
+          <div class="connect-sb-orders-card-top">
 
-            <tr
-              v-for="order in orders"
-              :key="order.id"
-              class="connect-sb-orders-row"
+            <div class="connect-sb-orders-customer">
+
+              <div class="connect-sb-orders-avatar">
+                {{ getInitials(order.supplier) }}
+              </div>
+
+              <div>
+                <h3>
+                  {{ order.supplier }}
+                </h3>
+
+                <p>
+                  #{{ order.orderNumber }}
+                </p>
+              </div>
+
+            </div>
+
+
+            <!-- Order status -->
+            <span
+              class="connect-sb-orders-status"
+              :class="getStatusClass(order.status)"
+            >
+              <span class="connect-sb-orders-status-dot"></span>
+              {{ order.status }}
+            </span>
+
+          </div>
+
+
+          <!-- Card metadata -->
+          <div class="connect-sb-orders-card-meta">
+
+            <span>
+              <FontAwesomeIcon :icon="faClock" />
+              {{ order.date }}
+            </span>
+
+            <span>
+              <FontAwesomeIcon :icon="faTruck" />
+              {{ order.deliveryStatus }}
+            </span>
+
+          </div>
+
+
+          <!-- Items -->
+          <div class="connect-sb-orders-items">
+
+            <div class="connect-sb-orders-items-heading">
+              <span>ORDER ITEMS</span>
+              <span>{{ getOrderItems(order).length }} items</span>
+            </div>
+
+
+            <div
+              v-for="item in getOrderItems(order)"
+              :key="item.name"
+              class="connect-sb-orders-item"
             >
 
-              <!-- Order number -->
-              <td>
-                <span class="connect-sb-orders-number">
-                  {{ order.orderNumber }}
+              <div class="connect-sb-orders-item-info">
+
+                <span class="connect-sb-orders-item-name">
+                  {{ item.name }}
                 </span>
-              </td>
 
-
-              <!-- Supplier -->
-              <td>
-                <span class="connect-sb-orders-supplier">
-                  {{ order.supplier }}
+                <span class="connect-sb-orders-item-quantity">
+                  Qty {{ item.quantity }}
                 </span>
-              </td>
+
+              </div>
+
+              <strong>
+                R {{ Number(item.price).toFixed(2) }}
+              </strong>
+
+            </div>
+
+          </div>
 
 
-              <!-- Order date -->
-              <td>
-                <span class="connect-sb-orders-date">
-                  {{ order.date }}
-                </span>
-              </td>
+          <!-- Card footer -->
+          <div class="connect-sb-orders-card-footer">
+
+            <div class="connect-sb-orders-total">
+
+              <span>Total</span>
+
+              <strong>
+                R {{ Number(order.total).toFixed(2) }}
+              </strong>
+
+            </div>
 
 
-              <!-- Order status -->
-              <td>
-                <span
-                  class="connect-sb-orders-status"
-                  :class="getStatusClass(order.status)"
-                >
-                  <span class="connect-sb-orders-status-dot"></span>
-                  {{ order.status }}
-                </span>
-              </td>
+            <div class="connect-sb-orders-card-actions">
+
+              <button
+                type="button"
+                class="connect-sb-orders-view-button"
+                :class="{
+                  active: selectedOrder?.id === order.id
+                }"
+                @click="viewOrder(order)"
+              >
+                {{ selectedOrder?.id === order.id ? 'Viewing' : 'See Details' }}
+                <span>→</span>
+              </button>
 
 
-              <!-- Delivery status -->
-              <td>
-                <span
-                  class="connect-sb-orders-status"
-                  :class="getStatusClass(order.deliveryStatus)"
-                >
-                  <span class="connect-sb-orders-status-dot"></span>
-                  {{ order.deliveryStatus }}
-                </span>
-              </td>
+              <!-- Only show payment when the order is unpaid -->
+              <router-link
+                v-if="order.paymentStatus === 'Unpaid'"
+                :to="`/payment/${order.id}`"
+                class="connect-sb-orders-pay-button"
+              >
+                <FontAwesomeIcon :icon="faCreditCard" />
+                Pay Bills
+              </router-link>
+
+            </div>
+
+          </div>
+
+        </article>
+
+      </div>
 
 
-              <!-- Payment status -->
-              <td>
-                <span
-                  class="connect-sb-orders-status"
-                  :class="getPaymentClass(order.paymentStatus)"
-                >
-                  <span class="connect-sb-orders-status-dot"></span>
-                  {{ order.paymentStatus }}
-                </span>
-              </td>
+      <!-- No search results -->
+      <div
+        v-else
+        class="connect-sb-orders-empty"
+      >
 
+        <div class="connect-sb-orders-empty-icon">
+          <FontAwesomeIcon :icon="faBoxOpen" />
+        </div>
 
-              <!-- Action buttons -->
-              <td class="connect-sb-orders-actions">
+        <h3>
+          No orders found
+        </h3>
 
-                <button
-                  type="button"
-                  class="connect-sb-orders-view-button"
-                  @click="viewOrder(order)"
-                >
-                  View
-                  <span>→</span>
-                </button>
-
-
-                <!-- Only show Pay when the order is unpaid -->
-                <router-link
-                  v-if="order.paymentStatus === 'Unpaid'"
-                  :to="`/payment/${order.id}`"
-                  class="connect-sb-orders-pay-button"
-                >
-                  Pay
-                </router-link>
-
-              </td>
-
-            </tr>
-
-          </tbody>
-
-        </table>
+        <p>
+          Try changing your search or selecting another order status.
+        </p>
 
       </div>
 
@@ -203,9 +311,16 @@
         class="connect-sb-orders-details-card"
       >
 
+        <!-- Small connector that visually links the details to the selected card -->
+        <div class="connect-sb-orders-details-connector">
+          <span></span>
+        </div>
+
+
         <div class="connect-sb-orders-details-header">
 
           <div>
+
             <p class="connect-sb-orders-details-eyebrow">
               ORDER DETAILS
             </p>
@@ -217,6 +332,7 @@
             <p>
               {{ selectedOrder.supplier }}
             </p>
+
           </div>
 
 
@@ -241,34 +357,28 @@
             <strong>{{ selectedOrder.date }}</strong>
           </div>
 
-
           <div class="connect-sb-orders-detail-item">
             <span>Order Status</span>
             <strong>{{ selectedOrder.status }}</strong>
           </div>
-
 
           <div class="connect-sb-orders-detail-item">
             <span>Delivery ID</span>
             <strong>{{ selectedOrder.deliveryId }}</strong>
           </div>
 
-
           <div class="connect-sb-orders-detail-item">
             <span>Delivery Status</span>
             <strong>{{ selectedOrder.deliveryStatus }}</strong>
           </div>
-
 
           <div class="connect-sb-orders-detail-item">
             <span>Payment Status</span>
             <strong>{{ selectedOrder.paymentStatus }}</strong>
           </div>
 
-
           <div class="connect-sb-orders-detail-item">
             <span>Delivery Fee</span>
-
             <strong>
               R {{ Number(selectedOrder.deliveryFee).toFixed(2) }}
             </strong>
@@ -281,33 +391,39 @@
         <div class="connect-sb-orders-price-section">
 
           <div class="connect-sb-orders-price-row">
+
             <span>Order Total</span>
 
             <strong>
               R {{ Number(selectedOrder.total).toFixed(2) }}
             </strong>
+
           </div>
 
 
-          <div class="connect-sb-orders-price-row connect-sb-orders-price-total">
+          <div
+            class="connect-sb-orders-price-row connect-sb-orders-price-total"
+          >
+
             <span>Total with Delivery</span>
 
             <strong>
               R {{ totalWithDelivery }}
             </strong>
+
           </div>
 
         </div>
 
 
-        <!-- Links to other pages where needed -->
+        <!-- Detail actions -->
         <div class="connect-sb-orders-detail-actions">
 
           <router-link
             :to="`/tracking?order=${selectedOrder.id}`"
             class="connect-sb-orders-track-button"
           >
-            <span>🚚</span>
+            <FontAwesomeIcon :icon="faTruckFast" />
             Track Delivery
           </router-link>
 
@@ -318,8 +434,8 @@
             :to="`/payment/${selectedOrder.id}`"
             class="connect-sb-orders-details-pay-button"
           >
+            <FontAwesomeIcon :icon="faCreditCard" />
             Pay for Order
-            <span>→</span>
           </router-link>
 
         </div>
@@ -337,43 +453,135 @@
 
 import { computed, ref } from 'vue'
 
+// Font Awesome icons used on the orders page
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+
+import {
+  faBoxOpen,
+  faCalendarDays,
+  faClock,
+  faCreditCard,
+  faMagnifyingGlass,
+  faTruck,
+  faTruckFast
+} from '@fortawesome/free-solid-svg-icons'
+
 // Get the order data
 import { orders } from '../data/orders'
 
+
+// Search and filter controls
+const searchQuery = ref('')
+const activeFilter = ref('All')
 
 // Keep track of the order the user clicks
 const selectedOrder = ref(null)
 
 
-// Count unpaid orders
-const unpaidOrders = computed(() => {
-  return orders.filter(order => order.paymentStatus === 'Unpaid').length
-})
-
-
-// Count deliveries that are still active
-const activeDeliveries = computed(() => {
+// Count active orders
+const activeOrdersCount = computed(() => {
   return orders.filter(order => {
-    return order.deliveryStatus.toLowerCase() !== 'completed'
+    return order.deliveryStatus?.toLowerCase() !== 'completed'
   }).length
 })
 
 
+// Filter the orders shown on screen
+const filteredOrders = computed(() => {
+  let result = [...orders]
+
+  // Apply the selected status tab
+  if (activeFilter.value === 'Completed') {
+    result = result.filter(order => {
+      return (
+        order.status?.toLowerCase() === 'completed' ||
+        order.deliveryStatus?.toLowerCase() === 'completed'
+      )
+    })
+  }
+
+  if (activeFilter.value === 'On Process') {
+    result = result.filter(order => {
+      return (
+        order.status?.toLowerCase() !== 'completed' &&
+        order.deliveryStatus?.toLowerCase() !== 'completed'
+      )
+    })
+  }
+
+
+  // Apply the search
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+
+    result = result.filter(order => {
+      return (
+        order.orderNumber?.toLowerCase().includes(query) ||
+        order.supplier?.toLowerCase().includes(query) ||
+        order.status?.toLowerCase().includes(query) ||
+        order.deliveryStatus?.toLowerCase().includes(query)
+      )
+    })
+  }
+
+  return result
+})
+
+
+// Create a simple avatar from the supplier name
+function getInitials(name) {
+  if (!name) {
+    return 'WC'
+  }
+
+  return name
+    .split(' ')
+    .map(word => word.charAt(0))
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
+
+// Return order items when they exist
+// The fallback keeps the page working with the current sample data
+function getOrderItems(order) {
+  if (Array.isArray(order.items) && order.items.length) {
+    return order.items
+  }
+
+  return [
+    {
+      name: 'Supplier Order',
+      quantity: 1,
+      price: Number(order.total)
+    }
+  ]
+}
+
+
 // Show the order details
 function viewOrder(order) {
+
+  // Clicking the same order again closes its details
+  if (selectedOrder.value?.id === order.id) {
+    selectedOrder.value = null
+    return
+  }
+
   selectedOrder.value = order
 }
 
 
 // Turn status text into a class name
 function getStatusClass(status) {
-  return status.toLowerCase().replace(/\s+/g, '-')
-}
+  if (!status) {
+    return 'pending'
+  }
 
-
-// Get the payment status class
-function getPaymentClass(status) {
-  return status.toLowerCase().replace(/\s+/g, '-')
+  return status
+    .toLowerCase()
+    .replace(/\s+/g, '-')
 }
 
 
@@ -402,23 +610,27 @@ const totalWithDelivery = computed(() => {
   box-sizing: border-box;
   background: #E8E2DD;
   color: #5C3D24;
-
-  /* Keep the main interface clean and easy to read */
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 
 /* Header */
 .connect-sb-orders-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 28px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto auto;
+  align-items: start;
+  column-gap: 30px;
+  margin-bottom: 30px;
+}
+
+.connect-sb-orders-heading {
+  min-width: 0;
 }
 
 .connect-sb-orders-eyebrow,
-.connect-sb-orders-details-eyebrow {
+.connect-sb-orders-details-eyebrow,
+.connect-sb-orders-section-eyebrow {
   margin: 0 0 7px;
   color: #D17A4A;
   font-size: 11px;
@@ -427,53 +639,310 @@ const totalWithDelivery = computed(() => {
 }
 
 .connect-sb-orders-title {
-  margin: 0 0 8px;
+  margin: 0;
   color: #4E342E;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 40px;
+  font-size: 42px;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.05;
 }
 
-.connect-sb-orders-description {
+
+/* Compact date control */
+.connect-sb-orders-date-wrapper {
+  grid-column: 2;
+  grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 7px 13px;
+  box-sizing: border-box;
+  border: 1px solid rgba(78, 52, 46, 0.08);
+  border-radius: 8px;
+  background: #FFFEFC;
+  box-shadow: 0 3px 12px rgba(78, 52, 46, 0.035);
+  white-space: nowrap;
+}
+
+.connect-sb-orders-calendar-icon {
+  flex-shrink: 0;
+  color: #5C3D24;
+  font-size: 11px;
+}
+
+.connect-sb-orders-date {
   margin: 0;
-  max-width: 600px;
-  color: #7A665B;
-  font-size: 15px;
-  line-height: 1.6;
+  color: #5C3D24;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
 }
 
 
-/* Summary cards */
-.connect-sb-orders-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 22px;
+/* Full-width divider below the heading and date */
+.connect-sb-orders-header-divider {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin: 22px 0 14px;
+  background: rgba(92, 61, 36, 0.16);
 }
 
-.connect-sb-orders-summary-card {
+
+/* Search below the divider */
+.connect-sb-orders-search {
+  grid-column: 2;
+  grid-row: 3;
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 78px;
-  padding: 16px 18px;
+  width: 285px;
+  height: 40px;
+  padding: 0 14px;
   box-sizing: border-box;
-  border: 1px solid rgba(78, 52, 46, 0.07);
-  border-radius: 15px;
+  border: 1px solid #D8CCC4;
+  border-radius: 10px;
   background: #FFFEFC;
-  box-shadow: 0 5px 18px rgba(78, 52, 46, 0.055);
+  box-shadow: 0 4px 15px rgba(78, 52, 46, 0.045);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.connect-sb-orders-search:focus-within {
+  border-color: #D17A4A;
+  box-shadow: 0 5px 18px rgba(209, 122, 74, 0.10);
+}
+
+.connect-sb-orders-search-icon {
+  flex-shrink: 0;
+  color: #8A766B;
+  font-size: 13px;
+}
+
+.connect-sb-orders-search input {
+  width: 100%;
+  min-width: 0;
+  margin-left: 10px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #5C3D24;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.connect-sb-orders-search input::placeholder {
+  color: #A3938A;
+}
+
+
+/* Filter toolbar */
+.connect-sb-orders-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.connect-sb-orders-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(78, 52, 46, 0.065);
+}
+
+.connect-sb-orders-tab {
+  min-height: 35px;
+  padding: 7px 15px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #7A665B;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.connect-sb-orders-tab:hover {
+  color: #4E342E;
+}
+
+.connect-sb-orders-tab.active {
+  background: #FFFEFC;
+  color: #4E342E;
+  box-shadow: 0 3px 9px rgba(78, 52, 46, 0.08);
+}
+
+.connect-sb-orders-count {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #8A766B;
+  font-size: 12px;
+}
+
+.connect-sb-orders-count strong {
+  color: #4E342E;
+  font-weight: 800;
+}
+
+.connect-sb-orders-count-divider {
+  margin: 0 2px;
+  color: #B1A39B;
+}
+
+
+/* Orders section heading */
+.connect-sb-orders-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.connect-sb-orders-section-eyebrow {
+  margin-bottom: 4px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+}
+
+.connect-sb-orders-section-heading h2 {
+  margin: 0;
+  color: #4E342E;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.connect-sb-orders-heading-line {
+  width: 42px;
+  height: 5px;
+  margin-bottom: 5px;
+  border-radius: 999px;
+  background: #D17A4A;
+}
+
+
+/* Order cards */
+.connect-sb-orders-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 17px;
+}
+
+.connect-sb-orders-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgba(78, 52, 46, 0.075);
+  border-radius: 17px;
+  background: #FFFEFC;
+  box-shadow: 0 6px 22px rgba(78, 52, 46, 0.065);
+  overflow: hidden;
   transition:
     transform 180ms ease,
-    box-shadow 180ms ease;
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
 }
 
-.connect-sb-orders-summary-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 9px 24px rgba(78, 52, 46, 0.1);
+.connect-sb-orders-card::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: #D17A4A;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms ease;
 }
 
-.connect-sb-orders-summary-icon {
+.connect-sb-orders-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(78, 52, 46, 0.105);
+}
+
+.connect-sb-orders-card:hover::before {
+  transform: scaleX(1);
+}
+
+
+/* Selected card stands out from the other orders */
+.connect-sb-orders-card-selected {
+  border-color: rgba(209, 122, 74, 0.45);
+  background: #FFFCF8;
+  box-shadow: 0 12px 32px rgba(78, 52, 46, 0.13);
+}
+
+.connect-sb-orders-card-selected::before {
+  transform: scaleX(1);
+}
+
+.connect-sb-orders-card-selected:hover {
+  transform: translateY(-2px);
+}
+
+
+/* Small label that identifies the selected card */
+.connect-sb-orders-selected-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin-bottom: 13px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #F3E7D9;
+  color: #8A5A32;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.connect-sb-orders-selected-label span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #D17A4A;
+  box-shadow: 0 0 0 3px rgba(209, 122, 74, 0.10);
+}
+
+
+/* Card header */
+.connect-sb-orders-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.connect-sb-orders-customer {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.connect-sb-orders-avatar {
   display: grid;
   width: 40px;
   height: 40px;
@@ -481,137 +950,50 @@ const totalWithDelivery = computed(() => {
   place-items: center;
   border-radius: 12px;
   background: #F3E7D9;
-  font-size: 18px;
-}
-
-.connect-sb-orders-summary-card p {
-  margin: 0 0 3px;
-  color: #8A766B;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.connect-sb-orders-summary-card strong {
-  color: #4E342E;
-  font-size: 21px;
-  font-weight: 750;
-}
-
-
-/* Orders table */
-.connect-sb-orders-table-card {
-  overflow: hidden;
-  border: 1px solid rgba(78, 52, 46, 0.07);
-  border-radius: 18px;
-  background: #FFFEFC;
-  box-shadow: 0 7px 24px rgba(78, 52, 46, 0.07);
-}
-
-.connect-sb-orders-table-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22px 24px 18px;
-}
-
-.connect-sb-orders-table-heading h2 {
-  margin: 0 0 4px;
-  color: #4E342E;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 23px;
-  font-weight: 600;
-}
-
-.connect-sb-orders-table-heading p {
-  margin: 0;
-  color: #8A766B;
-  font-size: 13px;
-}
-
-.connect-sb-orders-table-accent {
-  width: 42px;
-  height: 5px;
-  border-radius: 999px;
-  background: #D17A4A;
-}
-
-
-/* Keeps the table usable on phones */
-.connect-sb-orders-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.connect-sb-orders-table {
-  width: 100%;
-  min-width: 850px;
-  border-collapse: collapse;
-}
-
-.connect-sb-orders-table thead {
-  background: #4E342E;
-}
-
-.connect-sb-orders-table th {
-  padding: 14px 17px;
-  color: #FFFEFC;
-  text-align: left;
+  color: #5C3D24;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.connect-sb-orders-card-selected .connect-sb-orders-avatar {
+  background: #D17A4A;
+  color: #FFFEFC;
+}
+
+.connect-sb-orders-customer h3 {
+  margin: 0 0 3px;
+  overflow: hidden;
+  color: #4E342E;
+  font-size: 14px;
+  font-weight: 750;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.connect-sb-orders-row {
-  border-bottom: 1px solid #EEE7E2;
-  transition: background 180ms ease;
-}
-
-.connect-sb-orders-row:last-child {
-  border-bottom: none;
-}
-
-.connect-sb-orders-row:hover {
-  background: #FCF8F4;
-}
-
-.connect-sb-orders-row td {
-  padding: 16px 17px;
-  color: #5C3D24;
-  font-size: 13px;
-  vertical-align: middle;
-}
-
-.connect-sb-orders-number {
-  color: #4E342E;
-  font-weight: 750;
-}
-
-.connect-sb-orders-supplier {
-  font-weight: 600;
-}
-
-.connect-sb-orders-date {
-  color: #8A766B;
+.connect-sb-orders-customer p {
+  margin: 0;
+  color: #9A8A81;
+  font-size: 11px;
 }
 
 
-/* Status badges */
+/* Status */
 .connect-sb-orders-status {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 10px;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 5px 8px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 800;
   white-space: nowrap;
 }
 
 .connect-sb-orders-status-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: currentColor;
 }
@@ -630,15 +1012,132 @@ const totalWithDelivery = computed(() => {
 .connect-sb-orders-status.processing,
 .connect-sb-orders-status.pending,
 .connect-sb-orders-status.in-transit,
-.connect-sb-orders-status.out-for-delivery {
+.connect-sb-orders-status.out-for-delivery,
+.connect-sb-orders-status.ready,
+.connect-sb-orders-status.in-progress {
   background: #F3E7D9;
   color: #8A5A32;
 }
 
 
-/* Action buttons */
-.connect-sb-orders-actions {
+/* Card metadata */
+.connect-sb-orders-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-top: 15px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #EEE7E2;
+}
+
+.connect-sb-orders-card-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #8A766B;
+  font-size: 10px;
+}
+
+.connect-sb-orders-card-meta svg {
+  color: #D17A4A;
+  font-size: 10px;
+}
+
+
+/* Items section */
+.connect-sb-orders-items {
+  padding: 15px 0;
+}
+
+.connect-sb-orders-items-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.connect-sb-orders-items-heading span:first-child {
+  color: #A08F85;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.connect-sb-orders-items-heading span:last-child {
+  color: #A08F85;
+  font-size: 9px;
+}
+
+.connect-sb-orders-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 6px 0;
+}
+
+.connect-sb-orders-item-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.connect-sb-orders-item-name {
+  overflow: hidden;
+  color: #5C3D24;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.connect-sb-orders-item-quantity {
+  color: #9A8A81;
+  font-size: 10px;
+}
+
+.connect-sb-orders-item strong {
+  flex-shrink: 0;
+  color: #5C3D24;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+/* Card footer */
+.connect-sb-orders-card-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid #EEE7E2;
+}
+
+.connect-sb-orders-total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.connect-sb-orders-total span {
+  color: #8A766B;
+  font-size: 10px;
+}
+
+.connect-sb-orders-total strong {
+  color: #4E342E;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.connect-sb-orders-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .connect-sb-orders-view-button,
@@ -646,13 +1145,14 @@ const totalWithDelivery = computed(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 7px 10px;
   box-sizing: border-box;
-  min-height: 34px;
-  padding: 8px 12px;
-  border-radius: 9px;
+  border-radius: 8px;
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 750;
   text-decoration: none;
   cursor: pointer;
   transition:
@@ -662,8 +1162,6 @@ const totalWithDelivery = computed(() => {
 }
 
 .connect-sb-orders-view-button {
-  gap: 7px;
-  margin-right: 5px;
   border: 1px solid #D8CCC4;
   background: #FFFEFC;
   color: #5C3D24;
@@ -671,32 +1169,99 @@ const totalWithDelivery = computed(() => {
 
 .connect-sb-orders-view-button:hover {
   transform: translateY(-1px);
-  border-color: #BDAEA4;
   background: #F8F2ED;
+}
+
+.connect-sb-orders-view-button.active {
+  border-color: #D17A4A;
+  background: #F3E7D9;
+  color: #8A5A32;
 }
 
 .connect-sb-orders-pay-button {
   border: 1px solid #D17A4A;
   background: #D17A4A;
   color: #FFFEFC;
-  box-shadow: 0 4px 10px rgba(209, 122, 74, 0.18);
+  box-shadow: 0 3px 9px rgba(209, 122, 74, 0.18);
 }
 
 .connect-sb-orders-pay-button:hover {
   transform: translateY(-1px);
   background: #BF683A;
-  box-shadow: 0 6px 14px rgba(209, 122, 74, 0.25);
+  box-shadow: 0 5px 12px rgba(209, 122, 74, 0.24);
+}
+
+
+/* Empty state */
+.connect-sb-orders-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  padding: 30px;
+  border: 1px dashed #D4C7BE;
+  border-radius: 17px;
+  background: rgba(255, 254, 252, 0.6);
+  text-align: center;
+}
+
+.connect-sb-orders-empty-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  place-items: center;
+  border-radius: 14px;
+  background: #F3E7D9;
+  color: #5C3D24;
+  font-size: 19px;
+}
+
+.connect-sb-orders-empty h3 {
+  margin: 0 0 5px;
+  color: #4E342E;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+}
+
+.connect-sb-orders-empty p {
+  margin: 0;
+  color: #8A766B;
+  font-size: 12px;
 }
 
 
 /* Order details */
 .connect-sb-orders-details-card {
-  margin-top: 22px;
+  position: relative;
+  margin-top: 25px;
   padding: 25px;
-  border: 1px solid rgba(78, 52, 46, 0.07);
+  border: 1px solid rgba(209, 122, 74, 0.24);
   border-radius: 18px;
   background: #FFFEFC;
-  box-shadow: 0 8px 26px rgba(78, 52, 46, 0.08);
+  box-shadow: 0 10px 30px rgba(78, 52, 46, 0.10);
+}
+
+
+/* This small accent visually connects the detail panel to the selected order */
+.connect-sb-orders-details-connector {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.connect-sb-orders-details-connector span {
+  width: 58px;
+  height: 4px;
+  border-radius: 999px;
+  background: #D17A4A;
+  box-shadow: 0 2px 7px rgba(209, 122, 74, 0.18);
 }
 
 .connect-sb-orders-details-header {
@@ -864,7 +1429,7 @@ const totalWithDelivery = computed(() => {
 }
 
 
-/* Small animation when order details open */
+/* Details animation */
 .connect-sb-orders-details-enter-active,
 .connect-sb-orders-details-leave-active {
   transition:
@@ -880,19 +1445,39 @@ const totalWithDelivery = computed(() => {
 
 
 /* Tablet */
+@media (max-width: 1050px) {
+
+  .connect-sb-orders-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+
+/* Smaller tablet */
 @media (max-width: 900px) {
 
   .connect-sb-orders-page {
     padding: 26px;
   }
 
-  .connect-sb-orders-summary {
-    grid-template-columns: repeat(2, 1fr);
+  .connect-sb-orders-header {
+    column-gap: 20px;
+  }
+
+  .connect-sb-orders-date-wrapper {
+    max-width: 100%;
+  }
+
+  .connect-sb-orders-search {
+    width: 320px;
+    max-width: 100%;
   }
 
   .connect-sb-orders-details-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
 }
 
 
@@ -904,38 +1489,74 @@ const totalWithDelivery = computed(() => {
   }
 
   .connect-sb-orders-header {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
     margin-bottom: 22px;
   }
 
   .connect-sb-orders-title {
-    font-size: 32px;
+    font-size: 34px;
   }
 
-  .connect-sb-orders-description {
-    max-width: 100%;
-    font-size: 14px;
+  .connect-sb-orders-date-wrapper {
+    align-self: flex-start;
+    min-height: 32px;
   }
 
-  .connect-sb-orders-summary {
+  .connect-sb-orders-header-divider {
+    width: 100%;
+    margin: 4px 0 2px;
+  }
+
+  .connect-sb-orders-search {
+    width: 100%;
+  }
+
+  .connect-sb-orders-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 13px;
+    margin-bottom: 25px;
+  }
+
+  .connect-sb-orders-tabs {
+    width: 100%;
+  }
+
+  .connect-sb-orders-tab {
+    flex: 1;
+    padding: 7px 9px;
+  }
+
+  .connect-sb-orders-count {
+    padding-left: 3px;
+  }
+
+  .connect-sb-orders-grid {
     grid-template-columns: 1fr;
-    gap: 10px;
   }
 
-  .connect-sb-orders-summary-card {
-    min-height: 70px;
+  .connect-sb-orders-section-heading h2 {
+    font-size: 22px;
   }
 
-  .connect-sb-orders-table-heading {
-    padding: 19px 17px 16px;
+  .connect-sb-orders-card {
+    padding: 18px;
   }
 
-  .connect-sb-orders-table-heading h2 {
-    font-size: 21px;
+  .connect-sb-orders-card-footer {
+    align-items: stretch;
+    flex-direction: column;
   }
 
-  /* Keep the table scrollable instead of squeezing the columns */
-  .connect-sb-orders-table {
-    min-width: 780px;
+  .connect-sb-orders-card-actions {
+    width: 100%;
+  }
+
+  .connect-sb-orders-view-button,
+  .connect-sb-orders-pay-button {
+    flex: 1;
   }
 
   .connect-sb-orders-details-card {
@@ -954,6 +1575,7 @@ const totalWithDelivery = computed(() => {
   .connect-sb-orders-details-pay-button {
     width: 100%;
   }
+
 }
 
 </style>
