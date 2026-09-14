@@ -15,6 +15,7 @@
         <router-link to="/orders" class="nav-item">My orders</router-link>
         <router-link to="/deliveries" class="nav-item">Deliveries</router-link>
         <router-link to="/messages" class="nav-item">Messages</router-link>
+        <router-link to="/reviews" class="nav-item">Reviews</router-link>
         <router-link to="/business-profile" class="nav-item">Business profile</router-link>
       </nav>
 
@@ -26,6 +27,17 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const isLoggedIn = computed(() => !!localStorage.getItem("token"));
+
+function logout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  router.push("/login");
+}
 </script>
 
 <style scoped>

@@ -3,6 +3,7 @@ import Dashboard from "../views/Dashboard.vue";
 import BusinessProfile from "../views/BusinessProfile.vue";
 import BrowseSuppliers from "../views/BrowseSuppliers.vue";
 import Messages from "../views/Messages.vue";
+import Reviews from "../views/Reviews.vue";
 import ComingSoon from "../views/ComingSoon.vue";
 
 const routes = [
@@ -11,6 +12,7 @@ const routes = [
   { path: "/business-profile", name: "business-profile", component: BusinessProfile },
   { path: "/browse-suppliers", name: "browse-suppliers", component: BrowseSuppliers },
   { path: "/messages", name: "messages", component: Messages },
+  { path: "/reviews", name: "reviews", component: Reviews },
   { path: "/orders", name: "orders", component: ComingSoon, meta: { label: "My orders" } },
   { path: "/deliveries", name: "deliveries", component: ComingSoon, meta: { label: "Deliveries" } },
 ];
