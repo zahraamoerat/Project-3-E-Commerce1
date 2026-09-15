@@ -1,45 +1,26 @@
 <template>
-  <div class="auth-container">
-    <!-- Left Column: Branding / Marketing -->
-    <div class="auth-brand-side">
-      <div class="brand-header">
-        <router-link to="/" class="brand-logo">
-          <img src="../assets/website-logo.png" alt="WeConnect Logo" class="logo-icon" />
-          <span class="logo-text">WeConnect</span>
-        </router-link>
-      </div>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <router-link to="/" class="brand-group">
+        <img
+          src="../assets/website-logo.png"
+          alt="WeConnect Logo"
+          class="logo-icon"
+        />
+        <span class="brand-title">WeConnect</span>
+      </router-link>
+      <span class="sub-header-text">B2B Trade Corridor</span>
+    </header>
 
-      <div class="brand-hero">
-        <div class="tag">— WELCOME BACK</div>
-        <h1 class="brand-title">Access your trade corridor.</h1>
-        <p class="brand-subtitle">
-          Log in to manage your wholesale orders, track dispatches, or message your suppliers directly.
-        </p>
-
-        <div class="feature-pills">
-          <div class="pill">
-            <span class="pill-icon">🛒</span> Direct B2B Sourcing
+    <main class="main-container">
+      <div class="card-box">
+        <div class="header-block">
+          <div class="tag-row">
+            <span class="tag-line"></span>
+            <span class="tag-text">WELCOME BACK</span>
           </div>
-          <div class="pill">
-            <span class="pill-icon">📦</span> Real-time Order Tracking
-          </div>
-          <div class="pill">
-            <span class="pill-icon">⚡</span> Fast Invoice Archiving
-          </div>
-        </div>
-      </div>
-
-      <div class="brand-footer">
-        <p>© WeConnect B2B Marketplace. All rights reserved.</p>
-      </div>
-    </div>
-
-    <!-- Right Column: Login Form -->
-    <div class="auth-form-side">
-      <div class="form-wrapper">
-        <div class="form-header">
-          <h2>Sign in to your account</h2>
-          <p>
+          <h1 class="main-heading">Sign in to your account</h1>
+          <p class="sub-heading">
             Don't have an account yet?
             <router-link to="/signup" class="link-highlight">Sign up free</router-link>
           </p>
@@ -67,9 +48,9 @@
           </button>
         </div>
 
-        <form @submit.prevent="handleLogin" class="auth-form">
+        <form @submit.prevent="handleLogin" class="form-space">
           <div class="form-group">
-            <label for="email">Work Email Address</label>
+              <label for="email" class="form-label">WORK EMAIL ADDRESS</label>
             <input
               id="email"
               v-model="email"
@@ -81,7 +62,7 @@
 
           <div class="form-group">
             <div class="label-row">
-              <label for="password">Password</label>
+              <label for="password" class="form-label">PASSWORD</label>
               <a href="#" class="forgot-link">Forgot password?</a>
             </div>
             <input
@@ -101,168 +82,169 @@
             </label>
           </div>
 
-          <button type="submit" class="submit-btn">
-            Sign In as {{ selectedRole === 'buyer' ? 'Buyer' : 'Supplier' }}
+          <button type="submit" class="primary-button">
+            Sign In as {{ selectedRole === "buyer" ? "Buyer" : "Supplier" }}
           </button>
         </form>
 
-        <div class="form-footer">
-          <router-link to="/" class="back-link">← Back to home page</router-link>
+        <div class="footer-link-box">
+          <router-link to="/" class="footer-link">← Back to home page</router-link>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'LoginPage',
+  name: "LoginPage",
   data() {
     return {
-      selectedRole: 'buyer', // default selection
-      email: '',
-      password: '',
-      rememberMe: false
+      selectedRole: "buyer", // default selection
+      email: "",
+      password: "",
+      rememberMe: false,
     };
   },
   methods: {
     handleLogin() {
       // Logic for authenticating user
-      console.log('Logging in as:', this.selectedRole, this.email);
-      
+      console.log("Logging in as:", this.selectedRole, this.email);
+
       // Redirect based on selected role
-      if (this.selectedRole === 'buyer') {
-        this.$router.push('/buyer-dashboard');
+      if (this.selectedRole === "buyer") {
+        this.$router.push("/buyer-dashboard");
       } else {
-        this.$router.push('/supplier-dashboard');
+        this.$router.push("/supplier-dashboard");
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-.auth-container {
-  display: flex;
+.page-wrapper {
   min-height: 100vh;
-  width: 100%;
-  background-color: #f6f4ee;
-  color: #3b2c24;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-/* Left Column: Branding */
-.auth-brand-side {
-  flex: 1;
-  background-color: #3b2c24;
-  color: #f6f4ee;
-  padding: 48px;
+  background-color: #f7f5f0;
+  color: #332d29;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  padding: 1.5rem;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
-.brand-logo {
+@media (min-width: 768px) {
+  .page-wrapper {
+    padding: 2.5rem;
+  }
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 80rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.brand-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.75rem;
   text-decoration: none;
 }
 
 .logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 2.5rem;
+  height: 2.5rem;
   object-fit: contain;
-}
-
-.logo-text {
-  font-weight: 700;
-  font-size: 24px;
-  color: #ffffff;
-}
-
-.brand-hero {
-  max-width: 480px;
-  margin: auto 0;
-}
-
-.tag {
-  color: #c86d44;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin-bottom: 12px;
+  flex: 0 0 auto;
 }
 
 .brand-title {
-  font-family: 'Georgia', serif;
-  font-size: 42px;
-  line-height: 1.2;
-  margin: 0 0 16px 0;
-  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.025em;
+  color: #2d2522;
 }
 
-.brand-subtitle {
-  color: #c2b8ae;
-  font-size: 16px;
-  line-height: 1.5;
-  margin-bottom: 32px;
+.sub-header-text {
+  font-size: 0.75rem;
+  color: #78716c;
+  font-weight: 500;
 }
 
-.feature-pills {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.main-container {
+  max-width: 42rem;
+  margin: auto auto;
+  width: 100%;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
-.pill {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 12px 18px;
-  border-radius: 30px;
-  font-size: 14px;
-  color: #e5dbc9;
+.card-box {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(231, 229, 228, 0.6);
 }
 
-.pill-icon {
-  font-size: 16px;
+@media (min-width: 768px) {
+  .card-box {
+    padding: 2.5rem;
+  }
 }
 
-.brand-footer p {
-  font-size: 12px;
-  color: #8c827a;
-  margin: 0;
+.header-block {
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
-/* Right Column: Form */
-.auth-form-side {
-  flex: 1.2;
+.tag-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
-  background-color: #f6f4ee;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.form-wrapper {
-  width: 100%;
-  max-width: 420px;
+.tag-line {
+  width: 1rem;
+  height: 2px;
+  background-color: #cd6d43;
 }
 
-.form-header h2 {
-  font-family: 'Georgia', serif;
-  font-size: 30px;
-  margin: 0 0 8px 0;
-  color: #3b2c24;
+.tag-text {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #cd6d43;
 }
 
-.form-header p {
-  font-size: 14px;
-  color: #6e6a66;
-  margin: 0 0 28px 0;
+.main-heading {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d2522;
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .main-heading {
+    font-size: 1.875rem;
+  }
+}
+
+.sub-heading {
+  font-size: 0.875rem;
+  color: #78716c;
 }
 
 .link-highlight {
@@ -277,12 +259,13 @@ export default {
 
 /* Role Selector Toggle Buttons */
 .role-selector {
-  display: flex;
-  gap: 12px;
-  background-color: #efece6;
-  padding: 6px;
-  border-radius: 12px;
-  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  background-color: #f7f5f0;
+  padding: 0.375rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
 }
 
 .role-btn {
@@ -290,14 +273,14 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: transparent;
   color: #6e6a66;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -309,10 +292,10 @@ export default {
 }
 
 /* Form Groups & Inputs */
-.auth-form {
+.form-space {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1rem;
 }
 
 .form-group {
@@ -327,10 +310,14 @@ export default {
   align-items: center;
 }
 
-.form-group label {
-  font-size: 13px;
+.form-label {
+  display: block;
+  font-size: 10px;
   font-weight: 600;
-  color: #3b2c24;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #78716c;
+  margin-bottom: 0.375rem;
 }
 
 .forgot-link {
@@ -346,19 +333,20 @@ export default {
 
 .form-group input {
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #dcd6cd;
-  border-radius: 8px;
-  background-color: #ffffff;
-  font-size: 14px;
-  color: #3b2c24;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background-color: #f7f5f0;
+  font-size: 0.875rem;
+  color: #292524;
   box-sizing: border-box;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .form-group input:focus {
-  border-color: #c86d44;
+  border-color: #cd6d43;
+  background-color: #ffffff;
 }
 
 /* Checkbox */
@@ -384,54 +372,37 @@ export default {
 }
 
 /* Submit Button */
-.submit-btn {
-  background-color: #d27343;
+.primary-button {
+  width: 100%;
+  background-color: #cd6d43;
   color: #ffffff;
   border: none;
-  padding: 14px;
-  border-radius: 24px;
-  font-size: 15px;
-  font-weight: 600;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  margin-top: 8px;
+  margin-top: 1rem;
 }
 
-.submit-btn:hover {
-  background-color: #b85e31;
+.primary-button:hover {
+  background-color: #b85e37;
 }
 
-.form-footer {
-  margin-top: 28px;
+.footer-link-box {
+  margin-top: 1.5rem;
   text-align: center;
 }
 
-.back-link {
-  font-size: 13px;
-  color: #6e6a66;
+.footer-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #57534e;
   text-decoration: none;
 }
 
-.back-link:hover {
-  color: #3b2c24;
-}
-
-/* Responsive view for smaller screens */
-@media (max-width: 900px) {
-  .auth-container {
-    flex-direction: column;
-  }
-
-  .auth-brand-side {
-    padding: 32px 24px;
-  }
-
-  .brand-title {
-    font-size: 32px;
-  }
-
-  .auth-form-side {
-    padding: 32px 24px;
-  }
+.footer-link:hover {
+  color: #2d2522;
 }
 </style>

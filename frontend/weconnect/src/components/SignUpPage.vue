@@ -1,354 +1,614 @@
 <template>
-  <div class="page-container">
-    <!-- Header -->
-    <header class="header">
-      <div class="logo-container">
-        <span class="logo-badge">WC</span>
-        <span class="logo-text">WeConnect</span>
+  <div class="page-wrapper">
+    <!-- Navigation Header -->
+    <header class="header-container">
+      <div class="brand-group" @click="$router.push('/')">
+        <img
+          src="../assets/website-logo.png"
+          alt="WeConnect Logo"
+          class="logo-icon"
+        />
+        <span class="brand-title">WeConnect</span>
       </div>
-      <div class="header-tag">B2B Trade Corridor</div>
+      <span class="sub-header-text">B2B Trade Corridor</span>
     </header>
 
-    <!-- Main Content -->
-    <main class="content">
-      <div class="subtitle-tag">— JOIN THE MARKETPLACE</div>
-      <h1 class="main-title">Create your account</h1>
-      <p class="description">Select your role to view registration options and pricing.</p>
+    <!-- Main Container -->
+    <main class="main-container">
+      <!-- SUPPLIER PENDING STATE (Shows after supplier submits application) -->
+      <div v-if="submittedSupplier" class="card-box text-center">
+        <div class="status-icon">⏳</div>
+        <h2 class="card-title">Supplier Application Submitted!</h2>
+        <p class="status-description">
+          Thank you for registering <strong>{{ form.companyName }}</strong
+          >. Your supplier application and
+          <strong>{{ form.subscriptionPlan }}</strong> subscription request have
+          been sent to our team for verification.
+        </p>
 
-      <!-- Role Selector Tabs -->
-      <div class="role-selector">
-        <button 
-          :class="['role-tab', { active: selectedRole === 'buyer' }]"
-          @click="selectedRole = 'buyer'"
+        <div class="info-banner">
+          <p class="font-bold">What happens next?</p>
+          <ul class="info-list">
+            <li>
+              Our admin team will review your business and registration
+              credentials.
+            </li>
+            <li>
+              You will receive an email once your account and seller access are
+              approved.
+            </li>
+            <li>
+              Upon approval, you will be directed to activate your subscription
+              and access your Supplier Dashboard.
+            </li>
+          </ul>
+        </div>
+
+        <button
+          @click="$router.push('/login')"
+          class="primary-button max-w-xs mx-auto"
         >
-          🛒 Small Business (Buyer)
-        </button>
-        <button 
-          :class="['role-tab', { active: selectedRole === 'supplier' }]"
-          @click="selectedRole = 'supplier'"
-        >
-          📦 Supplier / Producer
+          Return to Login
         </button>
       </div>
 
-      <!-- Registration Form Container -->
-      <div class="form-card">
-        <form @submit.prevent="handleSignUp">
-          <!-- Common Fields -->
-          <div class="form-group">
-            <label>{{ selectedRole === 'buyer' ? 'BUSINESS NAME' : 'SUPPLIER / COMPANY NAME' }}</label>
-            <input 
-              type="text" 
-              v-model="form.name" 
-              :placeholder="selectedRole === 'buyer' ? 'e.g. Kaya Kitchen' : 'e.g. Cape Fresh Packaging Co.'" 
-              required 
+      <!-- SIGN UP FORM -->
+      <div v-else class="card-box">
+        <!-- Title Header -->
+        <div class="header-block">
+          <div class="tag-row">
+            <span class="tag-line"></span>
+            <span class="tag-text">GET STARTED</span>
+          </div>
+          <h1 class="main-heading">Create your WeConnect account</h1>
+          <p class="sub-heading">
+            Select your account type to configure your workspace.
+          </p>
+        </div>
+
+        <!-- Role Switcher -->
+        <div class="role-switcher">
+          <button
+            type="button"
+            @click="selectedRole = 'buyer'"
+            :class="[
+              'role-btn',
+              selectedRole === 'buyer'
+                ? 'role-btn-active'
+                : 'role-btn-inactive',
+            ]"
+          >
+            <span>🧺</span>
+            <span>Small Business (Buyer)</span>
+          </button>
+
+          <button
+            type="button"
+            @click="selectedRole = 'supplier'"
+            :class="[
+              'role-btn',
+              selectedRole === 'supplier'
+                ? 'role-btn-active'
+                : 'role-btn-inactive',
+            ]"
+          >
+            <span>📦</span>
+            <span>Supplier / Wholesaler</span>
+          </button>
+        </div>
+
+        <!-- Registration Form -->
+        <form @submit.prevent="handleSignUp" class="form-space">
+          <div class="grid-2-col">
+            <div>
+              <label class="form-label">FIRST NAME</label>
+              <input
+                v-model="form.firstName"
+                type="text"
+                required
+                placeholder="Thandeka"
+                class="form-input"
+              />
+            </div>
+            <div>
+              <label class="form-label">LAST NAME</label>
+              <input
+                v-model="form.lastName"
+                type="text"
+                required
+                placeholder="Mthembu"
+                class="form-input"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">WORK EMAIL</label>
+            <input
+              v-model="form.email"
+              type="email"
+              required
+              placeholder="thandeka@kayakitchen.co.za"
+              class="form-input"
             />
           </div>
 
-          <div class="form-group">
-            <label>WORK EMAIL</label>
-            <input 
-              type="email" 
-              v-model="form.email" 
-              placeholder="e.g. name@company.com" 
-              required 
+          <div>
+            <label class="form-label">PASSWORD</label>
+            <input
+              v-model="form.password"
+              type="password"
+              required
+              placeholder="••••••••••••"
+              class="form-input"
             />
           </div>
 
-          <div class="form-group">
-            <label>PASSWORD</label>
-            <input 
-              type="password" 
-              v-model="form.password" 
-              placeholder="••••••••" 
-              required 
+          <div>
+            <label class="form-label">
+              {{
+                selectedRole === "buyer"
+                  ? "BUSINESS NAME"
+                  : "SUPPLIER COMPANY NAME"
+              }}
+            </label>
+            <input
+              v-model="form.companyName"
+              type="text"
+              required
+              :placeholder="
+                selectedRole === 'buyer'
+                  ? 'Kaya Kitchen'
+                  : 'Cape Fresh Packaging Co.'
+              "
+              class="form-input"
             />
           </div>
 
-          <!-- Supplier Subscription Tier Selector -->
-          <div v-if="selectedRole === 'supplier'" class="supplier-pricing-section">
-            <label class="section-label">SELECT YOUR PRODUCT LISTING TIER</label>
-            
-            <div class="pricing-grid">
-              <div 
-                v-for="tier in tiers" 
-                :key="tier.id"
-                :class="['tier-card', { selected: form.selectedTier === tier.id }]"
-                @click="form.selectedTier = tier.id"
+          <!-- SUPPLIER ONLY: Plan Selection & Admin Application Notice -->
+          <div v-if="selectedRole === 'supplier'" class="supplier-section">
+            <label class="form-label highlight-label"
+              >SELECT TARGET SUBSCRIPTION PLAN</label
+            >
+            <div class="grid-2-col">
+              <div
+                @click="form.subscriptionPlan = 'Starter Supplier'"
+                :class="[
+                  'plan-card',
+                  form.subscriptionPlan === 'Starter Supplier'
+                    ? 'plan-card-active'
+                    : 'plan-card-inactive',
+                ]"
               >
-                <div class="tier-name">{{ tier.name }}</div>
-                <div class="tier-limit">{{ tier.limit }}</div>
-                <div class="tier-price">{{ tier.price }}</div>
+                <div class="plan-header">
+                  <span class="plan-title">Starter Supplier</span>
+                  <span class="plan-price">R499/mo</span>
+                </div>
+                <p class="plan-desc">
+                  Up to 50 active product listings & basic GPS dispatch.
+                </p>
+              </div>
+
+              <div
+                @click="form.subscriptionPlan = 'Pro Fleet'"
+                :class="[
+                  'plan-card',
+                  form.subscriptionPlan === 'Pro Fleet'
+                    ? 'plan-card-active'
+                    : 'plan-card-inactive',
+                ]"
+              >
+                <div class="plan-header">
+                  <span class="plan-title">Pro Fleet</span>
+                  <span class="plan-price">R1,299/mo</span>
+                </div>
+                <p class="plan-desc">
+                  Unlimited products, priority route dispatch & analytics.
+                </p>
               </div>
             </div>
           </div>
 
-          <button type="submit" class="submit-btn">
-            {{ selectedRole === 'buyer' ? 'Create Free Buyer Account' : 'Proceed to Payment & Register' }}
+          <!-- Submit Button -->
+          <button type="submit" class="primary-button">
+            {{
+              selectedRole === "supplier"
+                ? "Submit Supplier Application"
+                : "Create Buyer Account"
+            }}
           </button>
         </form>
       </div>
 
-      <div class="footer-link">
-        <a href="#" @click.prevent="$emit('navigate', 'login')">← Already have an account? Log in</a>
+      <!-- Footer Link -->
+      <div class="footer-link-box">
+        <router-link to="/login" class="footer-link">
+          Already have an account?
+          <span class="link-highlight">Log in here</span>
+        </router-link>
       </div>
     </main>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'SignUpPage',
-  data() {
-    return {
-      selectedRole: 'buyer', // 'buyer' or 'supplier'
-      form: {
-        name: '',
-        email: '',
-        password: '',
-        selectedTier: 'growth'
-      },
-      tiers: [
-        { id: 'starter', name: 'Starter Tier', limit: 'Up to 25 products', price: '$29/mo' },
-        { id: 'growth', name: 'Growth Tier', limit: 'Up to 100 products', price: '$79/mo' },
-        { id: 'enterprise', name: 'Enterprise', limit: 'Unlimited products', price: '$199/mo' }
-      ]
-    };
-  },
-  methods: {
-    handleSignUp() {
-      const payload = {
-        role: this.selectedRole,
-        ...this.form,
-        tier: this.selectedRole === 'supplier' ? this.form.selectedTier : 'free'
-      };
-      
-      console.log('Signing up with data:', payload);
-      alert(`Registration submitted as ${this.selectedRole.toUpperCase()}!`);
-    }
+<script setup>
+import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const selectedRole = ref("buyer");
+const submittedSupplier = ref(false);
+
+const form = reactive({
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+  companyName: "",
+  subscriptionPlan: "Starter Supplier",
+});
+
+const handleSignUp = async () => {
+  if (selectedRole.value === "supplier") {
+    // 1. Supplier Application submitted (Backend sets users.status = 'pending')
+    console.log("Supplier application submitted:", form);
+    submittedSupplier.value = true;
+  } else {
+    // 2. Buyer account created immediately (Backend sets users.status = 'approved')
+    console.log("Buyer signed up directly:", form);
+    router.push("/marketplace");
   }
 };
 </script>
 
 <style scoped>
-.page-container {
+/* Page & Layout Setup */
+.page-wrapper {
   min-height: 100vh;
-  background-color: #f6f4ee;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: #333333;
-  padding: 24px 40px;
-  box-sizing: border-box;
+  background-color: #f7f5f0;
+  color: #332d29;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
-.header {
+@media (min-width: 768px) {
+  .page-wrapper {
+    padding: 2.5rem;
+  }
+}
+
+.header-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
+  max-width: 80rem;
   margin: 0 auto;
+  width: 100%;
 }
 
-.logo-container {
+.brand-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.75rem;
+  cursor: pointer;
 }
 
-.logo-badge {
-  background-color: #3b2c24;
-  color: #ffffff;
-  font-weight: bold;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font-size: 14px;
+.logo-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+  flex: 0 0 auto;
 }
 
-.logo-text {
+.brand-title {
   font-weight: 700;
-  font-size: 20px;
-  color: #3b2c24;
+  font-size: 1.25rem;
+  letter-spacing: -0.025em;
+  color: #2d2522;
 }
 
-.header-tag {
-  font-size: 13px;
-  color: #7a7571;
+.sub-header-text {
+  font-size: 0.75rem;
+  color: #78716c;
   font-weight: 500;
 }
 
-.content {
-  max-width: 600px;
-  margin: 50px auto 0 auto;
-  text-align: center;
+.main-container {
+  max-width: 42rem;
+  margin: auto auto;
+  width: 100%;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
-.subtitle-tag {
-  color: #c86d44;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin-bottom: 12px;
-}
-
-.main-title {
-  font-family: 'Georgia', serif;
-  font-size: 34px;
-  color: #3b2c24;
-  margin: 0 0 12px 0;
-  font-weight: bold;
-}
-
-.description {
-  color: #6e6a66;
-  font-size: 14px;
-  margin-bottom: 30px;
-}
-
-.role-selector {
-  display: flex;
-  background-color: #e9e5dc;
-  padding: 4px;
-  border-radius: 30px;
-  margin-bottom: 24px;
-}
-
-.role-tab {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  background: transparent;
-  border-radius: 26px;
-  font-weight: 600;
-  color: #6e6a66;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.role-tab.active {
+/* Card Container */
+.card-box {
   background-color: #ffffff;
-  color: #3b2c24;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(231, 229, 228, 0.6);
 }
 
-.form-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
-  text-align: left;
+@media (min-width: 768px) {
+  .card-box {
+    padding: 2.5rem;
+  }
 }
 
-.form-group {
-  margin-bottom: 18px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: #555;
-  margin-bottom: 6px;
-  letter-spacing: 0.5px;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  background-color: #f9f8f5;
-  font-size: 14px;
-  box-sizing: border-box;
-  outline: none;
-}
-
-.form-group input:focus {
-  border-color: #c86d44;
-  background-color: #fff;
-}
-
-.supplier-pricing-section {
-  margin-top: 24px;
-  margin-bottom: 24px;
-}
-
-.section-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: #555;
-  margin-bottom: 10px;
-  letter-spacing: 0.5px;
-}
-
-.pricing-grid {
-  display: flex;
-  gap: 10px;
-}
-
-.tier-card {
-  flex: 1;
-  border: 2px solid #eee;
-  border-radius: 10px;
-  padding: 12px;
-  cursor: pointer;
-  background-color: #f9f8f5;
-  transition: all 0.2s;
+/* Typography & Titles */
+.header-block {
   text-align: center;
+  margin-bottom: 2rem;
 }
 
-.tier-card.selected {
-  border-color: #c86d44;
-  background-color: #fdf8f5;
+.tag-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.tier-name {
-  font-size: 12px;
-  font-weight: bold;
-  color: #3b2c24;
+.tag-line {
+  width: 1rem;
+  height: 2px;
+  background-color: #cd6d43;
 }
 
-.tier-limit {
+.tag-text {
   font-size: 11px;
-  color: #777;
-  margin: 4px 0;
-}
-
-.tier-price {
-  font-size: 14px;
   font-weight: 700;
-  color: #c86d44;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #cd6d43;
 }
 
-.submit-btn {
-  width: 100%;
-  background-color: #d27343;
-  color: white;
+.main-heading {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d2522;
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .main-heading {
+    font-size: 1.875rem;
+  }
+}
+
+.sub-heading {
+  font-size: 0.875rem;
+  color: #78716c;
+}
+
+/* Role Switcher */
+.role-switcher {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  background-color: #f7f5f0;
+  padding: 0.375rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.role-btn {
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   border: none;
-  padding: 14px;
-  border-radius: 24px;
-  font-weight: 600;
-  font-size: 14px;
   cursor: pointer;
-  margin-top: 10px;
-  transition: background-color 0.2s;
 }
 
-.submit-btn:hover {
-  background-color: #be6133;
+.role-btn-active {
+  background-color: #ffffff;
+  color: #2d2522;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.role-btn-inactive {
+  background-color: transparent;
+  color: #78716c;
+}
+
+/* Form Styles */
+.form-space {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.grid-2-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .grid-2-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.form-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #78716c;
+  margin-bottom: 0.375rem;
+}
+
+.highlight-label {
+  color: #cd6d43;
+}
+
+.form-input {
+  width: 100%;
+  background-color: #f7f5f0;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #292524;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  border-color: #cd6d43;
+  background-color: #ffffff;
+}
+
+/* Supplier Subscription Plan Selector */
+.supplier-section {
+  padding-top: 1rem;
+  border-top: 1px solid #f5f5f4;
+  margin-top: 0.5rem;
+}
+
+.plan-card {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 2px solid #e7e5e4;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.plan-card-active {
+  border-color: #cd6d43;
+  background-color: #faf3ee;
+}
+
+.plan-card-inactive:hover {
+  border-color: #d6d3d1;
+}
+
+.plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.plan-title {
+  font-family: Georgia, Cambria, serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #2d2522;
+}
+
+.plan-price {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #cd6d43;
+}
+
+.plan-desc {
+  font-size: 11px;
+  color: #78716c;
+}
+
+/* Primary Action Button */
+.primary-button {
+  width: 100%;
+  background-color: #cd6d43;
+  color: #ffffff;
+  font-weight: 500;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 1rem;
+}
+
+.primary-button:hover {
+  background-color: #b85e37;
+}
+
+/* Supplier Application Pending Banner */
+.status-icon {
+  width: 4rem;
+  height: 4rem;
+  background-color: #f5ebe1;
+  color: #cd6d43;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem auto;
+  font-size: 1.5rem;
+}
+
+.card-title {
+  font-family: Georgia, Cambria, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d2522;
+  margin-bottom: 0.5rem;
+}
+
+.status-description {
+  font-size: 0.875rem;
+  color: #57534e;
+  max-width: 28rem;
+  margin: 0 auto 1.5rem auto;
+  line-height: 1.5;
+}
+
+.info-banner {
+  background-color: #f7f5f0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  color: #78716c;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.info-list {
+  list-style-type: disc;
+  padding-left: 1rem;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Footer Navigation Links */
+.footer-link-box {
+  text-align: center;
+  margin-top: 1.5rem;
 }
 
 .footer-link {
-  margin-top: 30px;
-}
-
-.footer-link a {
-  color: #3b2c24;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #57534e;
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
 }
 
-.footer-link a:hover {
-  text-decoration: underline;
+.link-highlight {
+  color: #cd6d43;
 }
 </style>
