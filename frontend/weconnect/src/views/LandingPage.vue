@@ -58,18 +58,23 @@
       </div>
 
       <div class="hero-preview">
-        <div class="floating-card top-card">
-          <span class="card-tag">NEW ORDER #1842</span>
-          <strong>Cape Fresh Packaging</strong>
-          <small>R12,450.00 • Processing</small>
-        </div>
-        <div class="floating-card middle-card">
-          <span class="status-badge">✔ DISPATCHED</span>
-          <strong>Track Shipment</strong>
-        </div>
-        <div class="floating-card bottom-card">
-          <small>Buyer Account</small>
-          <strong>Kaya Kitchen</strong>
+        <div
+          class="delivery-map"
+          aria-label="Live delivery route from supplier to Kaya Kitchen"
+        >
+          <div class="map-grid"></div>
+          <div class="map-label supplier-label">Cape Fresh Packaging</div>
+          <div class="map-label buyer-label">Kaya Kitchen</div>
+          <div class="map-route"></div>
+          <div class="map-pin supplier-pin"></div>
+          <div class="map-pin buyer-pin"></div>
+          <div class="delivery-vehicle" aria-hidden="true">●</div>
+          <div class="delivery-status">
+            <span class="status-dot"></span>
+            <span>LIVE DELIVERY</span>
+            <strong>Arriving in 18 min</strong>
+          </div>
+          <div class="map-coordinates">CAPE TOWN • TRACKING #1842</div>
         </div>
       </div>
     </section>
@@ -120,7 +125,7 @@
           <span class="step-num">3</span>
           <h4>Order & Pay</h4>
           <p>
-            PCheckout securely via instant EFT or store credit options.
+            Checkout securely via instant EFT or store credit options.
             Everything is aggregated into a single transparent invoice.
           </p>
         </div>
@@ -173,7 +178,9 @@
 
     <!-- Testimonial Section -->
     <section class="testimonial-section">
-      <div class="testimonial-image-box"></div>
+      <div class="testimonial-image-box">
+        <img src="../assets/Kaya-Kitchen.jpg" alt="Kaya Kitchen" />
+      </div>
       <div class="testimonial-content">
         <p class="quote">
           “We used to chase three different suppliers by WhatsApp. Now we
@@ -201,7 +208,7 @@
         <details class="faq-item">
           <summary>Can one account be both a buyer and a supplier?</summary>
           <p>
-            Curently, we prtition workflows to ensure specialized dashboards.
+            Curently, we partition workflows to ensure specialized dashboards.
             However, you can register using a seperate business profile under a
             single manager.
           </p>
@@ -224,7 +231,7 @@
         <h2>Pick your side and see the dashboard.</h2>
         <p>
           Join hundreds of businesses trading directly on South Africa's digital
-          commerce corridor. Fat approval process.
+          commerce corridor. Fast approval process.
         </p>
         <router-link to="/signup" class="btn-primary-lg"
           >Sign Up Now</router-link
@@ -245,7 +252,7 @@
         </div>
         <p>
           Connecting Small Businesses with verified wholesale suppliers.
-          Sourcing, sorted on both sdes of the order.
+          Sourcing, sorted on both sides of the order.
         </p>
       </div>
 
@@ -467,34 +474,180 @@ export default {
   height: 320px;
 }
 
-.floating-card {
+.delivery-map {
   position: absolute;
-  background: white;
-  padding: 16px 20px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-  display: flex;
-  flex-direction: column;
+  inset: 10px 0;
+  overflow: hidden;
+  border: 1px solid #e2d9ca;
+  border-radius: 20px;
+  background: #e8e1d5;
+  box-shadow: 0 18px 35px rgba(59, 44, 36, 0.12);
 }
 
-.top-card {
-  top: 10px;
-  right: 20px;
-  width: 220px;
+.map-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.48;
+  background-image:
+    linear-gradient(
+      28deg,
+      transparent 44%,
+      #d5cabb 45%,
+      #d5cabb 47%,
+      transparent 48%
+    ),
+    linear-gradient(
+      118deg,
+      transparent 42%,
+      #d5cabb 43%,
+      #d5cabb 45%,
+      transparent 46%
+    ),
+    linear-gradient(90deg, transparent 49%, #d5cabb 50%, transparent 51%);
+  background-size:
+    130px 100px,
+    155px 120px,
+    110px 110px;
 }
 
-.middle-card {
-  top: 110px;
-  left: 20px;
+.map-route {
+  position: absolute;
+  top: 82px;
+  left: 80px;
+  width: 235px;
+  height: 130px;
+  border: 3px solid #c86d44;
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(18deg);
+  filter: drop-shadow(0 2px 0 rgba(255, 255, 255, 0.5));
+}
+
+.map-route::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 3px dashed rgba(255, 255, 255, 0.8);
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: inherit;
+  animation: route-flow 2.2s linear infinite;
+}
+
+.map-pin {
+  position: absolute;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  border: 3px solid white;
+  border-radius: 50% 50% 50% 0;
+  background: #3b2c24;
+  box-shadow: 0 3px 8px rgba(59, 44, 36, 0.25);
+  transform: rotate(-45deg);
+}
+
+.supplier-pin {
+  top: 72px;
+  left: 68px;
+}
+
+.buyer-pin {
+  right: 68px;
+  bottom: 76px;
+  background: #c86d44;
+}
+
+.map-label {
+  position: absolute;
+  z-index: 3;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #3b2c24;
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(59, 44, 36, 0.1);
+}
+
+.supplier-label {
+  top: 32px;
+  left: 38px;
+}
+
+.buyer-label {
+  right: 28px;
+  bottom: 42px;
+}
+
+.delivery-vehicle {
+  position: absolute;
+  z-index: 4;
+  top: 157px;
+  left: 205px;
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border: 4px solid white;
+  border-radius: 50%;
+  background: #c86d44;
+  color: white;
+  font-size: 10px;
+  box-shadow: 0 0 0 8px rgba(200, 109, 68, 0.18);
+  animation: vehicle-pulse 2.2s ease-in-out infinite;
+}
+
+.delivery-status {
+  position: absolute;
+  right: 22px;
+  top: 20px;
+  display: grid;
+  gap: 3px;
+  padding: 11px 13px;
+  border-radius: 9px;
   background: #3b2c24;
   color: white;
-  width: 200px;
+  font-size: 9px;
+  letter-spacing: 0.7px;
 }
 
-.bottom-card {
-  bottom: 20px;
-  right: 40px;
-  width: 200px;
+.delivery-status strong {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #80c878;
+  box-shadow: 0 0 0 4px rgba(128, 200, 120, 0.14);
+}
+
+.map-coordinates {
+  position: absolute;
+  bottom: 18px;
+  left: 22px;
+  color: #7a7571;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+@keyframes route-flow {
+  to {
+    stroke-dashoffset: -30px;
+  }
+}
+
+@keyframes vehicle-pulse {
+  50% {
+    transform: translate(10px, -5px);
+    box-shadow: 0 0 0 12px rgba(200, 109, 68, 0.08);
+  }
 }
 
 .card-tag {
@@ -640,9 +793,15 @@ export default {
 .testimonial-image-box {
   width: 220px;
   height: 220px;
-  background-color: #e5dbc9;
   border-radius: 12px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.testimonial-image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .quote {
