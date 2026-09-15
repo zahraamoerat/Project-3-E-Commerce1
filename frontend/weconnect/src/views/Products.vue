@@ -146,6 +146,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { RouterLink } from "vue-router";
+import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { useSupplierData } from "@/data/supplierData";
 import {
@@ -193,14 +194,38 @@ function formatPrice(price) {
   }).format(price);
 }
 
-function deleteProduct(product) {
-  if (!window.confirm(`Are you sure you want to delete "${product.product_name}"?`)) {
+async function deleteProduct(product) {
+  const result = await Swal.fire({
+    title: "Delete product?",
+    text: `Are you sure you want to delete "${product.product_name}"?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Delete product",
+    cancelButtonText: "Keep product",
+    confirmButtonColor: "#b75347",
+    cancelButtonColor: "#684b41",
+    reverseButtons: true,
+  });
+
+  if (!result.isConfirmed) {
     return;
   }
 
   deletingProductId.value = product.product_id;
   removeProduct(product.product_id);
   deletingProductId.value = null;
+
+  await Swal.fire({
+    title: "Product deleted",
+    text: `${product.product_name} was removed from your catalog.`,
+    icon: "success",
+    toast: true,
+    position: "top-end",
+    timer: 2600,
+    showConfirmButton: false,
+    timerProgressBar: true,
+    confirmButtonColor: "#4d8a5c",
+  });
 }
 </script>
 

@@ -38,8 +38,8 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useSupplierData } from "@/data/supplierData";
-const { reviews } = useSupplierData(); const onlyUnanswered = ref(false); const message = ref(""); const unanswered = computed(() => reviews.value.filter((review) => !review.replied).length); const visibleReviews = computed(() => onlyUnanswered.value ? reviews.value.filter((review) => !review.replied) : reviews.value);
-function reply(review) { review.replied = true; message.value = `Reply saved for ${review.buyer}.`; setTimeout(() => message.value = "", 2500); }
+const { reviews, replyToReview } = useSupplierData(); const onlyUnanswered = ref(false); const message = ref(""); const unanswered = computed(() => reviews.value.filter((review) => !review.replied).length); const visibleReviews = computed(() => onlyUnanswered.value ? reviews.value.filter((review) => !review.replied) : reviews.value);
+function reply(review) { replyToReview(review.id); message.value = `Reply saved for ${review.buyer}.`; setTimeout(() => message.value = "", 2500); }
 </script>
 <style scoped>
 .reviews {

@@ -22,7 +22,7 @@
           <p>{{ delivery.carrier }} · ETA {{ delivery.eta }}</p>
         </div><span class="delivery-status" :class="delivery.status.toLowerCase().replaceAll(' ', '-')">{{
           delivery.status }}</span><button type="button" class="track"
-          @click="showNotice(`Tracking ${delivery.id} with ${delivery.carrier}.`)">Track</button>
+          @click="advanceDelivery(delivery)">{{ deliveryAction(delivery.status) }}</button>
       </article>
     </section>
     <p v-if="notice" class="notice">{{ notice }}</p>
@@ -31,7 +31,9 @@
 <script setup>
 import { ref } from "vue";
 import { useSupplierData } from "@/data/supplierData";
-const { deliveries } = useSupplierData(); const notice = ref(""); function showNotice(text) { notice.value = text; setTimeout(() => notice.value = "", 2600); }
+const { deliveries, updateDeliveryStatus } = useSupplierData(); const notice = ref(""); function showNotice(text) { notice.value = text; setTimeout(() => notice.value = "", 2600); }
+function deliveryAction(status) { return status === "Ready for pickup" ? "Start transit" : status === "In transit" ? "Mark delivered" : "View tracking"; }
+function advanceDelivery(delivery) { const nextStatus = delivery.status === "Ready for pickup" ? "In transit" : delivery.status === "In transit" ? "Delivered" : delivery.status; updateDeliveryStatus(delivery.id, nextStatus); showNotice(nextStatus === delivery.status ? `${delivery.id} is already delivered.` : `${delivery.id} moved to ${nextStatus}.`); }
 </script>
 <style scoped>
 .page {

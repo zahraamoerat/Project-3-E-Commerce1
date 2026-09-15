@@ -41,16 +41,22 @@
 </template>
 <script setup>
 import { computed, ref } from "vue";
-import { RouterLink } from "vue-router";
+import { RouterLink, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
 const { products, updateProduct } = useSupplierData();
+const router = useRouter();
 const query = ref("");
 const filteredProducts = computed(() => products.value.filter((product) => `${product.product_name} ${product.sku}`.toLowerCase().includes(query.value.toLowerCase().trim())));
 const lowStock = computed(() => products.value.filter((product) => product.stockStatus === "Low stock").length);
 const outOfStock = computed(() => products.value.filter((product) => product.stockStatus === "Out of stock").length);
 const stockValue = computed(() => products.value.reduce((sum, product) => sum + product.price * product.quantity, 0));
 function money(value) { return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(value); }
-function restock(product) { const value = window.prompt(`Set stock quantity for ${product.product_name}`, product.quantity); if (value !== null && Number.isInteger(Number(value)) && Number(value) >= 0) updateProduct(product.product_id, { quantity: Number(value) }); }
+function restock(product) {
+  router.push({
+    name: "RestockPage",
+    params: { id: String(product.product_id) },
+  });
+}
 </script>
 <style scoped>
 .stock-page {

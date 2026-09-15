@@ -208,6 +208,27 @@ function removeProduct(id) {
   );
 }
 
+function updateOrderStatus(id, status) {
+  const order = orders.value.find((item) => item.id === id);
+  if (!order) return null;
+  order.status = status;
+  return order;
+}
+
+function updateDeliveryStatus(id, status) {
+  const delivery = deliveries.value.find((item) => item.id === id);
+  if (!delivery) return null;
+  delivery.status = status;
+  return delivery;
+}
+
+function replyToReview(id) {
+  const review = reviews.value.find((item) => item.id === id);
+  if (!review) return null;
+  review.replied = true;
+  return review;
+}
+
 export function useSupplierData() {
   return {
     products,
@@ -220,6 +241,9 @@ export function useSupplierData() {
     addProduct,
     updateProduct,
     removeProduct,
+    updateOrderStatus,
+    updateDeliveryStatus,
+    replyToReview,
   };
 }
 

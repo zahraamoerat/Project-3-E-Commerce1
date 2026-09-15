@@ -23,7 +23,7 @@
         </div>
         <div class="order-total"><small>Order total</small><strong>{{ money(order.total) }}</strong><span
             :class="statusClass(order.status)">{{ order.status }}</span></div><button class="icon-action" type="button"
-          @click="showNotice(`Order ${order.id} marked for review.`)">View details</button>
+          @click="advanceOrder(order)">{{ nextAction(order.status) }}</button>
       </article>
       <div v-if="!filtered.length" class="empty">No orders match this view.</div>
     </section>
@@ -33,9 +33,11 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useSupplierData } from "@/data/supplierData";
-const { orders } = useSupplierData(); const query = ref(""); const selected = ref("All"); const notice = ref(""); const tabs = ["All", "Processing", "Ready to ship", "Delivered"];
+const { orders, updateOrderStatus } = useSupplierData(); const query = ref(""); const selected = ref("All"); const notice = ref(""); const tabs = ["All", "Processing", "Ready to ship", "Delivered"];
 const filtered = computed(() => orders.value.filter((order) => (selected.value === "All" || order.status === selected.value) && `${order.id} ${order.buyer} ${order.items}`.toLowerCase().includes(query.value.toLowerCase())));
 function money(value) { return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(value); } function statusClass(status) { return status.toLowerCase().replaceAll(" ", "-"); } function showNotice(text) { notice.value = text; setTimeout(() => notice.value = "", 2600); }
+function nextAction(status) { return status === "Processing" ? "Mark ready" : status === "Ready to ship" ? "Mark delivered" : "View details"; }
+function advanceOrder(order) { const nextStatus = order.status === "Processing" ? "Ready to ship" : order.status === "Ready to ship" ? "Delivered" : order.status; updateOrderStatus(order.id, nextStatus); showNotice(nextStatus === order.status ? `Order ${order.id} is already delivered.` : `${order.id} moved to ${nextStatus}.`); }
 </script>
 <style scoped>
 .page {

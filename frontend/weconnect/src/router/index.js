@@ -11,6 +11,7 @@ import Dashboard from "../views/Dashboard.vue";
 import Orders from "../views/Orders.vue";
 import Deliveries from "../views/Deliveries.vue";
 import Profile from "../views/Profile.vue";
+import RestockPage from "../views/RestockPage.vue";
 
 const routes = [
   {
@@ -55,6 +56,11 @@ const routes = [
         path: "stockmanagement",
         name: "StockManagement",
         component: StockManagement,
+      },
+      {
+        path: "stockmanagement/restock/:id",
+        name: "RestockPage",
+        component: RestockPage,
       },
       {
         path: "orders",
