@@ -26,3 +26,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Aiven SSL certificate (environment-specific, not shared)
+backend/config/aiven-ca.pem

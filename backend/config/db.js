@@ -1,4 +1,6 @@
 const mysql = require("mysql2/promise");
+const fs = require("fs");
+const path = require("path");
 require("dotenv").config();
 
 const pool = mysql.createPool({
@@ -10,6 +12,9 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  ssl: {
+    ca: fs.readFileSync(path.join(__dirname, "aiven-ca.pem")),
+  },
 });
 
 module.exports = pool;
