@@ -71,8 +71,8 @@ import { useSupplierData } from "@/data/supplierData";
 
 const route = useRoute();
 const { products } = useSupplierData();
-const product = products.value.find((item) => item.product_id === Number(route.params.id));
-const productImages = computed(() => product?.images?.length ? product.images : product?.image ? [product.image] : []);
+const product = computed(() => products.value.find((item) => item.product_id === Number(route.params.id)) || null);
+const productImages = computed(() => product.value?.images?.length ? product.value.images : product.value?.image ? [product.value.image] : []);
 const activeImage = ref(0);
 const selectedSwatch = ref(0);
 const selectedSize = ref(2);
@@ -100,7 +100,7 @@ function showSizeGuide() {
 function addToOrder() {
   Swal.fire({
     title: "Added to order",
-    text: `${quantity.value} × ${product.product_name} (${packSizes[selectedSize.value]})`,
+    text: `${quantity.value} × ${product.value.product_name} (${packSizes[selectedSize.value]})`,
     icon: "success",
     toast: true,
     position: "top-end",
@@ -113,7 +113,7 @@ function addToOrder() {
 function orderNow() {
   Swal.fire({
     title: "Start this order?",
-    text: `${quantity.value} × ${product.product_name} will be requested from this supplier.`,
+    text: `${quantity.value} × ${product.value.product_name} will be requested from this supplier.`,
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Start order",
@@ -141,7 +141,7 @@ function toggleSaved() {
 }
 
 async function shareProduct(network) {
-  const shareData = { title: product.product_name, text: product.description, url: window.location.href };
+  const shareData = { title: product.value.product_name, text: product.value.description, url: window.location.href };
   if (network === "Share" && navigator.share) {
     await navigator.share(shareData);
     return;

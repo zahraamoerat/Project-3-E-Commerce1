@@ -1,582 +1,93 @@
 import db from "../config/db.js";
-
 import {
-  createProduct,
+  createProduct as insertProduct,
   getProducts,
   getProductById,
-  updateProduct,
-  deleteProduct
+  updateProduct as saveProduct,
+  updateProductStock as saveStock,
+  deleteProduct as archiveProduct,
 } from "../models/productModel.js";
 
-
-/* =========================================================
-   PUBLISH PRODUCT
-========================================================= */
-
-export async function publishProduct(req, res) {
-
-  try {
-
-    const {
-
-      supplier_id,
-
-      category_name,
-
-      product_name,
-
-      description,
-
-      price,
-
-      unit,
-
-      sku,
-
-      product_image,
-
-      quantity,
-
-      low_stock_threshold
-
-    } = req.body;
-
-
-    /* =========================
-       VALIDATION
-    ========================= */
-
-    if (!supplier_id) {
-
-      return res.status(400).json({
-
-        message:
-          "Supplier ID is required."
-
-      });
-
-    }
-
-
-    if (!product_name) {
-
-      return res.status(400).json({
-
-        message:
-          "Product name is required."
-
-      });
-
-    }
-
-
-    if (
-      price === undefined ||
-      price === null ||
-      price === ""
-    ) {
-
-      return res.status(400).json({
-
-        message:
-          "Product price is required."
-
-      });
-
-    }
-
-
-    /* =========================
-       FIND CATEGORY
-    ========================= */
-
-    let category_id = null;
-
-
-    if (category_name) {
-
-      const [
-        categoryRows
-      ] = await db.execute(
-        `
-        SELECT category_id
-
-        FROM categories
-
-        WHERE category_name = ?
-        `,
-        [category_name]
-      );
-
-
-      if (
-        categoryRows.length === 0
-      ) {
-
-        return res.status(400).json({
-
-          message:
-            `Category "${category_name}" does not exist.`
-
-        });
-
-      }
-
-
-      category_id =
-        categoryRows[0].category_id;
-
-    }
-
-
-    /* =========================
-       CHECK SUPPLIER
-    ========================= */
-
-    const [
-      supplierRows
-    ] = await db.execute(
-      `
-      SELECT supplier_id
-
-      FROM suppliers
-
-      WHERE supplier_id = ?
-      `,
-      [supplier_id]
-    );
-
-
-    if (
-      supplierRows.length === 0
-    ) {
-
-      return res.status(400).json({
-
-        message:
-          "The selected supplier does not exist."
-
-      });
-
-    }
-
-
-    /* =========================
-       CREATE PRODUCT
-    ========================= */
-
-    const productId =
-      await createProduct({
-
-        supplier_id,
-
-        category_id,
-
-        product_name,
-
-        description,
-
-        price,
-
-        unit,
-
-        sku,
-
-        product_image,
-
-        quantity,
-
-        low_stock_threshold
-
-      });
-
-
-    /* =========================
-       SUCCESS
-    ========================= */
-
-    res.status(201).json({
-
-      message:
-        "Product published successfully.",
-
-      product_id:
-        productId
-
-    });
-
-
-  } catch (error) {
-
-    console.error(
-      "Error publishing product:",
-      error
-    );
-
-
-    res.status(500).json({
-
-      message:
-        "Failed to publish product.",
-
-      error:
-        error.message
-
-    });
-
+const supplierId = () => Number(process.env.SUPPLIER_ID || 1);
+
+async function categoryId(categoryName) {
+  if (!categoryName) return null;
+  const [rows] = await db.execute("SELECT category_id FROM categories WHERE category_name = ? LIMIT 1", [categoryName]);
+  if (!rows[0]) {
+    const error = new Error(`Category \"${categoryName}\" does not exist.`);
+    error.status = 400;
+    throw error;
   }
-
+  return rows[0].category_id;
 }
 
-
-/* =========================================================
-   FETCH PRODUCTS
-========================================================= */
-
-export async function fetchProducts(
-  req,
-  res
-) {
-
-  try {
-
-    const products =
-      await getProducts();
-
-
-    res.status(200).json(
-      products
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "ERROR FETCHING PRODUCTS:"
-    );
-
-    console.error(error);
-
-
-    res.status(500).json({
-
-      message:
-        "Failed to fetch products.",
-
-      error:
-        error.message ||
-        "Unknown database error",
-
-      code:
-        error.code ||
-        null
-
-    });
-
-  }
-
+function productData(body, category_id) {
+  return {
+    supplier_id: Number(body.supplier_id || supplierId()),
+    category_id,
+    product_name: String(body.product_name || "").trim(),
+    subcategory: body.subcategory,
+    description: body.description,
+    price: Number(body.price || 0),
+    compare_price: body.comparePrice ?? body.compare_price,
+    unit: body.unit,
+    selling_type: body.sellingType === "online" ? "in-store" : body.sellingType === "online-only" ? "online-only" : body.sellingType === "both" ? "both" : body.selling_type,
+    weight_kg: body.weight ?? body.weight_kg,
+    length_in: body.length ?? body.length_in,
+    breadth_in: body.breadth ?? body.breadth_in,
+    width_in: body.width ?? body.width_in,
+    sku: body.sku,
+    product_image: body.product_image || body.image,
+    images: body.images,
+    quantity: Number(body.quantity || 0),
+    low_stock_threshold: Number(body.low_stock_threshold ?? 10),
+  };
 }
 
-
-/* =========================================================
-   FETCH SINGLE PRODUCT
-========================================================= */
-
-export async function fetchProductById(req, res) {
-
-  try {
-
-    const { id } = req.params;
-
-
-    const product =
-      await getProductById(id);
-
-
-    if (!product) {
-
-      return res.status(404).json({
-
-        message:
-          "Product not found."
-
-      });
-
-    }
-
-
-    res.status(200).json(
-      product
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "Error fetching product:",
-      error
-    );
-
-
-    res.status(500).json({
-
-      message:
-        "Failed to fetch product.",
-
-      error:
-        error.message
-
-    });
-
-  }
-
+export async function fetchProducts(req, res, next) {
+  try { res.json(await getProducts()); } catch (error) { next(error); }
 }
 
-
-/* =========================================================
-   EDIT PRODUCT
-========================================================= */
-
-export async function editProduct(req, res) {
-
+export async function fetchProductById(req, res, next) {
   try {
-
-    const { id } = req.params;
-
-
-    /* =========================
-       CHECK PRODUCT EXISTS
-    ========================= */
-
-    const existing =
-      await getProductById(id);
-
-
-    if (!existing) {
-
-      return res.status(404).json({
-
-        message:
-          "Product not found."
-
-      });
-
-    }
-
-
-    const {
-
-      category_name,
-
-      product_name,
-
-      description,
-
-      price,
-
-      unit,
-
-      sku,
-
-      product_image,
-
-      quantity,
-
-      low_stock_threshold
-
-    } = req.body;
-
-
-    /* =========================
-       VALIDATION
-    ========================= */
-
-    if (!product_name) {
-
-      return res.status(400).json({
-
-        message:
-          "Product name is required."
-
-      });
-
-    }
-
-
-    if (
-      price === undefined ||
-      price === null ||
-      price === ""
-    ) {
-
-      return res.status(400).json({
-
-        message:
-          "Product price is required."
-
-      });
-
-    }
-
-
-    /* =========================
-       FIND CATEGORY
-    ========================= */
-
-    let category_id = null;
-
-
-    if (category_name) {
-
-      const [
-        categoryRows
-      ] = await db.execute(
-        `
-        SELECT category_id
-
-        FROM categories
-
-        WHERE category_name = ?
-        `,
-        [category_name]
-      );
-
-
-      if (
-        categoryRows.length === 0
-      ) {
-
-        return res.status(400).json({
-
-          message:
-            `Category "${category_name}" does not exist.`
-
-        });
-
-      }
-
-
-      category_id =
-        categoryRows[0].category_id;
-
-    }
-
-
-    /* =========================
-       UPDATE PRODUCT
-    ========================= */
-
-    await updateProduct(id, {
-
-      category_id,
-
-      product_name,
-
-      description,
-
-      price,
-
-      unit,
-
-      sku,
-
-      product_image,
-
-      quantity,
-
-      low_stock_threshold
-
-    });
-
-
-    /* =========================
-       SUCCESS
-    ========================= */
-
-    res.status(200).json({
-
-      message:
-        "Product updated successfully."
-
-    });
-
-
-  } catch (error) {
-
-    console.error(
-      "Error updating product:",
-      error
-    );
-
-
-    res.status(500).json({
-
-      message:
-        "Failed to update product.",
-
-      error:
-        error.message
-
-    });
-
-  }
-
+    const product = await getProductById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found." });
+    res.json(product);
+  } catch (error) { next(error); }
 }
 
-
-/* =========================================================
-   REMOVE PRODUCT
-========================================================= */
-
-export async function removeProduct(req, res) {
-
+export async function publishProduct(req, res, next) {
   try {
+    if (!req.body.product_name) return res.status(400).json({ message: "Product name is required." });
+    const data = productData(req.body, await categoryId(req.body.category_name));
+    const product_id = await insertProduct(data);
+    res.status(201).json({ message: "Product published successfully.", product_id });
+  } catch (error) { next(error); }
+}
 
-    const { id } = req.params;
+export async function editProduct(req, res, next) {
+  try {
+    if (!await getProductById(req.params.id)) return res.status(404).json({ message: "Product not found." });
+    const data = productData(req.body, await categoryId(req.body.category_name));
+    const affectedRows = await saveProduct(req.params.id, data);
+    res.json({ message: "Product updated successfully.", affectedRows });
+  } catch (error) { next(error); }
+}
 
+export async function patchProductStock(req, res, next) {
+  try {
+    const quantity = Number(req.body.quantity);
+    if (!Number.isInteger(quantity) || quantity < 0) return res.status(400).json({ message: "Quantity must be a non-negative integer." });
+    const affectedRows = await saveStock(req.params.id, quantity);
+    if (!affectedRows) return res.status(404).json({ message: "Product not found." });
+    res.json({ message: "Stock updated successfully.", quantity });
+  } catch (error) { next(error); }
+}
 
-    const affectedRows =
-      await deleteProduct(id);
-
-
-    if (!affectedRows) {
-
-      return res.status(404).json({
-
-        message:
-          "Product not found."
-
-      });
-
-    }
-
-
-    res.status(200).json({
-
-      message:
-        "Product deleted successfully."
-
-    });
-
-
-  } catch (error) {
-
-    console.error(
-      "Error deleting product:",
-      error
-    );
-
-
-    res.status(500).json({
-
-      message:
-        "Failed to delete product.",
-
-      error:
-        error.message
-
-    });
-
-  }
-
+export async function removeProduct(req, res, next) {
+  try {
+    const affectedRows = await archiveProduct(req.params.id);
+    if (!affectedRows) return res.status(404).json({ message: "Product not found." });
+    res.json({ message: "Product deleted successfully." });
+  } catch (error) { next(error); }
 }

@@ -46,8 +46,8 @@
 import { reactive, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
-const { profile } = useSupplierData(); const form = reactive({ ...profile.value }); const editing = ref(false); const message = ref("");
-function save() { if (editing.value) { Object.assign(profile.value, form); message.value = "Profile saved locally."; setTimeout(() => message.value = "", 2500); } editing.value = !editing.value; }
+const { profile, updateProfile } = useSupplierData(); const form = reactive({ ...profile.value }); const editing = ref(false); const message = ref("");
+async function save() { if (editing.value) { await updateProfile(form); message.value = "Profile saved."; setTimeout(() => message.value = "", 2500); } editing.value = !editing.value; }
 </script>
 <style scoped>
 .profile {

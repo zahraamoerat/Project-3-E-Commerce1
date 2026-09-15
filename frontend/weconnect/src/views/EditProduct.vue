@@ -59,12 +59,16 @@
   </div>
 </template>
 <script setup>
-import { reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
 const route = useRoute(); const router = useRouter(); const { products, updateProduct } = useSupplierData();
-const product = products.value.find((item) => item.product_id === Number(route.params.id));
-const form = reactive(product ? { product_name: product.product_name, category_name: product.category_name, sku: product.sku, description: product.description, price: product.price, quantity: product.quantity, low_stock_threshold: product.low_stock_threshold, image: product.image || "", images: product.images?.length ? [...product.images] : (product.image ? [product.image] : []) } : {});
+const product = computed(() => products.value.find((item) => item.product_id === Number(route.params.id)) || null);
+const form = reactive({ product_name: "", category_name: "", sku: "", description: "", price: 0, quantity: 0, low_stock_threshold: 10, image: "", images: [] });
+watch(product, (value) => {
+  if (!value) return;
+  Object.assign(form, { product_name: value.product_name, category_name: value.category_name, sku: value.sku, description: value.description, price: value.price, quantity: value.quantity, low_stock_threshold: value.low_stock_threshold, image: value.image || "", images: value.images?.length ? [...value.images] : (value.image ? [value.image] : []) });
+}, { immediate: true });
 const message = ref("");
 function selectImages(event) { const files = [...(event.target.files || [])]; form.images.push(...files.map((file) => URL.createObjectURL(file))); event.target.value = ""; }
 function removeImage(index) { form.images.splice(index, 1); form.image = form.images[0] || ""; }

@@ -1,265 +1,124 @@
 import { computed, ref } from "vue";
 
+const API_URL = import.meta.env.VITE_API_URL || "/api";
+
 const imagePlaceholders = {
-  packaging:
-    "https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=640&q=80",
-  coffee:
-    "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=640&q=80",
-  supplies:
-    "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=640&q=80",
+  packaging: "https://placehold.co/800x800?text=Product",
+  coffee: "https://placehold.co/800x800?text=Product",
+  supplies: "https://placehold.co/800x800?text=Product",
 };
 
-const products = ref([
-  {
-    product_id: 1,
-    product_name: "Untitled draft",
-    category_name: "Eco-friendly Packaging",
-    sku: "ECO-001",
-    price: 550,
-    quantity: 500,
-    low_stock_threshold: 80,
-    stockStatus: "In stock",
-    image: imagePlaceholders.packaging,
-    description: "Recycled kraft packaging for growing businesses.",
-  },
-  {
-    product_id: 2,
-    product_name: "Recycled Kraft Mailer",
-    category_name: "Eco-friendly Packaging",
-    sku: "ECO-014",
-    price: 320,
-    quantity: 42,
-    low_stock_threshold: 50,
-    stockStatus: "Low stock",
-    image: imagePlaceholders.packaging,
-    description: "Durable recyclable mailers sold in wholesale packs.",
-  },
-  {
-    product_id: 3,
-    product_name: "Compostable Wrap",
-    category_name: "Shipping Supplies",
-    sku: "SHIP-008",
-    price: 180,
-    quantity: 0,
-    low_stock_threshold: 30,
-    stockStatus: "Out of stock",
-    image: imagePlaceholders.supplies,
-    description: "Plastic-free wrap for low-impact dispatches.",
-  },
-  {
-    product_id: 4,
-    product_name: "Roasted Arabica Beans",
-    category_name: "Food & Beverage",
-    sku: "FOOD-031",
-    price: 780,
-    quantity: 125,
-    low_stock_threshold: 40,
-    stockStatus: "In stock",
-    image: imagePlaceholders.coffee,
-    description: "Medium roast coffee beans for cafes and offices.",
-  },
-]);
+const products = ref([]);
+const orders = ref([]);
+const deliveries = ref([]);
+const reviews = ref([]);
+const profile = ref({ businessName: "", owner: "", email: "", phone: "", location: "", description: "" });
+const loading = ref(true);
+const error = ref("");
+let loaded = false;
 
-const orders = ref([
-  {
-    id: "WC-1048",
-    buyer: "Mosaic Coffee Co.",
-    items: "Roasted Arabica Beans",
-    total: 2340,
-    status: "Ready to ship",
-    date: "Today",
-    accent: "coffee",
-  },
-  {
-    id: "WC-1047",
-    buyer: "Northstar Retail",
-    items: "Recycled Kraft Mailer",
-    total: 1600,
-    status: "Processing",
-    date: "Yesterday",
-    accent: "packaging",
-  },
-  {
-    id: "WC-1046",
-    buyer: "Greenline Studio",
-    items: "Untitled draft",
-    total: 2750,
-    status: "Delivered",
-    date: "12 Sep 2026",
-    accent: "supplies",
-  },
-]);
-
-const deliveries = ref([
-  {
-    id: "DL-2204",
-    order: "WC-1048",
-    destination: "Mosaic Coffee Co.",
-    eta: "Today, 16:00",
-    status: "Ready for pickup",
-    carrier: "SwiftShip",
-  },
-  {
-    id: "DL-2203",
-    order: "WC-1047",
-    destination: "Northstar Retail",
-    eta: "Tomorrow, 10:30",
-    status: "In transit",
-    carrier: "ParcelPro",
-  },
-  {
-    id: "DL-2202",
-    order: "WC-1046",
-    destination: "Greenline Studio",
-    eta: "Delivered 12 Sep",
-    status: "Delivered",
-    carrier: "SwiftShip",
-  },
-]);
-
-const reviews = ref([
-  {
-    id: 1,
-    buyer: "Mosaic Coffee Co.",
-    rating: 5,
-    title: "Consistent quality",
-    text: "The packaging arrived quickly and looked exactly like the sample.",
-    date: "2 days ago",
-    replied: false,
-  },
-  {
-    id: 2,
-    buyer: "Northstar Retail",
-    rating: 4,
-    title: "Great wholesale value",
-    text: "Reliable stock and a very helpful supplier team.",
-    date: "6 days ago",
-    replied: true,
-  },
-  {
-    id: 3,
-    buyer: "Greenline Studio",
-    rating: 5,
-    title: "Will order again",
-    text: "The materials feel premium and the delivery updates were clear.",
-    date: "1 week ago",
-    replied: false,
-  },
-]);
-
-const profile = ref({
-  businessName: "Cedar & Finch Supply Co.",
-  owner: "Amara Nkosi",
-  email: "hello@cedarfinch.co.za",
-  phone: "+27 11 555 0184",
-  location: "Cape Town, South Africa",
-  description:
-    "Thoughtful wholesale goods and low-impact packaging for independent businesses.",
-});
+async function request(path, options = {}) {
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.message || "The server request failed.");
+  return body;
+}
 
 function refreshStatus(product) {
   const quantity = Number(product.quantity || 0);
   const threshold = Number(product.low_stock_threshold || 0);
-  product.stockStatus =
-    quantity === 0
-      ? "Out of stock"
-      : quantity <= threshold
-        ? "Low stock"
-        : "In stock";
+  product.stockStatus = quantity === 0 ? "Out of stock" : quantity <= threshold ? "Low stock" : "In stock";
 }
 
-function addProduct(product) {
-  const nextId =
-    Math.max(...products.value.map((item) => item.product_id), 0) + 1;
-  const images = product.images?.length
-    ? [...product.images]
-    : product.image
-      ? [product.image]
-      : [imagePlaceholders.packaging];
-  const nextProduct = {
-    ...product,
-    product_id: nextId,
-    images,
-    image: images[0],
-  };
-  refreshStatus(nextProduct);
-  products.value.unshift(nextProduct);
-  return nextProduct;
-}
-
-function updateProduct(id, changes) {
-  const product = products.value.find((item) => item.product_id === Number(id));
-  if (!product) return null;
-  Object.assign(product, changes);
-  if (changes.images) {
-    product.images = [...changes.images];
-    product.image = product.images[0] || imagePlaceholders.packaging;
-  } else if (changes.image) {
-    product.images = [changes.image];
-    product.image = changes.image;
+export async function loadSupplierData() {
+  if (loaded) return;
+  loading.value = true;
+  try {
+    const data = await request("/supplier/overview");
+    products.value = data.products || [];
+    orders.value = data.orders || [];
+    deliveries.value = data.deliveries || [];
+    reviews.value = data.reviews || [];
+    if (data.profile) Object.assign(profile.value, data.profile);
+    loaded = true;
+    error.value = "";
+  } catch (requestError) {
+    error.value = requestError.message;
+    console.error("Unable to load supplier data:", requestError);
+  } finally {
+    loading.value = false;
   }
-  refreshStatus(product);
-  return product;
 }
 
-function removeProduct(id) {
-  products.value = products.value.filter(
-    (product) => product.product_id !== Number(id),
-  );
+loadSupplierData();
+
+async function addProduct(product) {
+  const result = await request("/products", { method: "POST", body: JSON.stringify(product) });
+  const created = await request(`/products/${result.product_id}`);
+  products.value.unshift(created);
+  return created;
 }
 
-function updateOrderStatus(id, status) {
+async function updateProduct(id, changes) {
+  const payload = { ...changes, category_name: changes.category_name || products.value.find((item) => item.product_id === Number(id))?.category_name };
+  const result = await request(`/products/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+  const updated = await request(`/products/${id}`);
+  const index = products.value.findIndex((item) => item.product_id === Number(id));
+  if (index !== -1) products.value[index] = updated;
+  return result;
+}
+
+async function updateProductStock(id, quantity) {
+  await request(`/products/${id}/stock`, { method: "PATCH", body: JSON.stringify({ quantity }) });
+  const updated = await request(`/products/${id}`);
+  const index = products.value.findIndex((item) => item.product_id === Number(id));
+  if (index !== -1) products.value[index] = updated;
+  return updated;
+}
+
+async function removeProduct(id) {
+  await request(`/products/${id}`, { method: "DELETE" });
+  products.value = products.value.filter((product) => product.product_id !== Number(id));
+}
+
+async function updateOrderStatus(id, status) {
+  const apiStatus = status === "Ready to ship" ? "Shipped" : status;
+  await request(`/supplier/orders/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status: apiStatus }) });
   const order = orders.value.find((item) => item.id === id);
-  if (!order) return null;
-  order.status = status;
+  if (order) order.status = status;
   return order;
 }
 
-function updateDeliveryStatus(id, status) {
-  const delivery = deliveries.value.find((item) => item.id === id);
-  if (!delivery) return null;
-  delivery.status = status;
+async function updateDeliveryStatus(id, status) {
+  await request(`/supplier/deliveries/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+  const delivery = deliveries.value.find((item) => String(item.id) === String(id));
+  if (delivery) delivery.status = status;
   return delivery;
 }
 
-function replyToReview(id) {
+async function replyToReview(id, reply_text = "Thank you for your feedback.") {
+  await request(`/supplier/reviews/${id}/replies`, { method: "POST", body: JSON.stringify({ reply_text }) });
   const review = reviews.value.find((item) => item.id === id);
-  if (!review) return null;
-  review.replied = true;
+  if (review) review.replied = true;
   return review;
 }
 
+async function updateProfile(changes) {
+  const updated = await request("/supplier/profile", { method: "PATCH", body: JSON.stringify(changes) });
+  Object.assign(profile.value, updated);
+  return updated;
+}
+
 export function useSupplierData() {
-  return {
-    products,
-    orders,
-    deliveries,
-    reviews,
-    profile,
-    imagePlaceholders,
-    refreshStatus,
-    addProduct,
-    updateProduct,
-    removeProduct,
-    updateOrderStatus,
-    updateDeliveryStatus,
-    replyToReview,
-  };
+  return { products, orders, deliveries, reviews, profile, loading, error, imagePlaceholders, refreshStatus, loadSupplierData, addProduct, updateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
 }
 
 export const supplierStats = {
   productCount: computed(() => products.value.length),
-  lowStockCount: computed(
-    () =>
-      products.value.filter((product) => product.stockStatus === "Low stock")
-        .length,
-  ),
-  outOfStockCount: computed(
-    () =>
-      products.value.filter((product) => product.stockStatus === "Out of stock")
-        .length,
-  ),
-  revenue: computed(() =>
-    orders.value.reduce((sum, order) => sum + order.total, 0),
-  ),
+  lowStockCount: computed(() => products.value.filter((product) => product.stockStatus === "Low stock").length),
+  outOfStockCount: computed(() => products.value.filter((product) => product.stockStatus === "Out of stock").length),
+  revenue: computed(() => orders.value.reduce((sum, order) => sum + Number(order.total || 0), 0)),
 };

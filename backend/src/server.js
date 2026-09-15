@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { testDatabaseConnection } from "./config/db.js";
 
 import productRoutes from "./routes/productRoutes.js";
+import supplierRoutes from "./routes/supplierRoutes.js";
 
 dotenv.config();
 
@@ -72,6 +73,7 @@ app.get("/", (req, res) => {
 ========================= */
 
 app.use("/api/products", productRoutes);
+app.use("/api/supplier", supplierRoutes);
 
 /* =========================
    ERROR HANDLER
