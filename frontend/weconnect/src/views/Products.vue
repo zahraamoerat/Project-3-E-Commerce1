@@ -4,259 +4,204 @@
       <header class="page-header">
         <div>
           <h1>Products</h1>
-          <p>Manage your wholesale products and inventory.</p>
+          <p>Manage your product catalog and pricing.</p>
         </div>
-
-        <RouterLink to="/add-products" class="add-product-button">
-          + Add Product
+        <RouterLink to="/products/add" class="add-product-button">
+          <FontAwesomeIcon :icon="faPlus" />
+          Add product
         </RouterLink>
       </header>
 
-      <section class="controls">
-        <div class="search-container">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search products or SKU..."
-          />
+      <section class="products-card">
+        <div class="card-heading">
+          <h2>All products</h2>
         </div>
 
-        <select v-model="selectedStatus" class="filter-select">
-          <option value="All">All Products</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
-        </select>
-      </section>
+        <div class="controls">
+          <label class="search-container">
+            <FontAwesomeIcon :icon="faMagnifyingGlass" />
+            <span class="sr-only">Search products</span>
+            <input v-model="searchQuery" type="text" placeholder="Search products..." />
+          </label>
 
-      <div v-if="loading" class="message loading">
-        Loading products...
-      </div>
+          <div class="status-filters" aria-label="Filter products by stock">
+            <button v-for="filter in statusFilters" :key="filter.value" type="button" class="filter-button"
+              :class="{ 'filter-button--active': selectedStatus === filter.value }"
+              @click="selectedStatus = filter.value">
+              {{ filter.label }}
+            </button>
+          </div>
 
-      <div v-else-if="error" class="message error">
-        {{ error }}
-      </div>
+          <span class="result-count">{{ filteredProducts.length }} result<span
+              v-if="filteredProducts.length !== 1">s</span></span>
 
-      <section v-else class="products-card">
-        <div class="table-container">
+          <div class="view-toggle" aria-label="Product view">
+            <button type="button" class="view-button" :class="{ 'view-button--active': viewMode === 'list' }"
+              :aria-pressed="viewMode === 'list'" aria-label="List view" @click="viewMode = 'list'">
+              <FontAwesomeIcon :icon="faList" />
+            </button>
+            <button type="button" class="view-button" :class="{ 'view-button--active': viewMode === 'grid' }"
+              :aria-pressed="viewMode === 'grid'" aria-label="Grid view" @click="viewMode = 'grid'">
+              <FontAwesomeIcon :icon="faTableCells" />
+            </button>
+          </div>
+        </div>
+
+        <div v-if="error" class="message error">{{ error }}</div>
+
+        <div v-if="viewMode === 'list'" class="table-container">
           <table>
             <thead>
               <tr>
-                <th>PRODUCT</th>
-                <th>SKU</th>
-                <th>CATEGORY</th>
-                <th>PRICE</th>
-                <th>STOCK</th>
-                <th>STATUS</th>
-                <th>ACTIONS</th>
+                <th>Product <span>▲</span></th>
+                <th>Category <span>▲</span></th>
+                <th>Price <span>▲</span></th>
+                <th>Stock <span>▲</span></th>
+                <th>Status <span>▲</span></th>
+                <th><span class="sr-only">Actions</span></th>
               </tr>
             </thead>
-
             <tbody>
-              <tr
-                v-for="product in filteredProducts"
-                :key="product.product_id"
-              >
-                <td class="product-name">
-                  {{ product.product_name }}
+              <tr v-for="product in filteredProducts" :key="product.product_id">
+                <td class="product-cell">
+                  <span class="product-icon">
+                    <FontAwesomeIcon :icon="faCube" />
+                  </span>
+                  <strong>{{ product.product_name }}</strong>
                 </td>
-
+                <td>{{ product.category_name }}</td>
+                <td>{{ formatPrice(product.price) }}</td>
+                <td>{{ Number(product.quantity).toLocaleString() }} units</td>
                 <td>
-                  {{ product.sku || "—" }}
-                </td>
-
-                <td>
-                  {{ product.category_name || "Uncategorised" }}
-                </td>
-
-                <td>
-                  {{ formatPrice(product.price) }}
-                </td>
-
-                <td>
-                  {{ Number(product.quantity || 0) }}
-                </td>
-
-                <td>
-                  <span
-                    class="status-badge"
-                    :class="
-                      product.is_active
-                        ? 'active'
-                        : 'inactive'
-                    "
-                  >
-                    {{
-                      product.is_active
-                        ? "Active"
-                        : "Inactive"
-                    }}
+                  <span class="status-badge" :class="product.stockStatus.toLowerCase().replace(' ', '-')">
+                    <span class="status-dot"></span>
+                    {{ product.stockStatus }}
                   </span>
                 </td>
-
                 <td class="actions">
-                  <RouterLink
-                    :to="`/edit-product/${product.product_id}`"
-                    class="edit-button"
-                  >
-                    Edit
+                  <RouterLink :to="`/products/view/${product.product_id}`" class="icon-button"
+                    aria-label="View product">
+                    <FontAwesomeIcon :icon="faEye" />
                   </RouterLink>
-
-                  <button
-                    class="delete-button"
-                    :disabled="
-                      deletingProductId ===
-                      product.product_id
-                    "
-                    @click="deleteProduct(product)"
-                  >
-                    {{
-                      deletingProductId ===
-                      product.product_id
-                        ? "Deleting..."
-                        : "Delete"
-                    }}
+                  <RouterLink :to="`/products/edit/${product.product_id}`" class="icon-button"
+                    aria-label="Edit product">
+                    <FontAwesomeIcon :icon="faPen" />
+                  </RouterLink>
+                  <button class="icon-button" type="button" aria-label="Delete product"
+                    :disabled="deletingProductId === product.product_id" @click="deleteProduct(product)">
+                    <FontAwesomeIcon :icon="faTrashCan" />
                   </button>
                 </td>
               </tr>
-
               <tr v-if="filteredProducts.length === 0">
-                <td colspan="7" class="no-results">
-                  No products found.
-                </td>
+                <td colspan="6" class="no-results">No products found.</td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <div v-else class="product-grid">
+          <article v-for="product in filteredProducts" :key="product.product_id" class="product-tile">
+            <div class="tile-image">
+              <img :src="product.image" :alt="product.product_name" />
+              <span class="status-badge" :class="product.stockStatus.toLowerCase().replace(' ', '-')">
+                <span class="status-dot"></span>
+                {{ product.stockStatus }}
+              </span>
+            </div>
+            <div class="tile-content">
+              <span class="tile-category">{{ product.category_name }}</span>
+              <h3>{{ product.product_name }}</h3>
+              <div class="tile-details">
+                <span><small>Price</small><strong>{{ formatPrice(product.price) }}</strong></span>
+                <span><small>Stock</small><strong>{{ Number(product.quantity).toLocaleString() }} units</strong></span>
+              </div>
+              <div class="tile-actions">
+                <RouterLink :to="`/products/view/${product.product_id}`" class="tile-view">View product</RouterLink>
+                <RouterLink :to="`/products/edit/${product.product_id}`" class="tile-edit">Edit product</RouterLink>
+                <button class="icon-button" type="button" aria-label="Delete product"
+                  :disabled="deletingProductId === product.product_id" @click="deleteProduct(product)">
+                  <FontAwesomeIcon :icon="faTrashCan" />
+                </button>
+              </div>
+            </div>
+          </article>
+          <div v-if="filteredProducts.length === 0" class="no-results">No products found.</div>
+        </div>
+
+        <footer class="card-footer">
+          <span>Showing {{ filteredProducts.length ? `1-${filteredProducts.length}` : "0" }} of {{
+            filteredProducts.length }}</span>
+          <div class="pagination">
+            <button type="button" class="pagination-button" disabled aria-label="Previous page">‹</button>
+            <button type="button" class="pagination-button pagination-button--current">1</button>
+            <button type="button" class="pagination-button" disabled aria-label="Next page">›</button>
+          </div>
+        </footer>
       </section>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { computed, ref } from "vue";
 import { RouterLink } from "vue-router";
-import { api } from "@/services/api";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { useSupplierData } from "@/data/supplierData";
+import {
+  faCube,
+  faList,
+  faMagnifyingGlass,
+  faPen,
+  faPlus,
+  faTableCells,
+  faTrashCan,
+  faEye
+} from "@fortawesome/free-solid-svg-icons";
 
-const products = ref([]);
+const { products, removeProduct } = useSupplierData();
+
 const searchQuery = ref("");
 const selectedStatus = ref("All");
-
-const loading = ref(true);
+const viewMode = ref("list");
+const deletingProductId = ref(null);
 const error = ref("");
 
-const deletingProductId = ref(null);
-
-async function loadProducts() {
-  loading.value = true;
-  error.value = "";
-
-  try {
-    const data = await api.getProducts();
-
-    products.value = Array.isArray(data)
-      ? data
-      : data.products || [];
-  } catch (err) {
-    console.error("Failed to load products:", err);
-
-    error.value =
-      err.message ||
-      "Unable to load products. Please try again.";
-  } finally {
-    loading.value = false;
-  }
-}
+const statusFilters = [
+  { label: "All products", value: "All" },
+  { label: "In stock", value: "In stock" },
+  { label: "Low stock", value: "Low stock" },
+  { label: "Out of stock", value: "Out of stock" }
+];
 
 const filteredProducts = computed(() => {
-  const query =
-    searchQuery.value
-      .toLowerCase()
-      .trim();
+  const query = searchQuery.value.toLowerCase().trim();
 
   return products.value.filter((product) => {
-    const productName =
-      (product.product_name || "").toLowerCase();
-
-    const sku =
-      (product.sku || "").toLowerCase();
-
-    const category =
-      (product.category_name || "").toLowerCase();
-
-    const matchesSearch =
-      !query ||
-      productName.includes(query) ||
-      sku.includes(query) ||
-      category.includes(query);
-
-    const isActive =
-      Boolean(Number(product.is_active));
-
-    const productStatus =
-      isActive ? "Active" : "Inactive";
-
-    const matchesStatus =
-      selectedStatus.value === "All" ||
-      productStatus === selectedStatus.value;
-
+    const matchesSearch = !query || [product.product_name, product.category_name]
+      .some((value) => value.toLowerCase().includes(query));
+    const matchesStatus = selectedStatus.value === "All" || product.stockStatus === selectedStatus.value;
     return matchesSearch && matchesStatus;
   });
 });
 
 function formatPrice(price) {
-  const numericPrice = Number(price || 0);
-
-  return new Intl.NumberFormat(
-    "en-ZA",
-    {
-      style: "currency",
-      currency: "ZAR"
-    }
-  ).format(numericPrice);
+  return new Intl.NumberFormat("en-ZA", {
+    style: "currency",
+    currency: "ZAR",
+    maximumFractionDigits: 0
+  }).format(price);
 }
 
-async function deleteProduct(product) {
-  const confirmed = window.confirm(
-    `Are you sure you want to delete "${product.product_name}"?`
-  );
-
-  if (!confirmed) {
+function deleteProduct(product) {
+  if (!window.confirm(`Are you sure you want to delete "${product.product_name}"?`)) {
     return;
   }
 
-  deletingProductId.value =
-    product.product_id;
-
-  error.value = "";
-
-  try {
-    await api.deleteProduct(
-      product.product_id
-    );
-
-    products.value =
-      products.value.filter(
-        (item) =>
-          item.product_id !==
-          product.product_id
-      );
-  } catch (err) {
-    console.error(
-      "Failed to delete product:",
-      err
-    );
-
-    error.value =
-      err.message ||
-      "Failed to delete product.";
-  } finally {
-    deletingProductId.value = null;
-  }
+  deletingProductId.value = product.product_id;
+  removeProduct(product.product_id);
+  deletingProductId.value = null;
 }
-
-onMounted(() => {
-  loadProducts();
-});
 </script>
 
 <style scoped>
@@ -266,235 +211,542 @@ onMounted(() => {
 
 .products-page {
   min-height: 100vh;
-  background: #f6f4f1;
-  color: #4b3934;
+  padding: clamp(18px, 3vw, 30px) clamp(14px, 3vw, 30px) 48px;
+  background: #f7f5f2;
+  color: #4d3933;
   font-family: Arial, Helvetica, sans-serif;
 }
 
 .main-content {
-  max-width: 1500px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding-bottom: 40px;
 }
 
 .page-header {
-  min-height: 120px;
-  padding: 25px 40px;
-  background: #f8f7f5;
-  border-bottom: 1px solid #e8e4df;
-
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.page-header h1,
+.card-heading h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  color: #44312c;
 }
 
 .page-header h1 {
-  margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 32px;
-  color: #44332f;
+  font-size: clamp(25px, 3vw, 32px);
+  line-height: 1.15;
 }
 
 .page-header p {
-  margin: 8px 0 0;
-  color: #756a66;
+  margin: 5px 0 0;
+  color: #85736d;
+  font-size: 14px;
 }
 
 .add-product-button {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-
-  background: #d9824e;
-  color: white;
-
-  padding: 12px 20px;
-  border-radius: 8px;
-
-  text-decoration: none;
+  gap: 8px;
+  padding: 11px 17px;
+  border-radius: 9px;
+  background: #e17b3d;
+  color: #fff;
+  font-size: 13px;
   font-weight: 700;
+  text-decoration: none;
 }
 
 .add-product-button:hover {
-  background: #c86f3e;
-}
-
-.controls {
-  padding: 30px 40px;
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.search-container {
-  flex: 1;
-  min-width: 240px;
-}
-
-.search-container input,
-.filter-select {
-  width: 100%;
-  height: 46px;
-
-  border: 1px solid #ded9d5;
-  border-radius: 8px;
-
-  background: white;
-  padding: 0 14px;
-
-  font-size: 14px;
-  color: #4b3934;
-}
-
-.filter-select {
-  width: 180px;
-}
-
-.message {
-  margin: 0 40px 20px;
-  padding: 15px 18px;
-  border-radius: 8px;
-}
-
-.loading {
-  background: #fff7e8;
-  color: #8a621f;
-}
-
-.error {
-  background: #fde4df;
-  color: #b73e26;
+  background: #ce6930;
 }
 
 .products-card {
-  margin: 0 40px;
-
-  background: white;
-  border: 1px solid #e4dfdb;
-  border-radius: 16px;
-
   overflow: hidden;
+  border: 1px solid #e5dfda;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 7px 20px rgba(75, 56, 48, .06);
+}
+
+.card-heading {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid #eeeae7;
+}
+
+.card-heading h2 {
+  font-size: 17px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 20px;
+  border-bottom: 1px solid #eeeae7;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 368px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #e4ded9;
+  border-radius: 8px;
+  background: #faf9f7;
+  color: #b2a7a1;
+}
+
+.search-container input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #57453e;
+  font-size: 13px;
+}
+
+.status-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-button,
+.view-button {
+  border: 1px solid #e7e0db;
+  background: #fff;
+  color: #685750;
+  cursor: pointer;
+}
+
+.filter-button {
+  padding: 8px 14px;
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.filter-button--active {
+  border-color: #684b41;
+  background: #684b41;
+  color: #fff;
+}
+
+.result-count {
+  margin-left: auto;
+  color: #aa9a92;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #e7e0db;
+  border-radius: 8px;
+}
+
+.view-button {
+  width: 30px;
+  height: 28px;
+  border: 0;
+  border-radius: 5px;
+  color: #aa9c95;
+}
+
+.view-button--active {
+  background: #f1eeeb;
+  color: #69534a;
 }
 
 .table-container {
-  width: 100%;
   overflow-x: auto;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 20px;
+  background: #faf9f7;
+}
+
+.product-tile {
+  overflow: hidden;
+  border: 1px solid #e8e1dc;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.tile-image {
+  position: relative;
+  height: 150px;
+  background: #f1ebe5;
+}
+
+.tile-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tile-image .status-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.tile-content {
+  padding: 15px;
+}
+
+.tile-category {
+  color: #a08f87;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.tile-content h3 {
+  margin: 6px 0 15px;
+  color: #4b3934;
+  font: 700 17px Georgia, "Times New Roman", serif;
+}
+
+.tile-details {
+  display: flex;
+  gap: 28px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0ece9;
+}
+
+.tile-details span small,
+.tile-details span strong {
+  display: block;
+}
+
+.tile-details small {
+  margin-bottom: 4px;
+  color: #a08f87;
+  font-size: 10px;
+}
+
+.tile-details strong {
+  color: #5b453c;
+  font-size: 13px;
+}
+
+.tile-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding-top: 13px;
+}
+
+.tile-view,
+.tile-edit {
+  color: #c9631f;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tile-view {
+  padding: 7px 10px;
+  border: 1px solid #e7e0d8;
+  border-radius: 7px;
+  color: #684d45;
+}
+
+.tile-view:hover,
+.tile-edit:hover {
+  color: #c9631f;
+}
+
+.product-grid .no-results {
+  grid-column: 1 / -1;
+  border-bottom: 0;
 }
 
 table {
   width: 100%;
-  min-width: 900px;
+  min-width: 760px;
   border-collapse: collapse;
 }
 
-thead {
-  background: #faf9f7;
+th {
+  padding: 12px 20px;
+  border-bottom: 1px solid #eeeae7;
+  color: #a08f87;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  text-transform: none;
 }
 
-th {
-  text-align: left;
-  padding: 16px;
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: #756a66;
-  border-bottom: 1px solid #e5e0dc;
+th span {
+  color: #c0b4ae;
+  font-size: 9px;
 }
 
 td {
-  padding: 18px 16px;
-  border-bottom: 1px solid #eeeae7;
-  color: #655b57;
+  padding: 13px 20px;
+  border-bottom: 1px solid #f1eeeb;
+  color: #675851;
+  font-size: 13px;
 }
 
 tbody tr:hover {
-  background: #faf8f6;
+  background: #fdfcfb;
 }
 
-.product-name {
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   color: #4b3934;
-  font-weight: 700;
+}
+
+.product-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #f1ebe5;
+  color: #c78a57;
+  font-size: 16px;
 }
 
 .status-badge {
   display: inline-flex;
-  padding: 7px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 16px;
+  font-size: 11px;
   font-weight: 700;
 }
 
-.status-badge.active {
-  background: #e3f2e5;
-  color: #32823d;
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
-.status-badge.inactive {
-  background: #fde4df;
-  color: #b73e26;
+.in-stock {
+  background: #e6f3e9;
+  color: #3b8955;
+}
+
+.low-stock {
+  background: #fff2dc;
+  color: #b57725;
+}
+
+.out-of-stock {
+  background: #fae5e1;
+  color: #b85043;
 }
 
 .actions {
   display: flex;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 7px;
 }
 
-.edit-button,
-.delete-button {
-  border: none;
-  border-radius: 7px;
-
-  padding: 9px 14px;
-
-  font-size: 13px;
-  font-weight: 700;
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 33px;
+  height: 33px;
+  border: 1px solid #ebe4df;
+  border-radius: 8px;
+  background: #fff;
+  color: #8a7971;
   cursor: pointer;
-
   text-decoration: none;
 }
 
-.edit-button {
-  background: #eee8e3;
-  color: #4b3934;
+.icon-button:hover {
+  border-color: #cdbeb5;
+  color: #563f37;
 }
 
-.delete-button {
-  background: #fde4df;
-  color: #b73e26;
-}
-
-.delete-button:disabled {
-  opacity: 0.6;
+.icon-button:disabled {
+  opacity: .45;
   cursor: not-allowed;
 }
 
 .no-results {
+  padding: 34px;
   text-align: center;
-  padding: 35px;
-  color: #756a66;
+  color: #a08f87;
 }
 
-@media (max-width: 700px) {
-  .page-header {
-    padding: 25px 20px;
-    align-items: flex-start;
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  color: #aa9a92;
+  font-size: 12px;
+}
+
+.pagination {
+  display: flex;
+  gap: 5px;
+}
+
+.pagination-button {
+  width: 31px;
+  height: 31px;
+  border: 1px solid #eee8e4;
+  border-radius: 7px;
+  background: #fff;
+  color: #b8aaa4;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.pagination-button--current {
+  border-color: #60453d;
+  background: #60453d;
+  color: #fff;
+  font-size: 13px;
+}
+
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.message {
+  margin: 12px 20px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #fae5e1;
+  color: #b85043;
+  font-size: 13px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 900px) {
+  .controls {
+    flex-wrap: wrap;
+  }
+
+  .search-container {
+    flex: 1 1 250px;
+  }
+
+  .result-count {
+    margin-left: 0;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .products-page .page-header {
     flex-direction: column;
+    gap: 14px;
+  }
+
+  .add-product-button {
+    align-self: flex-start;
   }
 
   .controls {
-    padding: 20px;
+    align-items: stretch;
+    flex-wrap: wrap;
   }
 
-  .filter-select {
+  .search-container {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .status-filters {
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+}
+
+@media (max-width: 600px) {
+  .products-page {
+    padding: 18px 14px 32px;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+
+  .add-product-button {
+    align-self: stretch;
+    justify-content: center;
+  }
+
+  .controls {
+    align-items: stretch;
+    padding: 12px 14px;
+  }
+
+  .search-container {
     width: 100%;
   }
 
-  .products-card {
-    margin: 0 20px;
+  .status-filters {
+    width: 100%;
+    overflow-x: auto;
   }
 
-  .message {
-    margin: 0 20px 20px;
+  .product-grid {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .result-count {
+    margin-right: auto;
+  }
+
+  .card-heading,
+  .card-footer {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  th,
+  td {
+    padding-left: 14px;
+    padding-right: 14px;
   }
 }
 </style>

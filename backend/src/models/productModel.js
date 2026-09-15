@@ -5,9 +5,7 @@ import db from "../config/db.js";
    ========================================================= */
 
 export async function getProducts() {
-  const [
-    rows
-  ] = await db.execute(
+  const [rows] = await db.execute(
     `
     SELECT
       p.product_id,
@@ -37,7 +35,7 @@ export async function getProducts() {
 
     ORDER BY
       p.product_id DESC
-    `
+    `,
   );
 
   return rows;
@@ -47,12 +45,8 @@ export async function getProducts() {
    GET PRODUCT BY ID
    ========================================================= */
 
-export async function getProductById(
-  productId
-) {
-  const [
-    rows
-  ] = await db.execute(
+export async function getProductById(productId) {
+  const [rows] = await db.execute(
     `
     SELECT
       p.product_id,
@@ -84,8 +78,10 @@ export async function getProductById(
 
     LIMIT 1
     `,
-    [productId]
+    [productId],
   );
 
   return rows[0] || null;
 }
+
+export const createProduct = async (productData) => {};

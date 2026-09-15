@@ -45,5 +45,9 @@ import Sidebar from "../components/Sidebar.vue";
   .sidebar_main-layout {
     flex-direction: column;
   }
+
+  .sidebar_main-content {
+    min-height: auto;
+  }
 }
 </style>

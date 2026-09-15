@@ -1,1231 +1,359 @@
 <template>
-  <div class="edit-product_page">
-
-    <!-- ===================================================== PAGE HEADER ====================================================== -->
-    <header class="edit-product_page-header">
-
-      <div class="edit-product_page-header-content">
-        <h1>Edit Product</h1>
-
-        <p>
-          Update product details, pricing, and stock information.
-        </p>
+  <div class="edit-page">
+    <header class="edit-header">
+      <div><span class="eyebrow">CATALOG WORKSPACE</span>
+        <h1>Edit product</h1>
+        <p>Keep your listing accurate so buyers can order with confidence.</p>
       </div>
-
+      <RouterLink to="/products" class="ghost-button">Back to products</RouterLink>
     </header>
-
-
-    <!-- LOADING -->
-    <div
-      v-if="isLoading"
-      class="edit-product_message"
-    >
-      Loading product...
+    <div v-if="!product" class="empty">
+      <h2>Product not found</h2>
+      <RouterLink to="/products" class="primary-button">Return to products</RouterLink>
     </div>
-
-
-    <!-- LOAD ERROR -->
-    <div
-      v-if="loadError && !isLoading"
-      class="edit-product_error-message"
-    >
-      {{ loadError }}
-
-      <button
-        type="button"
-        @click="loadProduct"
-      >
-        Try Again
-      </button>
-    </div>
-
-
-    <!-- ===================================================== MAIN CONTENT ====================================================== -->
-    <div
-      v-if="!isLoading && !loadError"
-      class="edit-product_content-grid"
-    >
-
-      <!-- =================================================== LEFT COLUMN ==================================================== -->
-      <div class="edit-product_left-column">
-
-        <!-- =============================================== PRODUCT DETAILS ================================================ -->
-        <section class="edit-product_card">
-
-          <h2>Product Details &amp; Cataloging</h2>
-
-          <div class="edit-product_form-group">
-            <label>WHOLESALE PRODUCT TITLE</label>
-
-            <input
-              v-model="form.product_name"
-              type="text"
-              placeholder="e.g. Sugar Cane Takeaway Bowls (750ml) - Pack of 500"
-            />
-          </div>
-
-
-          <div class="edit-product_two-columns">
-
-            <div class="edit-product_form-group">
-              <label>PRODUCT CATEGORY</label>
-
-              <select v-model="form.category_name">
-                <option value="" disabled>
-                  Select a category
-                </option>
-
-                <option value="Eco-friendly Packaging">
-                  Eco-friendly Packaging
-                </option>
-
-                <option value="Food & Beverage">
-                  Food & Beverage
-                </option>
-
-                <option value="Cleaning Supplies">
-                  Cleaning Supplies
-                </option>
-
-                <option value="Office Supplies">
-                  Office Supplies
-                </option>
-              </select>
-            </div>
-
-
-            <div class="edit-product_form-group">
-              <label>STOCK KEEPING UNIT (SKU)</label>
-
-              <input
-                v-model="form.sku"
-                type="text"
-                placeholder="CFP-SCB-750M"
-              />
-            </div>
-
-          </div>
-
-
-          <div class="edit-product_form-group">
-
-            <label>DETAILED DESCRIPTION</label>
-
-            <textarea
-              v-model="form.description"
-              placeholder="Enter detailed bulk buying features (dimensions, food certifications, materials used, thermal properties, pack densities, etc.)"
-            ></textarea>
-
-          </div>
-
-        </section>
-
-
-        <!-- =============================================== PRICING ================================================ -->
-        <section class="edit-product_card">
-
-          <h2>
-            Pricing (ZAR)
-          </h2>
-
-
-          <div class="edit-product_two-columns">
-
-            <div class="edit-product_form-group">
-
-              <label>BASE PRICE PER UNIT PACK (R)</label>
-
-              <input
-                v-model="form.price"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="550.00"
-              />
-
-            </div>
-
-
-            <div class="edit-product_form-group">
-
-              <label>UNIT LABEL</label>
-
-              <input
-                v-model="form.unit"
-                type="text"
-                placeholder="pack"
-              />
-
-            </div>
-
-          </div>
-
-        </section>
-
-      </div>
-
-
-      <!-- =================================================== RIGHT COLUMN ==================================================== -->
-      <div class="edit-product_right-column">
-
-        <!-- =============================================== PRODUCT MEDIA ================================================ -->
-        <section class="edit-product_card">
-
-          <h2>Product Media</h2>
-
-
-          <input
-            ref="fileInput"
-            type="file"
-            accept="image/jpeg,image/png"
-            class="edit-product_hidden-file-input"
-            @change="onFileInputChange"
-          />
-
-
-          <div
-            class="edit-product_upload-area"
-            :class="{
-              'edit-product_is-dragover': isDragOver
-            }"
-            @click="openFilePicker"
-            @dragover.prevent="isDragOver = true"
-            @dragleave.prevent="isDragOver = false"
-            @drop.prevent="onDrop"
-          >
-
-            <img
-              v-if="previewUrl"
-              :src="previewUrl"
-              alt="Product image"
-              class="edit-product_preview-image"
-            />
-
-            <template v-else>
-
-              <div class="edit-product_upload-icon">
-                ↥
-              </div>
-
-              <strong>
-                Drag a product image here
-              </strong>
-
-              <span>
-                Supports JPG, PNG (Max 5MB)
-              </span>
-
-            </template>
-
-          </div>
-
-
-          <p
-            v-if="uploadError"
-            class="edit-product_upload-error"
-          >
-            {{ uploadError }}
-          </p>
-
-        </section>
-
-
-        <!-- =============================================== INVENTORY ================================================ -->
-        <section class="edit-product_card">
-
-          <h2>
-            Inventory
-          </h2>
-
-
-          <div class="edit-product_two-columns">
-
-            <div class="edit-product_form-group">
-
-              <label>STOCK QTY</label>
-
-              <input
-                v-model="form.quantity"
-                type="number"
-                min="0"
-                placeholder="500"
-              />
-
-            </div>
-
-
-            <div class="edit-product_form-group">
-
-              <label>LOW STOCK ALERT</label>
-
-              <input
-                v-model="form.low_stock_threshold"
-                type="number"
-                min="0"
-                placeholder="50"
-              />
-
-            </div>
-
-          </div>
-
-
-          <!-- SUCCESS MESSAGE -->
-          <p
-            v-if="successMessage"
-            class="edit-product_success-message"
-          >
-            {{ successMessage }}
-          </p>
-
-
-          <!-- ERROR MESSAGE -->
-          <p
-            v-if="errorMessage"
-            class="edit-product_error-message"
-          >
-            {{ errorMessage }}
-          </p>
-
-
-          <!-- Save -->
-          <button
-            type="button"
-            class="edit-product_save-button"
-            :disabled="isSaving"
-            @click="saveProduct"
-          >
-            {{
-              isSaving
-                ? "Saving..."
-                : "Save Changes"
-            }}
+    <form v-else class="edit-grid" @submit.prevent="save">
+      <section class="edit-card"><span class="eyebrow">LISTING DETAILS</span>
+        <h2>{{ product.product_name }}</h2><label>Product name<input v-model.trim="form.product_name"
+            required /></label>
+        <div class="two-columns"><label>Category<select v-model="form.category_name">
+              <option>Eco-friendly Packaging</option>
+              <option>Food & Beverage</option>
+              <option>Cleaning Supplies</option>
+              <option>Office Supplies</option>
+              <option>Shipping Supplies</option>
+            </select></label><label>SKU<input v-model="form.sku" /></label></div><label>Description<textarea
+            v-model="form.description" rows="7"></textarea></label>
+      </section>
+      <aside class="edit-side">
+        <section class="edit-card media-card"><span class="eyebrow">PRODUCT MEDIA</span>
+          <h2>Product Photos</h2>
+          <button type="button" class="upload-zone" @click="$refs.fileInput.click()">
+            <span class="upload-icon">&#8615;</span>
+            <strong>Click to upload or drag and drop</strong>
+            <small>Max 10mb file size, only png and jpeg files.</small>
           </button>
-
-
-          <!-- Cancel -->
-          <button
-            type="button"
-            class="edit-product_cancel-button"
-            @click="cancelEdit"
-          >
-            Cancel
-          </button>
-
+          <div v-if="form.images.length" class="thumbnail-strip">
+            <div v-for="(image, index) in form.images" :key="image" class="thumbnail-tile">
+              <img :src="image" :alt="`${form.product_name} product image ${index + 1}`" />
+              <span v-if="index === 0" class="media-badge">Primary</span>
+              <button type="button" :aria-label="`Remove image ${index + 1}`" @click="removeImage(index)">&#215;</button>
+            </div>
+          </div>
+          <div class="media-actions">
+            <input ref="fileInput" type="file" accept="image/png,image/jpeg" multiple hidden @change="selectImages" />
+          </div>
+          <p class="media-help">Add multiple product photos. The first image is used as the primary catalog image.</p>
         </section>
-
-      </div>
-
-    </div>
-
+        <section class="edit-card"><span class="eyebrow">INVENTORY & PRICING</span>
+          <div class="two-columns"><label>Price (ZAR)<input v-model.number="form.price" type="number"
+                min="0" /></label><label>Stock quantity<input v-model.number="form.quantity" type="number"
+                min="0" /></label></div><label>Low-stock alert<input v-model.number="form.low_stock_threshold"
+              type="number" min="0" /></label>
+          <div class="stock-callout"><strong>{{ product.stockStatus }}</strong><span>Current catalog status</span></div>
+          <button class="primary-button" type="submit">Save changes</button><button class="text-button" type="button"
+            @click="router.push('/products')">Cancel</button>
+          <p v-if="message" class="success">{{ message }}</p>
+        </section>
+      </aside>
+    </form>
   </div>
 </template>
-
-<script>
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
-
-const ACCEPTED_TYPES = [
-  "image/jpeg",
-  "image/png"
-];
-
-
-export default {
-
-  name: "EditProduct",
-
-  data() {
-
-    return {
-
-      isLoading: true,
-
-      loadError: "",
-
-      isSaving: false,
-
-      successMessage: "",
-
-      errorMessage: "",
-
-      isDragOver: false,
-
-      uploadError: "",
-
-      previewUrl: "",
-
-      newImageFile: null,
-
-      form: {
-
-        product_name: "",
-
-        category_name: "",
-
-        sku: "",
-
-        description: "",
-
-        price: "",
-
-        unit: "pack",
-
-        quantity: 0,
-
-        low_stock_threshold: 0
-
-      }
-
-    };
-
-  },
-
-
-  beforeUnmount() {
-
-    if (
-      this.newImageFile &&
-      this.previewUrl
-    ) {
-
-      URL.revokeObjectURL(
-        this.previewUrl
-      );
-
-    }
-
-  },
-
-
-  mounted() {
-
-    this.loadProduct();
-
-  },
-
-
-  methods: {
-
-    /* =====================================================
-       LOAD PRODUCT
-    ===================================================== */
-
-    async loadProduct() {
-
-      this.isLoading = true;
-
-      this.loadError = "";
-
-
-      const productId =
-        this.$route.params.id;
-
-
-      try {
-
-        const response =
-          await fetch(
-            `http://localhost:5000/api/products/${productId}`
-          );
-
-
-        const data =
-          await response.json();
-
-
-        if (!response.ok) {
-
-          throw new Error(
-            data.message ||
-            "Failed to load product."
-          );
-
-        }
-
-
-        this.form.product_name =
-          data.product_name || "";
-
-        this.form.category_name =
-          data.category_name || "";
-
-        this.form.sku =
-          data.sku || "";
-
-        this.form.description =
-          data.description || "";
-
-        this.form.price =
-          data.price != null
-            ? Number(data.price)
-            : "";
-
-        this.form.unit =
-          data.unit || "pack";
-
-        this.form.quantity =
-          data.quantity != null
-            ? Number(data.quantity)
-            : 0;
-
-        this.form.low_stock_threshold =
-          data.low_stock_threshold != null
-            ? Number(data.low_stock_threshold)
-            : 0;
-
-
-        this.previewUrl =
-          data.product_image || "";
-
-
-      } catch (error) {
-
-        console.error(
-          "Load product error:",
-          error
-        );
-
-        this.loadError =
-          error.message ||
-          "Unable to load product.";
-
-      } finally {
-
-        this.isLoading = false;
-
-      }
-
-    },
-
-
-    /* =====================================================
-       IMAGE UPLOAD
-    ===================================================== */
-
-    openFilePicker() {
-
-      this.$refs.fileInput.click();
-
-    },
-
-
-    onFileInputChange(event) {
-
-      this.handleFile(
-        event.target.files &&
-        event.target.files[0]
-      );
-
-      event.target.value = "";
-
-    },
-
-
-    onDrop(event) {
-
-      this.isDragOver = false;
-
-      this.handleFile(
-        event.dataTransfer.files &&
-        event.dataTransfer.files[0]
-      );
-
-    },
-
-
-    handleFile(file) {
-
-      this.uploadError = "";
-
-
-      if (!file) {
-
-        return;
-
-      }
-
-
-      const isAcceptedType =
-        ACCEPTED_TYPES.includes(file.type);
-
-      const isUnderSizeLimit =
-        file.size <= MAX_FILE_SIZE_BYTES;
-
-
-      if (
-        !isAcceptedType ||
-        !isUnderSizeLimit
-      ) {
-
-        this.uploadError =
-          "Only JPG/PNG under 5MB are supported.";
-
-        return;
-
-      }
-
-
-      if (
-        this.newImageFile &&
-        this.previewUrl
-      ) {
-
-        URL.revokeObjectURL(
-          this.previewUrl
-        );
-
-      }
-
-
-      this.newImageFile = file;
-
-      this.previewUrl =
-        URL.createObjectURL(file);
-
-    },
-
-
-    /* =====================================================
-       SAVE PRODUCT
-    ===================================================== */
-
-    async saveProduct() {
-
-      this.successMessage = "";
-
-      this.errorMessage = "";
-
-
-      /* Basic validation */
-
-      if (!this.form.product_name.trim()) {
-
-        this.errorMessage =
-          "Please enter a product name.";
-
-        return;
-
-      }
-
-
-      if (!this.form.category_name) {
-
-        this.errorMessage =
-          "Please select a product category.";
-
-        return;
-
-      }
-
-
-      if (
-        this.form.price === "" ||
-        Number(this.form.price) < 0
-      ) {
-
-        this.errorMessage =
-          "Please enter a valid product price.";
-
-        return;
-
-      }
-
-
-      this.isSaving = true;
-
-
-      try {
-
-        const productId =
-          this.$route.params.id;
-
-
-        /*
-         * Image upload/storage isn't wired up yet
-         * (same limitation as AddProducts.vue).
-         *
-         * Sending null keeps the existing image on
-         * the server, since updateProduct() uses
-         * COALESCE(?, product_image).
-         */
-
-        const response = await fetch(
-          `http://localhost:5000/api/products/${productId}`,
-          {
-
-            method: "PUT",
-
-            headers: {
-              "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-
-              product_name:
-                this.form.product_name.trim(),
-
-              category_name:
-                this.form.category_name,
-
-              sku:
-                this.form.sku.trim() || null,
-
-              description:
-                this.form.description.trim() || null,
-
-              price:
-                Number(this.form.price),
-
-              unit:
-                this.form.unit || "pack",
-
-              quantity:
-                Number(this.form.quantity),
-
-              low_stock_threshold:
-                Number(this.form.low_stock_threshold),
-
-              product_image: null
-
-            })
-
-          }
-        );
-
-
-        const data =
-          await response.json();
-
-
-        if (!response.ok) {
-
-          throw new Error(
-            data.message ||
-            "Failed to update product."
-          );
-
-        }
-
-
-        this.successMessage =
-          "Product updated successfully!";
-
-
-        window.dispatchEvent(
-          new CustomEvent("product-published")
-        );
-
-
-        setTimeout(() => {
-
-          this.$router.push("/products");
-
-        }, 500);
-
-
-      } catch (error) {
-
-        console.error(
-          "Update product error:",
-          error
-        );
-
-        this.errorMessage =
-          error.message ||
-          "Something went wrong while updating the product.";
-
-      } finally {
-
-        this.isSaving = false;
-
-      }
-
-    },
-
-
-    /* =====================================================
-       CANCEL
-    ===================================================== */
-
-    cancelEdit() {
-
-      this.$router.push("/products");
-
-    }
-
-  }
-
-};
+<script setup>
+import { reactive, ref } from "vue";
+import { RouterLink, useRoute, useRouter } from "vue-router";
+import { useSupplierData } from "@/data/supplierData";
+const route = useRoute(); const router = useRouter(); const { products, updateProduct } = useSupplierData();
+const product = products.value.find((item) => item.product_id === Number(route.params.id));
+const form = reactive(product ? { product_name: product.product_name, category_name: product.category_name, sku: product.sku, description: product.description, price: product.price, quantity: product.quantity, low_stock_threshold: product.low_stock_threshold, image: product.image || "", images: product.images?.length ? [...product.images] : (product.image ? [product.image] : []) } : {});
+const message = ref("");
+function selectImages(event) { const files = [...(event.target.files || [])]; form.images.push(...files.map((file) => URL.createObjectURL(file))); event.target.value = ""; }
+function removeImage(index) { form.images.splice(index, 1); form.image = form.images[0] || ""; }
+function save() { updateProduct(route.params.id, { ...form, image: form.images[0] || "", images: [...form.images] }); message.value = "Changes saved locally."; setTimeout(() => router.push("/products"), 650); }
 </script>
-
 <style scoped>
-
-/* =========================================================
-   PAGE
-========================================================= */
-
-.edit-product_page {
-  width: 100%;
+.edit-page {
   min-height: 100vh;
-  padding: 32px;
-  box-sizing: border-box;
+  padding: 34px 38px;
   background: #f7f5f2;
-  font-family: Arial, sans-serif;
-  color: #543b34;
-  overflow-x: hidden;
+  color: #4d3933;
+  font-family: Arial, sans-serif
 }
 
-
-/* =========================================================
-   PAGE HEADER
-========================================================= */
-
-.edit-product_page-header {
-  width: 100%;
-  margin-bottom: 30px;
+.edit-header,
+.edit-grid,
+.empty {
+  max-width: 1120px;
+  margin: 0 auto
 }
 
-.edit-product_page-header h1 {
-  margin: 0 0 8px;
-  font-family: Georgia, serif;
-  font-size: 30px;
+.edit-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 28px
+}
+
+.eyebrow {
+  color: #d2763d;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.2;
-  color: #57372f;
+  letter-spacing: 1.8px
 }
 
-.edit-product_page-header p {
+.edit-header h1 {
+  margin: 7px 0 5px;
+  font: 700 34px Georgia, serif;
+  color: #44312c
+}
+
+.edit-header p {
   margin: 0;
-  max-width: 650px;
-  color: #82736d;
-  font-size: 14px;
-  line-height: 1.6;
+  color: #88766e
 }
 
-
-/* =========================================================
-   MESSAGES
-========================================================= */
-
-.edit-product_message,
-.edit-product_error-message,
-.edit-product_success-message {
-  margin-bottom: 20px;
-  padding: 12px 16px;
-  border-radius: 9px;
-  font-size: 13px;
+.edit-grid {
+  display: grid;
+  grid-template-columns: 1.45fr .8fr;
+  gap: 22px
 }
 
-.edit-product_message {
-  background: #ffffff;
-  border: 1px solid #e5dfda;
-  color: #82736d;
-  text-align: center;
+.edit-side {
+  display: flex;
+  flex-direction: column;
+  gap: 22px
 }
 
-.edit-product_success-message {
-  background: #e9f7e8;
-  border: 1px solid #c9e6c7;
-  color: #3d7f42;
+.edit-card {
+  width: 100%;
+  padding: 25px;
+  border: 1px solid #e6dfda;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 6px 18px #4b38300d
 }
 
-.edit-product_error-message {
-  background: #fff0ed;
-  border: 1px solid #f0cfc8;
-  color: #c0392b;
+.edit-card h2 {
+  margin: 9px 0 25px;
+  font: 700 21px Georgia, serif
 }
 
-.edit-product_error-message button {
-  display: block;
-  margin: 10px auto 0;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 18px;
-  background: #d47b48;
-  color: #ffffff;
+.media-card h2 {
+  margin-bottom: 16px
+}
+
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 112px;
+  padding: 16px;
+  border: 1px dashed #e0a078;
+  border-radius: 8px;
+  background: #fffdfa;
+  color: #b86a43;
   cursor: pointer;
 }
 
-
-/* =========================================================
-   MAIN GRID
-========================================================= */
-
-.edit-product_content-grid {
-  width: 100%;
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1.6fr) minmax(300px, 1fr);
-
-  gap: 24px;
-
-  box-sizing: border-box;
+.upload-zone:hover {
+  background: #fff8f3;
+  border-color: #d2763d;
 }
 
-.edit-product_left-column,
-.edit-product_right-column {
-  min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 24px;
+.upload-icon {
+  margin-bottom: 6px;
+  color: #c17a51;
+  font-size: 21px;
 }
 
-
-/* =========================================================
-   CARDS
-========================================================= */
-
-.edit-product_card {
-  width: 100%;
-
-  background: #ffffff;
-
-  border: 1px solid #e5dfda;
-
-  border-radius: 16px;
-
-  padding: 26px;
-
-  box-sizing: border-box;
-
-  box-shadow:
-    0 4px 15px rgba(84, 59, 52, 0.04);
-}
-
-.edit-product_card h2 {
-  margin: 0 0 22px;
-
-  font-family: Georgia, serif;
-
-  font-size: 19px;
-
-  font-weight: 700;
-
-  line-height: 1.3;
-
-  color: #63463c;
-}
-
-
-/* =========================================================
-   FORM GROUP
-========================================================= */
-
-.edit-product_form-group {
-  width: 100%;
-  margin-bottom: 20px;
-}
-
-.edit-product_form-group:last-child {
-  margin-bottom: 0;
-}
-
-.edit-product_form-group label {
-  display: block;
-
-  margin-bottom: 8px;
-
+.upload-zone strong,
+.upload-zone small {
   font-size: 10px;
-
-  font-weight: 700;
-
-  letter-spacing: 0.5px;
-
-  color: #806f68;
+  font-weight: 600;
 }
 
-.edit-product_form-group input,
-.edit-product_form-group select,
-.edit-product_form-group textarea {
+.upload-zone small {
+  margin-top: 4px;
+  color: #a8958c;
+  font-weight: 400;
+}
+
+.thumbnail-strip {
+  display: flex;
+  gap: 7px;
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+.thumbnail-tile {
+  position: relative;
+  flex: 0 0 54px;
+  height: 54px;
+  overflow: hidden;
+  border: 1px solid #e6dfda;
+  border-radius: 6px;
+  background: #f1e6df;
+}
+
+.thumbnail-tile img {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-  box-sizing: border-box;
-
-  padding: 13px 14px;
-
-  border: 1px solid #e6e1dc;
-
-  border-radius: 9px;
-
-  background: #faf9f7;
-
-  color: #665953;
-
-  font-family: Arial, sans-serif;
-
+.thumbnail-tile > button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #b85043;
   font-size: 13px;
-
-  outline: none;
-
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-.edit-product_form-group input::placeholder,
-.edit-product_form-group textarea::placeholder {
-  color: #aaa09b;
+.thumbnail-tile > button:hover {
+  background: #fae5e1;
 }
 
-.edit-product_form-group input:focus,
-.edit-product_form-group select:focus,
-.edit-product_form-group textarea:focus {
-  border-color: #d47b48;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 0 0 3px rgba(212, 123, 72, 0.1);
+.media-badge {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: #fff;
+  color: #76594c;
+  font-size: 7px;
+  font-weight: 700;
 }
 
-.edit-product_form-group textarea {
-  min-height: 125px;
-
-  resize: vertical;
-
+.media-help {
+  margin: 10px 0 0;
+  color: #a38c80;
+  font-size: 12px;
   line-height: 1.5;
 }
 
-
-/* =========================================================
-   TWO COLUMNS
-========================================================= */
-
-.edit-product_two-columns {
-  width: 100%;
-
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr) minmax(0, 1fr);
-
-  gap: 18px;
-}
-
-
-/* =========================================================
-   HIDDEN FILE INPUT
-========================================================= */
-
-.edit-product_hidden-file-input {
-  display: none;
-}
-
-
-/* =========================================================
-   UPLOAD ERROR
-========================================================= */
-
-.edit-product_upload-error {
-  margin: 12px 0 0;
-
-  font-size: 12px;
-
-  color: #c0392b;
-}
-
-
-/* =========================================================
-   UPLOAD AREA
-========================================================= */
-
-.edit-product_upload-area {
-  width: 100%;
-
-  min-height: 200px;
-
+.edit-card label {
   display: flex;
-
   flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  box-sizing: border-box;
-
-  background: #faf8f6;
-
-  border: 2px dashed #d9d0ca;
-
-  border-radius: 12px;
-
-  cursor: pointer;
-
-  overflow: hidden;
-
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease;
-}
-
-.edit-product_upload-area:hover,
-.edit-product_upload-area.edit-product_is-dragover {
-  border-color: #d47b48;
-
-  background: #fffaf7;
-}
-
-.edit-product_preview-image {
-  width: 100%;
-
-  height: 200px;
-
-  object-fit: cover;
-
-  display: block;
-}
-
-.edit-product_upload-icon {
-  color: #d47b48;
-
-  font-size: 30px;
-
-  line-height: 1;
-
-  margin-bottom: 10px;
-}
-
-.edit-product_upload-area strong {
-  font-size: 13px;
-
-  color: #68554e;
-}
-
-.edit-product_upload-area span {
-  margin-top: 6px;
-
+  gap: 8px;
+  margin-bottom: 18px;
+  color: #7d6c64;
   font-size: 11px;
-
-  color: #9a8d87;
+  font-weight: 700;
+  letter-spacing: .4px
 }
 
+.edit-card input,
+.edit-card select,
+.edit-card textarea {
+  padding: 12px 13px;
+  border: 1px solid #e4ddd8;
+  border-radius: 8px;
+  outline: 0;
+  background: #fbfaf8;
+  color: #4d3933;
+  font: 14px Arial
+}
 
-/* =========================================================
-   BUTTONS
-========================================================= */
+.two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px
+}
 
-.edit-product_save-button,
-.edit-product_cancel-button {
+.ghost-button,
+.primary-button,
+.text-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  padding: 11px 15px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer
+}
+
+.ghost-button {
+  border: 1px solid #e1d8d2;
+  background: #fff;
+  color: #644c42
+}
+
+.primary-button {
   width: 100%;
-
-  box-sizing: border-box;
-
-  padding: 14px;
-
-  border-radius: 25px;
-
-  font-family: Arial, sans-serif;
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  border: 0;
+  background: #e17b3d;
+  color: #fff
 }
 
-
-/* Save */
-
-.edit-product_save-button {
-  margin-top: 24px;
-
-  background: #d47b48;
-
-  border: none;
-
-  color: #ffffff;
-
-  box-shadow:
-    0 4px 10px rgba(212, 123, 72, 0.2);
+.text-button {
+  width: 100%;
+  margin-top: 8px;
+  border: 0;
+  background: transparent;
+  color: #8e6b5b
 }
 
-.edit-product_save-button:hover {
-  background: #c76d3b;
-
-  transform: translateY(-2px);
-
-  box-shadow:
-    0 6px 14px rgba(212, 123, 72, 0.25);
+.stock-callout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px;
+  margin: 5px 0 20px;
+  border-radius: 8px;
+  background: #f5eee8;
+  color: #76594c
 }
 
-.edit-product_save-button:disabled {
-  opacity: 0.65;
-
-  cursor: not-allowed;
-
-  transform: none;
+.stock-callout span {
+  font-size: 12px;
+  color: #a38c80
 }
 
-
-/* Cancel */
-
-.edit-product_cancel-button {
-  margin-top: 10px;
-
-  background: #ffffff;
-
-  border: 1px solid #e4dcd6;
-
-  color: #634c44;
+.success {
+  margin-bottom: 0;
+  color: #418049;
+  font-size: 13px
 }
 
-.edit-product_cancel-button:hover {
-  background: #f8f6f3;
-
-  border-color: #d47b48;
+.empty {
+  text-align: center;
+  padding: 80px 20px
 }
 
+.empty h2 {
+  font: 24px Georgia, serif
+}
 
-/* =========================================================
-   TABLET
-========================================================= */
-
-@media (max-width: 1000px) {
-
-  .edit-product_content-grid {
-    grid-template-columns: 1fr;
+@media(max-width:800px) {
+  .edit-page {
+    padding: 24px 16px
   }
 
+  .edit-header {
+    flex-direction: column
+  }
+
+  .edit-grid {
+    grid-template-columns: 1fr
+  }
+
+  .two-columns {
+    grid-template-columns: 1fr
+  }
 }
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 700px) {
-
-  .edit-product_page {
-    padding: 18px;
-  }
-
-  .edit-product_page-header h1 {
-    font-size: 27px;
-  }
-
-  .edit-product_two-columns {
-    grid-template-columns: 1fr;
-
-    gap: 0;
-  }
-
-  .edit-product_card {
-    padding: 19px;
-
-    border-radius: 14px;
-  }
-
-}
-
 </style>

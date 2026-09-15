@@ -6,6 +6,11 @@ import Reviews from "../views/Reviews.vue";
 import StockManagement from "../views/StockManagement.vue";
 import AddProducts from "../views/AddProducts.vue";
 import EditProduct from "../views/EditProduct.vue";
+import ViewProduct from "../views/ViewProduct.vue";
+import Dashboard from "../views/Dashboard.vue";
+import Orders from "../views/Orders.vue";
+import Deliveries from "../views/Deliveries.vue";
+import Profile from "../views/Profile.vue";
 
 const routes = [
   {
@@ -22,6 +27,11 @@ const routes = [
         component: AddProducts,
       },
       {
+        path: "dashboard",
+        name: "Dashboard",
+        component: Dashboard,
+      },
+      {
         path: "products",
         name: "Products",
         component: Products,
@@ -32,6 +42,11 @@ const routes = [
         component: EditProduct,
       },
       {
+        path: "products/view/:id",
+        name: "ViewProduct",
+        component: ViewProduct,
+      },
+      {
         path: "reviews",
         name: "Reviews",
         component: Reviews,
@@ -40,6 +55,21 @@ const routes = [
         path: "stockmanagement",
         name: "StockManagement",
         component: StockManagement,
+      },
+      {
+        path: "orders",
+        name: "Orders",
+        component: Orders,
+      },
+      {
+        path: "deliveries",
+        name: "Deliveries",
+        component: Deliveries,
+      },
+      {
+        path: "profile",
+        name: "Profile",
+        component: Profile,
       },
     ],
   },
