@@ -1,31 +1,31 @@
 <template>
-  <div class="page">
-    <header class="header">
-      <div><span class="eyebrow">FULFILMENT DESK</span>
+  <div class="supplier_deliveries_page">
+    <header class="supplier_deliveries_header">
+      <div><span class="supplier_deliveries_eyebrow">FULFILMENT DESK</span>
         <h1>Deliveries</h1>
         <p>Coordinate pickups and keep every buyer informed.</p>
-      </div><button class="primary" type="button"
+      </div><button class="supplier_deliveries_primary" type="button"
         @click="showNotice('Pickup request created for your next ready order.')">Schedule pickup</button>
     </header>
-    <section class="delivery-hero">
-      <div><span class="eyebrow">TODAY'S ROUTE</span>
+    <section class="supplier_deliveries_delivery-hero">
+      <div><span class="supplier_deliveries_eyebrow">TODAY'S ROUTE</span>
         <h2>Three shipments in motion</h2>
         <p>SwiftShip has a pickup window available at 16:00.</p>
       </div>
-      <div class="route-line"><span>Warehouse</span><i></i><span>Buyers</span></div>
+      <div class="supplier_deliveries_route-line"><span>Warehouse</span><i></i><span>Buyers</span></div>
     </section>
-    <section class="delivery-list">
-      <article v-for="delivery in deliveries" :key="delivery.id" class="delivery">
-        <div class="delivery-icon">✦</div>
+    <section class="supplier_deliveries_delivery-list">
+      <article v-for="delivery in deliveries" :key="delivery.id" class="supplier_deliveries_delivery">
+        <div class="supplier_deliveries_delivery-icon">✦</div>
         <div><strong>{{ delivery.id }} · {{ delivery.order }}</strong>
           <h2>{{ delivery.destination }}</h2>
           <p>{{ delivery.carrier }} · ETA {{ delivery.eta }}</p>
-        </div><span class="delivery-status" :class="delivery.status.toLowerCase().replaceAll(' ', '-')">{{
-          delivery.status }}</span><button type="button" class="track"
+        </div><span class="supplier_deliveries_delivery-status" :class="delivery.status.toLowerCase().replaceAll(' ', '-')">{{
+          delivery.status }}</span><button type="button" class="supplier_deliveries_track"
           @click="advanceDelivery(delivery)">{{ deliveryAction(delivery.status) }}</button>
       </article>
     </section>
-    <p v-if="notice" class="notice">{{ notice }}</p>
+    <p v-if="notice" class="supplier_deliveries_notice">{{ notice }}</p>
   </div>
 </template>
 <script setup>
@@ -36,7 +36,7 @@ function deliveryAction(status) { return status === "Ready for pickup" ? "Start 
 function advanceDelivery(delivery) { const nextStatus = delivery.status === "Ready for pickup" ? "In transit" : delivery.status === "In transit" ? "Delivered" : delivery.status; updateDeliveryStatus(delivery.id, nextStatus); showNotice(nextStatus === delivery.status ? `${delivery.id} is already delivered.` : `${delivery.id} moved to ${nextStatus}.`); }
 </script>
 <style scoped>
-.page {
+.supplier_deliveries_page {
   min-height: 100vh;
   padding: clamp(22px, 4vw, 38px) clamp(16px, 4vw, 38px) 48px;
   background: #f7f5f2;
@@ -46,7 +46,7 @@ function advanceDelivery(delivery) { const nextStatus = delivery.status === "Rea
   margin: auto
 }
 
-.header {
+.supplier_deliveries_header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -54,26 +54,26 @@ function advanceDelivery(delivery) { const nextStatus = delivery.status === "Rea
   margin-bottom: 25px
 }
 
-.eyebrow {
+.supplier_deliveries_eyebrow {
   color: #d2763d;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.8px
 }
 
-.header h1 {
+.supplier_deliveries_header h1 {
   margin: 7px 0 5px;
   font: 700 clamp(28px, 4vw, 34px) Georgia, serif;
   color: #44312c
 }
 
-.header p {
+.supplier_deliveries_header p {
   margin: 0;
   color: #88766e
 }
 
-.primary,
-.track {
+.supplier_deliveries_primary,
+.supplier_deliveries_track {
   border: 0;
   border-radius: 7px;
   padding: 11px 14px;
@@ -84,7 +84,7 @@ function advanceDelivery(delivery) { const nextStatus = delivery.status === "Rea
   cursor: pointer
 }
 
-.delivery-hero {
+.supplier_deliveries_delivery-hero {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -95,18 +95,18 @@ function advanceDelivery(delivery) { const nextStatus = delivery.status === "Rea
   color: #fff
 }
 
-.delivery-hero h2 {
+.supplier_deliveries_delivery-hero h2 {
   margin: 8px 0 5px;
   font: 700 24px Georgia, serif
 }
 
-.delivery-hero p {
+.supplier_deliveries_delivery-hero p {
   margin: 0;
   color: #e2d1c9;
   font-size: 13px
 }
 
-.route-line {
+.supplier_deliveries_route-line {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -114,21 +114,21 @@ function advanceDelivery(delivery) { const nextStatus = delivery.status === "Rea
   font-size: 11px
 }
 
-.route-line i {
+.supplier_deliveries_route-line i {
   display: block;
   width: 100px;
   height: 1px;
   background: #dba47c
 }
 
-.delivery-list {
+.supplier_deliveries_delivery-list {
   border: 1px solid #e6dfda;
   border-radius: 13px;
   background: #fff;
   overflow: hidden
 }
 
-.delivery {
+.supplier_deliveries_delivery {
   display: grid;
   grid-template-columns: 45px 1fr 130px 70px;
   gap: 16px;
@@ -137,7 +137,7 @@ function advanceDelivery(delivery) { const nextStatus = delivery.status === "Rea
   border-bottom: 1px solid #f0ece9
 }
 
-.delivery-icon {
+.supplier_deliveries_delivery-icon {
   display: grid;
   place-items: center;
   width: 40px;
@@ -147,49 +147,49 @@ function advanceDelivery(delivery) { const nextStatus = delivery.status === "Rea
   color: #d2763d
 }
 
-.delivery strong {
+.supplier_deliveries_delivery strong {
   font-size: 12px;
   color: #8c756b
 }
 
-.delivery h2 {
+.supplier_deliveries_delivery h2 {
   margin: 5px 0 3px;
   font: 700 17px Georgia, serif
 }
 
-.delivery p {
+.supplier_deliveries_delivery p {
   margin: 0;
   color: #9b8981;
   font-size: 11px
 }
 
-.delivery-status {
+.supplier_deliveries_delivery-status {
   padding: 6px 8px;
   border-radius: 13px;
   font-size: 10px;
   font-weight: 700
 }
 
-.ready-for-pickup {
+.supplier_deliveries_ready-for-pickup {
   background: #fff1dc;
   color: #aa742b
 }
 
-.in-transit {
+.supplier_deliveries_in-transit {
   background: #e7f2e8;
   color: #478253
 }
 
-.delivered {
+.supplier_deliveries_delivered {
   background: #eee9f4;
   color: #765b8d
 }
 
-.track {
+.supplier_deliveries_track {
   background: #684b41
 }
 
-.notice {
+.supplier_deliveries_notice {
   position: fixed;
   right: 25px;
   bottom: 25px;
@@ -201,43 +201,43 @@ function advanceDelivery(delivery) { const nextStatus = delivery.status === "Rea
 }
 
 @media(max-width:700px) {
-  .page {
+  .supplier_deliveries_page {
     padding: 24px 16px
   }
 
-  .header,
-  .delivery-hero {
+  .supplier_deliveries_header,
+  .supplier_deliveries_delivery-hero {
     align-items: flex-start;
     flex-direction: column;
     gap: 18px
   }
 
-  .delivery {
+  .supplier_deliveries_delivery {
     grid-template-columns: 40px 1fr
   }
 
-  .delivery-status,
-  .track {
+  .supplier_deliveries_delivery-status,
+  .supplier_deliveries_track {
     grid-column: 2;
     justify-self: start
   }
 }
 
 @media(max-width:480px) {
-  .header .primary {
+  .supplier_deliveries_header .supplier_deliveries_primary {
     width: 100%;
   }
 
-  .delivery-hero {
+  .supplier_deliveries_delivery-hero {
     padding: 20px;
   }
 
-  .route-line {
+  .supplier_deliveries_route-line {
     width: 100%;
     justify-content: space-between;
   }
 
-  .route-line i {
+  .supplier_deliveries_route-line i {
     flex: 1;
   }
 }

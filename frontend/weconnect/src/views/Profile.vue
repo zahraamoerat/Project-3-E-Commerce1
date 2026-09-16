@@ -1,38 +1,38 @@
 <template>
-  <div class="profile">
-    <header class="profile-hero">
-      <div class="avatar">CF</div>
-      <div><span class="eyebrow">SUPPLIER PROFILE</span>
+  <div class="supplier_profile_profile">
+    <header class="supplier_profile_profile-hero">
+      <div class="supplier_profile_avatar">CF</div>
+      <div><span class="supplier_profile_eyebrow">SUPPLIER PROFILE</span>
         <h1>{{ form.businessName }}</h1>
         <p>{{ form.location }} · Verified wholesale supplier</p>
-      </div><button class="primary" type="button" @click="save">{{ editing ? 'Save profile' : 'Edit profile' }}</button>
+      </div><button class="supplier_profile_primary" type="button" @click="save">{{ editing ? 'Save profile' : 'Edit profile' }}</button>
     </header>
-    <div class="profile-grid">
-      <section class="card">
-        <div class="card-title">
+    <div class="supplier_profile_profile-grid">
+      <section class="supplier_profile_card">
+        <div class="supplier_profile_card-title">
           <div>
             <h2>Business information</h2>
             <p>Help buyers understand who they are ordering from.</p>
           </div>
         </div><label>Business name<input v-model="form.businessName" :disabled="!editing" /></label>
-        <div class="two"><label>Contact person<input v-model="form.owner"
+        <div class="supplier_profile_two"><label>Contact person<input v-model="form.owner"
               :disabled="!editing" /></label><label>Location<input v-model="form.location"
               :disabled="!editing" /></label></div>
-        <div class="two"><label>Email<input v-model="form.email" type="email"
+        <div class="supplier_profile_two"><label>Email<input v-model="form.email" type="email"
               :disabled="!editing" /></label><label>Phone<input v-model="form.phone" :disabled="!editing" /></label>
         </div><label>About your business<textarea v-model="form.description" rows="5"
             :disabled="!editing"></textarea></label>
-        <p v-if="message" class="success">{{ message }}</p>
+        <p v-if="message" class="supplier_profile_success">{{ message }}</p>
       </section>
       <aside>
-        <section class="card presence"><img
+        <section class="supplier_profile_card supplier_profile_presence"><img
             src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=800&q=80"
             alt="Bright supplier studio" />
           <h2>Make your storefront memorable</h2>
           <p>A clear profile and thoughtful product photography help buyers choose you with confidence.</p>
-          <RouterLink to="/products/add" class="link">Add your first featured product →</RouterLink>
+          <RouterLink to="/products/add" class="supplier_profile_link">Add your first featured product →</RouterLink>
         </section>
-        <section class="card checklist">
+        <section class="supplier_profile_card supplier_profile_checklist">
           <h2>Profile checklist</h2>
           <p>Business details <b>Complete</b></p>
           <p>Catalog photos <b>3 of 5</b></p>
@@ -50,7 +50,7 @@ const { profile, updateProfile } = useSupplierData(); const form = reactive({ ..
 async function save() { if (editing.value) { await updateProfile(form); message.value = "Profile saved."; setTimeout(() => message.value = "", 2500); } editing.value = !editing.value; }
 </script>
 <style scoped>
-.profile {
+.supplier_profile_profile {
   min-height: 100vh;
   padding: clamp(22px, 4vw, 38px) clamp(16px, 4vw, 38px) 48px;
   background: #f7f5f2;
@@ -60,7 +60,7 @@ async function save() { if (editing.value) { await updateProfile(form); message.
   margin: auto
 }
 
-.profile-hero {
+.supplier_profile_profile-hero {
   display: flex;
   align-items: center;
   gap: 18px;
@@ -70,7 +70,7 @@ async function save() { if (editing.value) { await updateProfile(form); message.
   color: #fff
 }
 
-.avatar {
+.supplier_profile_avatar {
   display: grid;
   place-items: center;
   width: 65px;
@@ -80,24 +80,24 @@ async function save() { if (editing.value) { await updateProfile(form); message.
   font: 700 20px Georgia, serif
 }
 
-.eyebrow {
+.supplier_profile_eyebrow {
   color: #dba47c;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.8px
 }
 
-.profile h1 {
+.supplier_profile_profile h1 {
   margin: 7px 0 4px;
   font: 700 clamp(25px, 4vw, 30px) Georgia, serif
 }
 
-.profile-hero p {
+.supplier_profile_profile-hero p {
   margin: 0;
   color: #e2d1c9
 }
 
-.primary {
+.supplier_profile_primary {
   margin-left: auto;
   border: 0;
   border-radius: 7px;
@@ -108,37 +108,37 @@ async function save() { if (editing.value) { await updateProfile(form); message.
   cursor: pointer
 }
 
-.profile-grid {
+.supplier_profile_profile-grid {
   display: grid;
   grid-template-columns: 1.3fr .7fr;
   gap: 22px;
   margin-top: 22px
 }
 
-.card {
+.supplier_profile_card {
   padding: 23px;
   border: 1px solid #e6dfda;
   border-radius: 13px;
   background: #fff
 }
 
-.card-title {
+.supplier_profile_card-title {
   margin-bottom: 24px
 }
 
-.card h2 {
+.supplier_profile_card h2 {
   margin: 0;
   font: 700 20px Georgia, serif
 }
 
-.card-title p,
-.presence p {
+.supplier_profile_card-title p,
+.supplier_profile_presence p {
   margin: 5px 0 0;
   color: #9b8981;
   font-size: 12px
 }
 
-.card label {
+.supplier_profile_card label {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -148,8 +148,8 @@ async function save() { if (editing.value) { await updateProfile(form); message.
   font-weight: 700
 }
 
-.card input,
-.card textarea {
+.supplier_profile_card input,
+.supplier_profile_card textarea {
   padding: 12px;
   border: 1px solid #e4ddd8;
   border-radius: 8px;
@@ -158,33 +158,33 @@ async function save() { if (editing.value) { await updateProfile(form); message.
   font: 14px Arial
 }
 
-.card input:disabled,
-.card textarea:disabled {
+.supplier_profile_card input:disabled,
+.supplier_profile_card textarea:disabled {
   opacity: 1
 }
 
-.two {
+.supplier_profile_two {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px
 }
 
-.presence {
+.supplier_profile_presence {
   overflow: hidden
 }
 
-.presence img {
+.supplier_profile_presence img {
   width: calc(100% + 46px);
   height: 160px;
   object-fit: cover;
   margin: -23px -23px 20px
 }
 
-.presence h2 {
+.supplier_profile_presence h2 {
   font-size: 18px
 }
 
-.link {
+.supplier_profile_link {
   display: inline-block;
   margin-top: 17px;
   color: #d2763d;
@@ -193,15 +193,15 @@ async function save() { if (editing.value) { await updateProfile(form); message.
   text-decoration: none
 }
 
-.checklist {
+.supplier_profile_checklist {
   margin-top: 22px
 }
 
-.checklist h2 {
+.supplier_profile_checklist h2 {
   margin-bottom: 14px
 }
 
-.checklist p {
+.supplier_profile_checklist p {
   display: flex;
   justify-content: space-between;
   padding: 10px 0;
@@ -211,52 +211,52 @@ async function save() { if (editing.value) { await updateProfile(form); message.
   font-size: 12px
 }
 
-.checklist b {
+.supplier_profile_checklist b {
   color: #4d8a5c
 }
 
-.success {
+.supplier_profile_success {
   color: #428252;
   font-size: 13px
 }
 
 @media(max-width:750px) {
-  .profile {
+  .supplier_profile_profile {
     padding: 24px 16px
   }
 
-  .profile-hero {
+  .supplier_profile_profile-hero {
     align-items: flex-start;
     flex-wrap: wrap
   }
 
-  .primary {
+  .supplier_profile_primary {
     margin-left: 0
   }
 
-  .profile-grid {
+  .supplier_profile_profile-grid {
     grid-template-columns: 1fr
   }
 
-  .two {
+  .supplier_profile_two {
     grid-template-columns: 1fr
   }
 }
 
 @media(max-width:480px) {
-  .profile-hero {
+  .supplier_profile_profile-hero {
     padding: 20px;
   }
 
-  .profile-hero .primary {
+  .supplier_profile_profile-hero .supplier_profile_primary {
     width: 100%;
   }
 
-  .card {
+  .supplier_profile_card {
     padding: 18px;
   }
 
-  .presence img {
+  .supplier_profile_presence img {
     width: calc(100% + 36px);
     margin: -18px -18px 18px;
   }

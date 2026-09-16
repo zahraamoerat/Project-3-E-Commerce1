@@ -1,30 +1,30 @@
 <template>
-  <div class="form-page">
-    <header class="form-header">
-      <RouterLink to="/products" class="back-link"><span aria-hidden="true">&#8592;</span> Back to product list</RouterLink>
-      <div class="header-title-row">
+  <div class="supplier_add_products_form-page">
+    <header class="supplier_add_products_form-header">
+      <RouterLink to="/products" class="supplier_add_products_back-link"><span aria-hidden="true">&#8592;</span> Back to product list</RouterLink>
+      <div class="supplier_add_products_header-title-row">
         <div>
-          <span class="eyebrow">PRODUCT CATALOG</span>
+          <span class="supplier_add_products_eyebrow">PRODUCT CATALOG</span>
           <h1>Add New Product</h1>
           <p>Build a clear listing buyers can discover, understand, and order.</p>
         </div>
-        <span class="required-note"><b>*</b> Required fields</span>
+        <span class="supplier_add_products_required-note"><b>*</b> Required fields</span>
       </div>
     </header>
-    <div v-if="message" class="notice">{{ message }}</div>
-    <form class="form-layout" @submit.prevent="publish">
-      <div class="form-column">
-        <section class="form-section">
-          <div class="section-heading"><span class="section-number">01</span><div><h2>Description</h2><p>Start with the details buyers see first.</p></div></div>
+    <div v-if="message" class="supplier_add_products_notice">{{ message }}</div>
+    <form class="supplier_add_products_form-layout" @submit.prevent="publish">
+      <div class="supplier_add_products_form-column">
+        <section class="supplier_add_products_form-section">
+          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">01</span><div><h2>Description</h2><p>Start with the details buyers see first.</p></div></div>
           <label>Product Name<input v-model.trim="form.product_name" placeholder="Product name" required /></label>
           <label>Business Description
-            <span class="field-action">Update .txt file</span>
+            <span class="supplier_add_products_field-action">Update .txt file</span>
             <textarea v-model.trim="form.description" rows="6" placeholder="Tell buyers about this product..."></textarea>
           </label>
         </section>
 
-        <section class="form-section">
-          <div class="section-heading"><span class="section-number">02</span><div><h2>Category</h2><p>Place this product in the right collection.</p></div></div>
+        <section class="supplier_add_products_form-section">
+          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">02</span><div><h2>Category</h2><p>Place this product in the right collection.</p></div></div>
           <label>Product Category<select v-model="form.category_name" required>
             <option disabled value="">Select a category</option>
             <option>Health & Medicine</option>
@@ -43,37 +43,37 @@
           </select></label>
         </section>
 
-        <section class="form-section">
-          <div class="section-heading"><span class="section-number">03</span><div><h2>Inventory</h2><p>Set the available quantity and tracking code.</p></div></div>
-          <div class="two-columns">
+        <section class="supplier_add_products_form-section">
+          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">03</span><div><h2>Inventory</h2><p>Set the available quantity and tracking code.</p></div></div>
+          <div class="supplier_add_products_two-columns">
             <label>Quantity<input v-model.number="form.quantity" type="number" min="0" required /></label>
             <label>SKU (Optional)<input v-model.trim="form.sku" placeholder="UGG-BB-PUR-06" /></label>
           </div>
         </section>
 
-        <section class="form-section selling-type">
-          <div class="section-heading"><span class="section-number">04</span><div><h2>Selling Type</h2><p>Choose where buyers can purchase this item.</p></div></div>
-          <label class="check-label"><input v-model="form.sellingType" value="online" type="radio" /> In-store selling only</label>
-          <label class="check-label"><input v-model="form.sellingType" value="online-only" type="radio" /> Online selling only</label>
-          <label class="check-label"><input v-model="form.sellingType" value="both" type="radio" /> Available both in-store and online</label>
+        <section class="supplier_add_products_form-section supplier_add_products_selling-type">
+          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">04</span><div><h2>Selling Type</h2><p>Choose where buyers can purchase this item.</p></div></div>
+          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="online" type="radio" /> In-store selling only</label>
+          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="online-only" type="radio" /> Online selling only</label>
+          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="both" type="radio" /> Available both in-store and online</label>
         </section>
 
-        <section class="form-section variant-section">
-          <div class="section-heading"><span class="section-number">05</span><div><h2>Variant</h2><p>Offer different versions of the same product.</p></div></div>
-          <div class="variant-row"><span>Product variants</span><button type="button" class="add-variant">+ Add Variant</button></div>
+        <section class="supplier_add_products_form-section supplier_add_products_variant-section">
+          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">05</span><div><h2>Variant</h2><p>Offer different versions of the same product.</p></div></div>
+          <div class="supplier_add_products_variant-row"><span>Product variants</span><button type="button" class="supplier_add_products_add-variant">+ Add Variant</button></div>
         </section>
       </div>
 
-      <div class="form-column">
-        <section class="form-section image-section">
-          <div class="section-heading"><span class="section-number">06</span><div><h2>Product Images <span class="info-icon" title="Add clear product images">i</span></h2><p>Use bright, clear images to build buyer confidence.</p></div></div>
-          <button type="button" class="upload-zone" @click="$refs.fileInput.click()">
-            <span class="upload-icon">&#8615;</span>
+      <div class="supplier_add_products_form-column">
+        <section class="supplier_add_products_form-section supplier_add_products_image-section">
+          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">06</span><div><h2>Product Images <span class="supplier_add_products_info-icon" title="Add clear product images">i</span></h2><p>Use bright, clear images to build buyer confidence.</p></div></div>
+          <button type="button" class="supplier_add_products_upload-zone" @click="$refs.fileInput.click()">
+            <span class="supplier_add_products_upload-icon">&#8615;</span>
             <strong>Click to upload or drag and drop</strong>
             <small>Max 10mb file size, only png and jpeg files.</small>
           </button>
-          <div v-if="form.images.length" class="thumbnail-strip">
-            <div v-for="(image, index) in form.images" :key="image" class="thumbnail-tile">
+          <div v-if="form.images.length" class="supplier_add_products_thumbnail-strip">
+            <div v-for="(image, index) in form.images" :key="image" class="supplier_add_products_thumbnail-tile">
               <img :src="image" :alt="`Selected product image ${index + 1}`" />
               <button type="button" :aria-label="`Remove image ${index + 1}`" @click="removeImage(index)">&#215;</button>
             </div>
@@ -81,26 +81,26 @@
           <input ref="fileInput" type="file" accept="image/png,image/jpeg" multiple hidden @change="selectImages" />
         </section>
 
-        <section class="form-section">
-          <div class="section-heading"><span class="section-number">07</span><div><h2>Shipping and Delivery</h2><p>Help buyers estimate handling and delivery requirements.</p></div></div>
-          <label>Items Weight<div class="input-suffix"><input v-model.number="form.weight" type="number" min="0" placeholder="12.00" /><span>kg</span></div></label>
-          <label>Package Size <span class="hint">(The package you use to ship your product)</span></label>
-          <div class="three-columns">
-            <label>Length<div class="input-suffix"><input v-model.number="form.length" type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
-            <label>Breadth<div class="input-suffix"><input v-model.number="form.breadth" type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
-            <label>Width<div class="input-suffix"><input v-model.number="form.width" type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
+        <section class="supplier_add_products_form-section">
+          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">07</span><div><h2>Shipping and Delivery</h2><p>Help buyers estimate handling and delivery requirements.</p></div></div>
+          <label>Items Weight<div class="supplier_add_products_input-suffix"><input v-model.number="form.weight" type="number" min="0" placeholder="12.00" /><span>kg</span></div></label>
+          <label>Package Size <span class="supplier_add_products_hint">(The package you use to ship your product)</span></label>
+          <div class="supplier_add_products_three-columns">
+            <label>Length<div class="supplier_add_products_input-suffix"><input v-model.number="form.length" type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
+            <label>Breadth<div class="supplier_add_products_input-suffix"><input v-model.number="form.breadth" type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
+            <label>Width<div class="supplier_add_products_input-suffix"><input v-model.number="form.width" type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
           </div>
         </section>
 
-        <section class="form-section pricing-section">
-          <div class="section-heading"><span class="section-number">08</span><div><h2>Pricing</h2><p>Set your wholesale price and comparison price.</p></div></div>
-          <div class="two-columns">
-            <label>Price<div class="input-prefix"><span>$</span><input v-model.number="form.price" type="number" min="0" required placeholder="180.00" /></div></label>
-            <label>Compare at Price <span class="info-icon" title="Original price">i</span><div class="input-prefix"><span>$</span><input v-model.number="form.comparePrice" type="number" min="0" placeholder="320.00" /></div></label>
+        <section class="supplier_add_products_form-section supplier_add_products_pricing-section">
+          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">08</span><div><h2>Pricing</h2><p>Set your wholesale price and comparison price.</p></div></div>
+          <div class="supplier_add_products_two-columns">
+            <label>Price<div class="supplier_add_products_input-prefix"><span>$</span><input v-model.number="form.price" type="number" min="0" required placeholder="180.00" /></div></label>
+            <label>Compare at Price <span class="supplier_add_products_info-icon" title="Original price">i</span><div class="supplier_add_products_input-prefix"><span>$</span><input v-model.number="form.comparePrice" type="number" min="0" placeholder="320.00" /></div></label>
           </div>
         </section>
 
-        <div class="form-actions"><button type="button" class="discard-button" @click="router.push('/products')">Discard</button><button type="button" class="schedule-button" @click="saveDraft">Schedule</button><button type="submit" class="primary-button">Add Product</button></div>
+        <div class="supplier_add_products_form-actions"><button type="button" class="supplier_add_products_discard-button" @click="router.push('/products')">Discard</button><button type="button" class="supplier_add_products_schedule-button" @click="saveDraft">Schedule</button><button type="submit" class="supplier_add_products_primary-button">Add Product</button></div>
       </div>
     </form>
   </div>
@@ -120,7 +120,7 @@ function publish() { if (!form.product_name || !form.category_name) return; addP
 function saveDraft() { addProduct({ ...productPayload(), product_name: form.product_name || "Untitled draft", category_name: form.category_name || "Eco-friendly Packaging" }); message.value = "Draft saved locally."; setTimeout(() => router.push("/products"), 650); }
 </script>
 <style scoped>
-.form-page {
+.supplier_add_products_form-page {
   min-height: 100vh;
   padding: 30px 34px 56px;
   background: #f7f5f2;
@@ -128,12 +128,12 @@ function saveDraft() { addProduct({ ...productPayload(), product_name: form.prod
   font-family: Arial, sans-serif;
 }
 
-.form-header {
+.supplier_add_products_form-header {
   max-width: 1080px;
   margin: 0 auto 30px;
 }
 
-.back-link {
+.supplier_add_products_back-link {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -144,14 +144,14 @@ function saveDraft() { addProduct({ ...productPayload(), product_name: form.prod
   text-decoration: none;
 }
 
-.header-title-row {
+.supplier_add_products_header-title-row {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 20px;
 }
 
-.eyebrow {
+.supplier_add_products_eyebrow {
   display: block;
   margin-bottom: 8px;
   color: #d2763d;
@@ -160,30 +160,30 @@ function saveDraft() { addProduct({ ...productPayload(), product_name: form.prod
   letter-spacing: 1.6px;
 }
 
-.form-header h1 {
+.supplier_add_products_form-header h1 {
   margin: 0 0 7px;
   color: #44312c;
   font-size: 22px;
   font-weight: 700;
 }
 
-.form-header p {
+.supplier_add_products_form-header p {
   margin: 0;
   color: #917e74;
   font-size: 12px;
 }
 
-.required-note {
+.supplier_add_products_required-note {
   padding-bottom: 3px;
   color: #99867d;
   font-size: 11px;
 }
 
-.required-note b {
+.supplier_add_products_required-note b {
   color: #c86e38;
 }
 
-.form-layout {
+.supplier_add_products_form-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.04fr) minmax(360px, .96fr);
   gap: 28px;
@@ -191,13 +191,13 @@ function saveDraft() { addProduct({ ...productPayload(), product_name: form.prod
   margin: auto;
 }
 
-.form-column {
+.supplier_add_products_form-column {
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
-.form-section {
+.supplier_add_products_form-section {
   padding: 20px 20px 22px;
   border: 1px solid #e6dfda;
   border-radius: 12px;
@@ -205,7 +205,7 @@ function saveDraft() { addProduct({ ...productPayload(), product_name: form.prod
   box-shadow: 0 3px 12px rgba(91, 62, 48, 0.025);
 }
 
-.section-heading {
+.supplier_add_products_section-heading {
   display: flex;
   align-items: flex-start;
   gap: 11px;
@@ -214,7 +214,7 @@ function saveDraft() { addProduct({ ...productPayload(), product_name: form.prod
   border-bottom: 1px solid #eee6e0;
 }
 
-.section-number {
+.supplier_add_products_section-number {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -228,36 +228,36 @@ function saveDraft() { addProduct({ ...productPayload(), product_name: form.prod
   font-weight: 700;
 }
 
-.form-section h2 {
+.supplier_add_products_form-section h2 {
   margin: 0;
   color: #4d3730;
   font-size: 14px;
   font-weight: 700;
 }
 
-.section-heading p {
+.supplier_add_products_section-heading p {
   margin: 4px 0 0;
   color: #a08d84;
   font-size: 11px;
   font-weight: 400;
 }
 
-.form-section label {
+.supplier_add_products_form-section label {
   position: relative;
 }
 
-.image-section,
-.pricing-section {
+.supplier_add_products_image-section,
+.supplier_add_products_pricing-section {
   padding-bottom: 22px;
 }
 
-.image-section h2 {
+.supplier_add_products_image-section h2 {
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
-.info-icon {
+.supplier_add_products_info-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -270,7 +270,7 @@ function saveDraft() { addProduct({ ...productPayload(), product_name: form.prod
   font-style: normal;
 }
 
-.field-action {
+.supplier_add_products_field-action {
   position: absolute;
   top: 0;
   right: 0;
@@ -316,32 +316,32 @@ textarea {
   line-height: 1.45;
 }
 
-.two-columns,
-.three-columns {
+.supplier_add_products_two-columns,
+.supplier_add_products_three-columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.form-section > label:last-child,
-.form-section > .two-columns:last-child,
-.form-section > .three-columns:last-child,
-.form-section > .variant-row:last-child {
+.supplier_add_products_form-section > label:last-child,
+.supplier_add_products_form-section > .supplier_add_products_two-columns:last-child,
+.supplier_add_products_form-section > .supplier_add_products_three-columns:last-child,
+.supplier_add_products_form-section > .supplier_add_products_variant-row:last-child {
   margin-bottom: 0;
 }
 
-.three-columns {
+.supplier_add_products_three-columns {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
-.hint {
+.supplier_add_products_hint {
   color: #aa968d;
   font-weight: 400;
 }
 
-.input-suffix,
-.input-prefix {
+.supplier_add_products_input-suffix,
+.supplier_add_products_input-prefix {
   display: flex;
   align-items: center;
   min-height: 36px;
@@ -350,25 +350,25 @@ textarea {
   border-radius: 6px;
 }
 
-.input-suffix input,
-.input-prefix input {
+.supplier_add_products_input-suffix input,
+.supplier_add_products_input-prefix input {
   min-width: 0;
   border: 0;
   box-shadow: none;
 }
 
-.input-suffix span,
-.input-prefix span {
+.supplier_add_products_input-suffix span,
+.supplier_add_products_input-prefix span {
   padding: 0 9px;
   color: #a48f85;
   font-size: 10px;
 }
 
-.input-prefix span {
+.supplier_add_products_input-prefix span {
   border-right: 1px solid #eee5df;
 }
 
-.upload-zone {
+.supplier_add_products_upload-zone {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -383,32 +383,32 @@ textarea {
   cursor: pointer;
 }
 
-.upload-icon {
+.supplier_add_products_upload-icon {
   margin-bottom: 6px;
   color: #c17a51;
   font-size: 21px;
 }
 
-.upload-zone strong,
-.upload-zone small {
+.supplier_add_products_upload-zone strong,
+.supplier_add_products_upload-zone small {
   font-size: 10px;
   font-weight: 600;
 }
 
-.upload-zone small {
+.supplier_add_products_upload-zone small {
   margin-top: 4px;
   color: #a8958c;
   font-weight: 400;
 }
 
-.thumbnail-strip {
+.supplier_add_products_thumbnail-strip {
   display: flex;
   gap: 7px;
   margin-top: 8px;
   overflow-x: auto;
 }
 
-.thumbnail-tile {
+.supplier_add_products_thumbnail-tile {
   position: relative;
   flex: 0 0 54px;
   height: 54px;
@@ -418,13 +418,13 @@ textarea {
   background: #f1e6df;
 }
 
-.thumbnail-tile img {
+.supplier_add_products_thumbnail-tile img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.thumbnail-tile button {
+.supplier_add_products_thumbnail-tile button {
   position: absolute;
   top: 2px;
   right: 2px;
@@ -444,7 +444,7 @@ textarea {
   cursor: pointer;
 }
 
-.check-label {
+.supplier_add_products_check-label {
   flex-direction: row;
   align-items: center;
   gap: 6px;
@@ -454,14 +454,14 @@ textarea {
   font-weight: 400;
 }
 
-.check-label input {
+.supplier_add_products_check-label input {
   min-height: auto;
   width: 12px;
   height: 12px;
   accent-color: #d2763d;
 }
 
-.variant-row {
+.supplier_add_products_variant-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -473,7 +473,7 @@ textarea {
   font-size: 10px;
 }
 
-.add-variant {
+.supplier_add_products_add-variant {
   border: 0;
   background: none;
   color: #c86e38;
@@ -482,7 +482,7 @@ textarea {
   cursor: pointer;
 }
 
-.form-actions {
+.supplier_add_products_form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -492,9 +492,9 @@ textarea {
   border-top: 1px solid #e6dfda;
 }
 
-.discard-button,
-.schedule-button,
-.primary-button {
+.supplier_add_products_discard-button,
+.supplier_add_products_schedule-button,
+.supplier_add_products_primary-button {
   min-height: 36px;
   padding: 0 14px;
   border: 0;
@@ -504,23 +504,23 @@ textarea {
   cursor: pointer;
 }
 
-.discard-button {
+.supplier_add_products_discard-button {
   border: 1px solid #e1d8d2;
   background: #fff;
   color: #735d52;
 }
 
-.schedule-button {
+.supplier_add_products_schedule-button {
   background: #fff3eb;
   color: #c16b39;
 }
 
-.primary-button {
+.supplier_add_products_primary-button {
   background: #d2763d;
   color: #fff;
 }
 
-.notice {
+.supplier_add_products_notice {
   margin: 0 auto 18px;
   padding: 10px 12px;
   border: 1px solid #cfe4d1;
@@ -531,15 +531,15 @@ textarea {
 }
 
 @media(max-width:850px) {
-  .form-page {
+  .supplier_add_products_form-page {
     padding: 20px 16px 35px;
   }
 
-  .form-layout {
+  .supplier_add_products_form-layout {
     grid-template-columns: 1fr;
   }
 
-  .header-title-row {
+  .supplier_add_products_header-title-row {
     align-items: flex-start;
     flex-direction: column;
     gap: 12px;
@@ -547,19 +547,19 @@ textarea {
 }
 
 @media(max-width:520px) {
-  .two-columns {
+  .supplier_add_products_two-columns {
     grid-template-columns: 1fr;
   }
 
-  .three-columns {
+  .supplier_add_products_three-columns {
     grid-template-columns: 1fr;
   }
 
-  .form-actions {
+  .supplier_add_products_form-actions {
     justify-content: stretch;
   }
 
-  .form-actions button {
+  .supplier_add_products_form-actions button {
     flex: 1;
     padding: 0 8px;
   }
