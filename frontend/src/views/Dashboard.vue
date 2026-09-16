@@ -61,7 +61,7 @@
 
         <h3 class="section-spacer">Suggested suppliers</h3>
         <ul class="suggested-list">
-          <li v-for="s in suggestedSuppliers" :key="s.supplierId">
+          <li v-for="s in suggestedSuppliers" :key="s.supplierId" @click="goToSuppliers">
             <div class="supplier-initials">{{ initials(s.companyName) }}</div>
             <div class="supplier-info">
               <strong>{{ s.companyName }}</strong>
@@ -74,7 +74,7 @@
 
       <!-- Tracking + notifications -->
       <section class="side-col">
-        <div class="card">
+        <div class="card" v-if="trackedOrder">
           <h3>Order #{{ trackedOrder.orderId }} tracking</h3>
           <div class="tracking-steps">
             <span :class="{ active: true }">Placed</span>
@@ -86,14 +86,18 @@
             <span>Simulated GPS marker — courier is approx. {{ trackedOrder.etaMinutes }} minutes from {{ trackedOrder.destinationCity }}</span>
           </div>
         </div>
+        <div class="card" v-else>
+          <h3>Order tracking</h3>
+          <p class="subtitle">Nothing in transit right now.</p>
+        </div>
 
         <div class="card">
           <h3>Notifications</h3>
           <ul class="notifications-list">
             <li v-for="n in notifications" :key="n.notificationId" :class="{ unread: !n.isRead }">
-              <span class="dot" :class="n.type"></span>
+              <span class="dot"></span>
               <div>
-                <strong>{{ notificationTitle(n.type) }}</strong>
+                <strong>{{ n.title }}</strong>
                 <p>{{ n.message }}</p>
               </div>
             </li>
@@ -106,10 +110,13 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import api from "../services/api";
 
-// Populated from GET /api/dashboard once the backend route exists.
-// Placeholder sample data below so the page is viewable while you build.
+const router = useRouter();
+
+// Sample data below is a fallback in case the API call fails —
+// loadDashboard() overwrites these with real data on mount.
 const business = ref({ name: "Ndlovu Farm Supplies" });
 
 const stats = ref({
@@ -134,17 +141,14 @@ const suggestedSuppliers = ref([
   { supplierId: 3, companyName: "FarmTech Equipment Parts", description: "Tractor and irrigation equipment spares" },
 ]);
 
-const trackedOrder = ref({
-  orderId: "SB-1042",
-  status: "in_transit",
-  etaMinutes: 24,
-  destinationCity: "Bloemfontein",
-});
+// Can legitimately be null (nothing currently in transit) — the template
+// guards the tracking card with v-if/v-else, so don't default this to an object.
+const trackedOrder = ref(null);
 
 const notifications = ref([
-  { notificationId: 1, type: "order_update", message: "Karoo Fertiliser Traders has accepted your NPK fertiliser order", isRead: false },
-  { notificationId: 2, type: "payment_reminder", message: "Invoice for #SB-1035 is due in 2 days (R1,450)", isRead: false },
-  { notificationId: 3, type: "rating_request", message: "Share your feedback for FarmTech Equipment Parts' delivery", isRead: true },
+  { notificationId: 1, title: "Order Confirmed", message: "Karoo Fertiliser Traders has accepted your NPK fertiliser order", isRead: false },
+  { notificationId: 2, title: "Payment Reminder", message: "Invoice for #SB-1035 is due in 2 days (R1,450)", isRead: false },
+  { notificationId: 3, title: "New Rating Available", message: "Share your feedback for FarmTech Equipment Parts' delivery", isRead: true },
 ]);
 
 function formatMoney(n) {
@@ -158,23 +162,27 @@ function statusLabel(status) {
     processing: "Processing",
   }[status] || status;
 }
-function notificationTitle(type) {
-  return {
-    order_update: "Order Confirmed",
-    payment_reminder: "Payment Reminder",
-    rating_request: "New Rating Available",
-    message: "New Message",
-    system: "Notice",
-  }[type] || "Notification";
-}
 function initials(name) {
   return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
+function goToSuppliers() {
+  router.push("/browse-suppliers");
+}
+
 async function loadDashboard() {
-  // Once the backend route exists, replace the ref() sample data above with:
-  // const { data } = await api.get("/dashboard");
-  // business.value = data.business; stats.value = data.stats; etc.
+  try {
+    const { data } = await api.get("/dashboard");
+    business.value = data.business;
+    stats.value = data.stats;
+    recentOrders.value = data.recentOrders;
+    suggestedSuppliers.value = data.suggestedSuppliers;
+    trackedOrder.value = data.trackedOrder;
+    notifications.value = data.notifications;
+  } catch (err) {
+    console.error("Failed to load dashboard data:", err);
+    // Falls back to the placeholder sample data above.
+  }
 }
 
 onMounted(loadDashboard);
@@ -283,6 +291,10 @@ onMounted(loadDashboard);
   gap: 12px;
   padding: 10px 0;
   border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+.suggested-list li:hover {
+  background: var(--color-accent-soft);
 }
 .supplier-initials {
   width: 32px;
@@ -344,9 +356,6 @@ onMounted(loadDashboard);
   border-radius: 50%;
   margin-top: 5px;
   flex-shrink: 0;
-  background: var(--color-text-muted);
+  background: var(--color-accent);
 }
-.dot.order_update { background: var(--color-success); }
-.dot.payment_reminder { background: var(--color-warning); }
-.dot.rating_request { background: var(--color-accent); }
 </style>
