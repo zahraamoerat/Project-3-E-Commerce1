@@ -1,7 +1,8 @@
 <template>
   <div class="supplier_add_products_form-page">
     <header class="supplier_add_products_form-header">
-      <RouterLink to="/products" class="supplier_add_products_back-link"><span aria-hidden="true">&#8592;</span> Back to product list</RouterLink>
+      <RouterLink to="/products" class="supplier_add_products_back-link"><span aria-hidden="true">&#8592;</span> Back to
+        product list</RouterLink>
       <div class="supplier_add_products_header-title-row">
         <div>
           <span class="supplier_add_products_eyebrow">PRODUCT CATALOG</span>
@@ -15,36 +16,55 @@
     <form class="supplier_add_products_form-layout" @submit.prevent="publish">
       <div class="supplier_add_products_form-column">
         <section class="supplier_add_products_form-section">
-          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">01</span><div><h2>Description</h2><p>Start with the details buyers see first.</p></div></div>
+          <div class="supplier_add_products_section-heading"><span
+              class="supplier_add_products_section-number">01</span>
+            <div>
+              <h2>Description</h2>
+              <p>Start with the details buyers see first.</p>
+            </div>
+          </div>
           <label>Product Name<input v-model.trim="form.product_name" placeholder="Product name" required /></label>
           <label>Business Description
             <span class="supplier_add_products_field-action">Update .txt file</span>
-            <textarea v-model.trim="form.description" rows="6" placeholder="Tell buyers about this product..."></textarea>
+            <textarea v-model.trim="form.description" rows="6"
+              placeholder="Tell buyers about this product..."></textarea>
           </label>
         </section>
 
         <section class="supplier_add_products_form-section">
-          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">02</span><div><h2>Category</h2><p>Place this product in the right collection.</p></div></div>
+          <div class="supplier_add_products_section-heading"><span
+              class="supplier_add_products_section-number">02</span>
+            <div>
+              <h2>Category</h2>
+              <p>Place this product in the right collection.</p>
+            </div>
+          </div>
           <label>Product Category<select v-model="form.category_name" required>
-            <option disabled value="">Select a category</option>
-            <option>Health & Medicine</option>
-            <option>Beauty</option>
-            <option>Eco-friendly Packaging</option>
-            <option>Food & Beverage</option>
-            <option>Cleaning Supplies</option>
-            <option>Office Supplies</option>
-            <option>Shipping Supplies</option>
-          </select></label>
+              <option disabled value="">Select a category</option>
+              <option>Health & Medicine</option>
+              <option>Beauty</option>
+              <option>Eco-friendly Packaging</option>
+              <option>Food & Beverage</option>
+              <option>Cleaning Supplies</option>
+              <option>Office Supplies</option>
+              <option>Shipping Supplies</option>
+            </select></label>
           <label>Product Category<select v-model="form.subcategory">
-            <option value="">Select a subcategory</option>
-            <option>Beauty</option>
-            <option>Packaging</option>
-            <option>Wholesale goods</option>
-          </select></label>
+              <option value="">Select a subcategory</option>
+              <option>Beauty</option>
+              <option>Packaging</option>
+              <option>Wholesale goods</option>
+            </select></label>
         </section>
 
         <section class="supplier_add_products_form-section">
-          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">03</span><div><h2>Inventory</h2><p>Set the available quantity and tracking code.</p></div></div>
+          <div class="supplier_add_products_section-heading"><span
+              class="supplier_add_products_section-number">03</span>
+            <div>
+              <h2>Inventory</h2>
+              <p>Set the available quantity and tracking code.</p>
+            </div>
+          </div>
           <div class="supplier_add_products_two-columns">
             <label>Quantity<input v-model.number="form.quantity" type="number" min="0" required /></label>
             <label>SKU (Optional)<input v-model.trim="form.sku" placeholder="UGG-BB-PUR-06" /></label>
@@ -52,21 +72,44 @@
         </section>
 
         <section class="supplier_add_products_form-section supplier_add_products_selling-type">
-          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">04</span><div><h2>Selling Type</h2><p>Choose where buyers can purchase this item.</p></div></div>
-          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="online" type="radio" /> In-store selling only</label>
-          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="online-only" type="radio" /> Online selling only</label>
-          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="both" type="radio" /> Available both in-store and online</label>
+          <div class="supplier_add_products_section-heading"><span
+              class="supplier_add_products_section-number">04</span>
+            <div>
+              <h2>Selling Type</h2>
+              <p>Choose where buyers can purchase this item.</p>
+            </div>
+          </div>
+          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="online"
+              type="radio" /> In-store selling only</label>
+          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="online-only"
+              type="radio" /> Online selling only</label>
+          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="both"
+              type="radio" /> Available both in-store and online</label>
         </section>
 
         <section class="supplier_add_products_form-section supplier_add_products_variant-section">
-          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">05</span><div><h2>Variant</h2><p>Offer different versions of the same product.</p></div></div>
-          <div class="supplier_add_products_variant-row"><span>Product variants</span><button type="button" class="supplier_add_products_add-variant">+ Add Variant</button></div>
+          <div class="supplier_add_products_section-heading"><span
+              class="supplier_add_products_section-number">05</span>
+            <div>
+              <h2>Variant</h2>
+              <p>Offer different versions of the same product.</p>
+            </div>
+          </div>
+          <div class="supplier_add_products_variant-row"><span>Product variants</span><button type="button"
+              class="supplier_add_products_add-variant">+ Add Variant</button></div>
         </section>
       </div>
 
       <div class="supplier_add_products_form-column">
         <section class="supplier_add_products_form-section supplier_add_products_image-section">
-          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">06</span><div><h2>Product Images <span class="supplier_add_products_info-icon" title="Add clear product images">i</span></h2><p>Use bright, clear images to build buyer confidence.</p></div></div>
+          <div class="supplier_add_products_section-heading"><span
+              class="supplier_add_products_section-number">06</span>
+            <div>
+              <h2>Product Images <span class="supplier_add_products_info-icon" title="Add clear product images">i</span>
+              </h2>
+              <p>Use bright, clear images to build buyer confidence.</p>
+            </div>
+          </div>
           <button type="button" class="supplier_add_products_upload-zone" @click="$refs.fileInput.click()">
             <span class="supplier_add_products_upload-icon">&#8615;</span>
             <strong>Click to upload or drag and drop</strong>
@@ -75,36 +118,62 @@
           <div v-if="form.images.length" class="supplier_add_products_thumbnail-strip">
             <div v-for="(image, index) in form.images" :key="image" class="supplier_add_products_thumbnail-tile">
               <img :src="image" :alt="`Selected product image ${index + 1}`" />
-              <button type="button" :aria-label="`Remove image ${index + 1}`" @click="removeImage(index)">&#215;</button>
+              <button type="button" :aria-label="`Remove image ${index + 1}`"
+                @click="removeImage(index)">&#215;</button>
             </div>
           </div>
           <input ref="fileInput" type="file" accept="image/png,image/jpeg" multiple hidden @change="selectImages" />
         </section>
 
         <section class="supplier_add_products_form-section">
-          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">07</span><div><h2>Shipping and Delivery</h2><p>Help buyers estimate handling and delivery requirements.</p></div></div>
-          <label>Items Weight<div class="supplier_add_products_input-suffix"><input v-model.number="form.weight" type="number" min="0" placeholder="12.00" /><span>kg</span></div></label>
-          <label>Package Size <span class="supplier_add_products_hint">(The package you use to ship your product)</span></label>
+          <div class="supplier_add_products_section-heading"><span
+              class="supplier_add_products_section-number">07</span>
+            <div>
+              <h2>Shipping and Delivery</h2>
+              <p>Help buyers estimate handling and delivery requirements.</p>
+            </div>
+          </div>
+          <label>Items Weight<div class="supplier_add_products_input-suffix"><input v-model.number="form.weight"
+                type="number" min="0" placeholder="12.00" /><span>kg</span></div></label>
+          <label>Package Size <span class="supplier_add_products_hint">(The package you use to ship your
+              product)</span></label>
           <div class="supplier_add_products_three-columns">
-            <label>Length<div class="supplier_add_products_input-suffix"><input v-model.number="form.length" type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
-            <label>Breadth<div class="supplier_add_products_input-suffix"><input v-model.number="form.breadth" type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
-            <label>Width<div class="supplier_add_products_input-suffix"><input v-model.number="form.width" type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
+            <label>Length<div class="supplier_add_products_input-suffix"><input v-model.number="form.length"
+                  type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
+            <label>Breadth<div class="supplier_add_products_input-suffix"><input v-model.number="form.breadth"
+                  type="number" min="0" placeholder="12.00" /><span>in</span></div></label>
+            <label>Width<div class="supplier_add_products_input-suffix"><input v-model.number="form.width" type="number"
+                  min="0" placeholder="12.00" /><span>in</span></div></label>
           </div>
         </section>
 
         <section class="supplier_add_products_form-section supplier_add_products_pricing-section">
-          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">08</span><div><h2>Pricing</h2><p>Set your wholesale price and comparison price.</p></div></div>
+          <div class="supplier_add_products_section-heading"><span
+              class="supplier_add_products_section-number">08</span>
+            <div>
+              <h2>Pricing</h2>
+              <p>Set your wholesale price and comparison price.</p>
+            </div>
+          </div>
           <div class="supplier_add_products_two-columns">
-            <label>Price<div class="supplier_add_products_input-prefix"><span>$</span><input v-model.number="form.price" type="number" min="0" required placeholder="180.00" /></div></label>
-            <label>Compare at Price <span class="supplier_add_products_info-icon" title="Original price">i</span><div class="supplier_add_products_input-prefix"><span>$</span><input v-model.number="form.comparePrice" type="number" min="0" placeholder="320.00" /></div></label>
+            <label>Price<div class="supplier_add_products_input-prefix"><span>$</span><input v-model.number="form.price"
+                  type="number" min="0" required placeholder="180.00" /></div></label>
+            <label>Compare at Price <span class="supplier_add_products_info-icon" title="Original price">i</span>
+              <div class="supplier_add_products_input-prefix"><span>$</span><input v-model.number="form.comparePrice"
+                  type="number" min="0" placeholder="320.00" /></div>
+            </label>
           </div>
         </section>
 
-        <div class="supplier_add_products_form-actions"><button type="button" class="supplier_add_products_discard-button" @click="router.push('/products')">Discard</button><button type="button" class="supplier_add_products_schedule-button" @click="saveDraft">Schedule</button><button type="submit" class="supplier_add_products_primary-button">Add Product</button></div>
+        <div class="supplier_add_products_form-actions"><button type="button"
+            class="supplier_add_products_discard-button" @click="router.push('/products')">Discard</button><button
+            type="button" class="supplier_add_products_schedule-button" @click="saveDraft">Save as draft</button><button
+            type="submit" class="supplier_add_products_primary-button">Add Product</button></div>
       </div>
     </form>
   </div>
 </template>
+
 <script setup>
 import { reactive, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
@@ -119,6 +188,7 @@ function productPayload() { return { ...form, image: form.images[0] || imagePlac
 function publish() { if (!form.product_name || !form.category_name) return; addProduct(productPayload()); message.value = "Product published to your local catalog."; setTimeout(() => router.push("/products"), 650); }
 function saveDraft() { addProduct({ ...productPayload(), product_name: form.product_name || "Untitled draft", category_name: form.category_name || "Eco-friendly Packaging" }); message.value = "Draft saved locally."; setTimeout(() => router.push("/products"), 650); }
 </script>
+
 <style scoped>
 .supplier_add_products_form-page {
   min-height: 100vh;
@@ -323,10 +393,10 @@ textarea {
   gap: 12px;
 }
 
-.supplier_add_products_form-section > label:last-child,
-.supplier_add_products_form-section > .supplier_add_products_two-columns:last-child,
-.supplier_add_products_form-section > .supplier_add_products_three-columns:last-child,
-.supplier_add_products_form-section > .supplier_add_products_variant-row:last-child {
+.supplier_add_products_form-section>label:last-child,
+.supplier_add_products_form-section>.supplier_add_products_two-columns:last-child,
+.supplier_add_products_form-section>.supplier_add_products_three-columns:last-child,
+.supplier_add_products_form-section>.supplier_add_products_variant-row:last-child {
   margin-bottom: 0;
 }
 

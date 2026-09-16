@@ -1,7 +1,8 @@
 <template>
   <div class="supplier_edit_product_edit-page">
     <header class="supplier_edit_product_edit-header">
-      <div><span class="supplier_edit_product_eyebrow">CATALOG WORKSPACE</span>
+      <div>
+        <span class="supplier_edit_product_eyebrow">CATALOG WORKSPACE</span>
         <h1>Edit product</h1>
         <p>Keep your listing accurate so buyers can order with confidence.</p>
       </div>
@@ -12,7 +13,8 @@
       <RouterLink to="/products" class="supplier_edit_product_primary-button">Return to products</RouterLink>
     </div>
     <form v-else class="supplier_edit_product_edit-grid" @submit.prevent="save">
-      <section class="supplier_edit_product_edit-card"><span class="supplier_edit_product_eyebrow">LISTING DETAILS</span>
+      <section class="supplier_edit_product_edit-card"><span class="supplier_edit_product_eyebrow">LISTING
+          DETAILS</span>
         <h2>{{ product.product_name }}</h2><label>Product name<input v-model.trim="form.product_name"
             required /></label>
         <div class="supplier_edit_product_two-columns"><label>Category<select v-model="form.category_name">
@@ -25,7 +27,8 @@
             v-model="form.description" rows="7"></textarea></label>
       </section>
       <aside class="supplier_edit_product_edit-side">
-        <section class="supplier_edit_product_edit-card supplier_edit_product_media-card"><span class="supplier_edit_product_eyebrow">PRODUCT MEDIA</span>
+        <section class="supplier_edit_product_edit-card supplier_edit_product_media-card"><span
+            class="supplier_edit_product_eyebrow">PRODUCT MEDIA</span>
           <h2>Product Photos</h2>
           <button type="button" class="supplier_edit_product_upload-zone" @click="$refs.fileInput.click()">
             <span class="supplier_edit_product_upload-icon">&#8615;</span>
@@ -36,22 +39,26 @@
             <div v-for="(image, index) in form.images" :key="image" class="supplier_edit_product_thumbnail-tile">
               <img :src="image" :alt="`${form.product_name} product image ${index + 1}`" />
               <span v-if="index === 0" class="supplier_edit_product_media-badge">Primary</span>
-              <button type="button" :aria-label="`Remove image ${index + 1}`" @click="removeImage(index)">&#215;</button>
+              <button type="button" :aria-label="`Remove image ${index + 1}`"
+                @click="removeImage(index)">&#215;</button>
             </div>
           </div>
           <div class="supplier_edit_product_media-actions">
             <input ref="fileInput" type="file" accept="image/png,image/jpeg" multiple hidden @change="selectImages" />
           </div>
-          <p class="supplier_edit_product_media-help">Add multiple product photos. The first image is used as the primary catalog image.</p>
+          <p class="supplier_edit_product_media-help">Add multiple product photos. The first image is used as the
+            primary catalog image.</p>
         </section>
-        <section class="supplier_edit_product_edit-card"><span class="supplier_edit_product_eyebrow">INVENTORY & PRICING</span>
-          <div class="supplier_edit_product_two-columns"><label>Price (ZAR)<input v-model.number="form.price" type="number"
-                min="0" /></label><label>Stock quantity<input v-model.number="form.quantity" type="number"
+        <section class="supplier_edit_product_edit-card"><span class="supplier_edit_product_eyebrow">INVENTORY &
+            PRICING</span>
+          <div class="supplier_edit_product_two-columns"><label>Price (ZAR)<input v-model.number="form.price"
+                type="number" min="0" /></label><label>Stock quantity<input v-model.number="form.quantity" type="number"
                 min="0" /></label></div><label>Low-stock alert<input v-model.number="form.low_stock_threshold"
               type="number" min="0" /></label>
-          <div class="supplier_edit_product_stock-callout"><strong>{{ product.stockStatus }}</strong><span>Current catalog status</span></div>
-          <button class="supplier_edit_product_primary-button" type="submit">Save changes</button><button class="supplier_edit_product_text-button" type="button"
-            @click="router.push('/products')">Cancel</button>
+          <div class="supplier_edit_product_stock-callout"><strong>{{ product.stockStatus }}</strong><span>Current
+              catalog status</span></div>
+          <button class="supplier_edit_product_primary-button" type="submit">Save changes</button><button
+            class="supplier_edit_product_text-button" type="button" @click="router.push('/products')">Cancel</button>
           <p v-if="message" class="supplier_edit_product_success">{{ message }}</p>
         </section>
       </aside>
@@ -206,7 +213,7 @@ function save() { updateProduct(route.params.id, { ...form, image: form.images[0
   object-fit: cover;
 }
 
-.supplier_edit_product_thumbnail-tile > button {
+.supplier_edit_product_thumbnail-tile>button {
   position: absolute;
   top: 2px;
   right: 2px;
@@ -226,7 +233,7 @@ function save() { updateProduct(route.params.id, { ...form, image: form.images[0
   cursor: pointer;
 }
 
-.supplier_edit_product_thumbnail-tile > button:hover {
+.supplier_edit_product_thumbnail-tile>button:hover {
   background: #fae5e1;
 }
 
