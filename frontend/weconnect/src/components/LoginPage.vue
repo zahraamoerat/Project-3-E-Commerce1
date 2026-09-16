@@ -22,7 +22,9 @@
           <h1 class="main-heading">Sign in to your account</h1>
           <p class="sub-heading">
             Don't have an account yet?
-            <router-link to="/signup" class="link-highlight">Sign up free</router-link>
+            <router-link to="/signup" class="link-highlight"
+              >Sign up free</router-link
+            >
           </p>
         </div>
 
@@ -50,7 +52,7 @@
 
         <form @submit.prevent="handleLogin" class="form-space">
           <div class="form-group">
-              <label for="email" class="form-label">WORK EMAIL ADDRESS</label>
+            <label for="email" class="form-label">WORK EMAIL ADDRESS</label>
             <input
               id="email"
               v-model="email"
@@ -88,7 +90,9 @@
         </form>
 
         <div class="footer-link-box">
-          <router-link to="/" class="footer-link">← Back to home page</router-link>
+          <router-link to="/" class="footer-link"
+            >← Back to home page</router-link
+          >
         </div>
       </div>
     </main>

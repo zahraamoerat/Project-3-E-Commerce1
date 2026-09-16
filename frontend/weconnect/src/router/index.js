@@ -4,7 +4,7 @@ import LandingPage from "../views/LandingPage.vue";
 import LoginPage from "../components/LoginPage.vue";
 import SignUpPage from "../components/SignUpPage.vue";
 import ProductsView from "../views/ProductsView.vue";
-import AddProductsView from "../views/AddProductsView.vue";
+import CartView from "../views/CartView.vue";
 
 const routes = [
   {
@@ -28,9 +28,9 @@ const routes = [
     component: ProductsView,
   },
   {
-    path: "/add-product",
-    name: "AddProduct",
-    component: AddProductsView,
+    path: "/cart",
+    name: "Cart",
+    component: CartView,
   },
   {
     path: "/:pathMatch(.*)*",
