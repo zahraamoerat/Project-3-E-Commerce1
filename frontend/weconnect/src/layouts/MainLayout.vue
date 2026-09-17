@@ -212,7 +212,6 @@ kbd {
   border-top: 1px solid #eee8e3;
   background: #faf8f6;
 }
-
 @media (max-width: 700px) {
   .sidebar_main-layout {
     flex-direction: column;
