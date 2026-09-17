@@ -62,21 +62,21 @@ const router = useRouter()
 function logout() {
   localStorage.removeItem("token")
   localStorage.removeItem("user")
-  router.push("/login")
+  router.push("/products")
 }
 
 </script>
 <style scoped>
 /* ========================================================= SIDEBAR ========================================================= */
 .sidebar {
-  width: 250px;
+  width: 248px;
   height: 100vh;
   position: sticky;
   top: 0;
   left: 0;
   background: #523a33;
   color: #c9b7ae;
-  padding: 20px;
+  padding: 22px 16px 16px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -92,7 +92,7 @@ function logout() {
   align-items: center;
   gap: 13px;
   padding: 6px 10px;
-  margin-bottom: 42px;
+  margin-bottom: 30px;
   flex-shrink: 0;
 }
 
@@ -144,7 +144,7 @@ function logout() {
 
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
   flex: 1;
 }
 
@@ -155,10 +155,10 @@ function logout() {
   align-items: center;
   gap: 15px;
   width: 100%;
-  min-height: 48px;
+  min-height: 45px;
   padding: 0 15px;
   box-sizing: border-box;
-  border-radius: 10px;
+  border-radius: 9px;
   color: #c9b7ae;
   text-decoration: none;
   font-family: figtree;
@@ -219,7 +219,7 @@ function logout() {
 .sidebar_logout {
   margin-top: auto;
   width: 100%;
-  min-height: 52px;
+  min-height: 48px;
   padding: 14px 15px;
   display: flex;
   align-items: center;

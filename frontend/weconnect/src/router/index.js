@@ -1,23 +1,92 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHistory } from "vue-router";
 
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-    },
-    {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
-    },
-  ],
-})
+import MainLayout from "../layouts/MainLayout.vue";
+import Products from "../views/Products.vue";
+import Reviews from "../views/Reviews.vue";
+import StockManagement from "../views/StockManagement.vue";
+import AddProducts from "../views/AddProducts.vue";
+import EditProduct from "../views/EditProduct.vue";
+import ViewProduct from "../views/ViewProduct.vue";
+import Dashboard from "../views/Dashboard.vue";
+import Orders from "../views/Orders.vue";
+import Deliveries from "../views/Deliveries.vue";
+import Profile from "../views/Profile.vue";
+import RestockPage from "../views/RestockPage.vue";
 
-export default router
+const routes = [
+  {
+    path: "/",
+    component: MainLayout,
+    children: [
+      {
+        path: "",
+        redirect: "/products",
+      },
+      {
+        path: "products/add",
+        name: "AddProducts",
+        component: AddProducts,
+      },
+      {
+        path: "dashboard",
+        name: "Dashboard",
+        component: Dashboard,
+      },
+      {
+        path: "products",
+        name: "Products",
+        component: Products,
+      },
+      {
+        path: "products/edit/:id",
+        name: "EditProduct",
+        component: EditProduct,
+      },
+      {
+        path: "products/view/:id",
+        name: "ViewProduct",
+        component: ViewProduct,
+      },
+      {
+        path: "reviews",
+        name: "Reviews",
+        component: Reviews,
+      },
+      {
+        path: "stockmanagement",
+        name: "StockManagement",
+        component: StockManagement,
+      },
+      {
+        path: "stockmanagement/restock/:id",
+        name: "RestockPage",
+        component: RestockPage,
+      },
+      {
+        path: "orders",
+        name: "Orders",
+        component: Orders,
+      },
+      {
+        path: "deliveries",
+        name: "Deliveries",
+        component: Deliveries,
+      },
+      {
+        path: "profile",
+        name: "Profile",
+        component: Profile,
+      },
+    ],
+  },
+
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/products",
+  },
+];
+
+export default createRouter({
+  history: createWebHistory(),
+  routes,
+});
