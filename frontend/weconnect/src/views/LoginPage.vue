@@ -50,6 +50,7 @@
           </button>
         </div>
 
+        <p v-if="error" class="error-message">{{ error }}</p>
         <form @submit.prevent="handleLogin" class="form-space">
           <div class="form-group">
             <label for="email" class="form-label">WORK EMAIL ADDRESS</label>
@@ -85,7 +86,7 @@
           </div>
 
           <button type="submit" class="primary-button">
-            Sign In as {{ selectedRole === "buyer" ? "Buyer" : "Supplier" }}
+            {{ isLoading ? "Signing in..." : `Sign In as ${selectedRole === "buyer" ? "Buyer" : "Supplier"}` }}
           </button>
         </form>
 
@@ -108,18 +109,33 @@ export default {
       email: "",
       password: "",
       rememberMe: false,
+      error: "",
+      isLoading: false,
     };
   },
   methods: {
-    handleLogin() {
-      // Logic for authenticating user
-      console.log("Logging in as:", this.selectedRole, this.email);
+    async handleLogin() {
+      this.error = "";
+      this.isLoading = true;
+      try {
+        const { api } = await import("@/services/api");
+        const result = await api.login(this.email, this.password);
 
-      // Redirect based on selected role
-      if (this.selectedRole === "buyer") {
-        this.$router.push("/buyer-dashboard");
-      } else {
-        this.$router.push("/supplier-dashboard");
+        if (result.role !== this.selectedRole) {
+          throw new Error(`This account is registered as a ${result.role}, not a ${this.selectedRole}.`);
+        }
+
+        localStorage.setItem("weconnect_token", result.token);
+        localStorage.setItem("weconnect_role", result.role);
+        localStorage.setItem("weconnect_user_id", String(result.userId));
+        if (result.buyerId) localStorage.setItem("weconnect_buyer_id", String(result.buyerId));
+        if (result.supplierId) localStorage.setItem("weconnect_supplier_id", String(result.supplierId));
+
+        this.$router.push(result.role === "buyer" ? "/marketplace" : "/supplier-dashboard");
+      } catch (error) {
+        this.error = error.message;
+      } finally {
+        this.isLoading = false;
       }
     },
   },
@@ -405,6 +421,8 @@ export default {
   color: #57534e;
   text-decoration: none;
 }
+
+.error-message { color: #b42318; background: #fef3f2; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.8rem; margin-bottom: 1rem; text-align: center; }
 
 .footer-link:hover {
   color: #2d2522;
