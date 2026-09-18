@@ -11,11 +11,11 @@
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faChartLine" />
         </span> <span>Dashboard</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Products -->
-      <RouterLink to="/products" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
+      <RouterLink to="/small-business/products" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faShoppingBag" />
         </span> <span>Products</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Orders -->
-      <RouterLink to="/orders" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
+      <RouterLink to="/small-business/orders" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faList" />
         </span> <span>Orders</span> <span class="sidebar_notification-dot"></span> </RouterLink>
@@ -25,7 +25,7 @@
           <FontAwesomeIcon :icon="faWarehouse" />
         </span> <span>Stock Management</span> <span class="sidebar_notification-dot"></span> </RouterLink>
       <!-- Deliveries -->
-      <RouterLink to="/deliveries" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
+      <RouterLink to="/small-business/deliveries" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faTruck" />
         </span> <span>Deliveries</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Reviews -->

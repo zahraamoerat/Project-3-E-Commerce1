@@ -15,11 +15,30 @@ const router = createRouter({
       component: () => import('../views/TrackingView.vue'),
     },
 
+    // Shared dashboard page with the GPS preview.
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../views/Dashboard.vue'),
+    },
+
     // Add the Small Business Orders page
     {
       path: '/small-business/orders',
       name: 'small-business-orders',
       component: () => import('../views/SmallBusinessOrdersView.vue'),
+    },
+
+    {
+      path: '/small-business/products',
+      name: 'small-business-products',
+      component: () => import('../views/SmallBusinessProductsView.vue'),
+    },
+
+    {
+      path: '/small-business/products/:productId',
+      name: 'small-business-product',
+      component: () => import('../views/SmallBusinessProductsView.vue'),
     },
 
     // Add the Supplier Orders page

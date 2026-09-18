@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="connect-payments-page">
     <!-- Page header -->
@@ -496,6 +495,9 @@ import Swal from 'sweetalert2'
 // Get the current route.
 const route = useRoute()
 
+// Base URL used to reach the backend API.
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
 // Store the order loaded from the backend.
 const order = ref(null)
 
@@ -595,7 +597,7 @@ async function loadOrder() {
     }
 
     const response = await fetch(
-      `http://localhost:3000/api/orders/${orderId}`
+      `${apiUrl}/orders/${orderId}`
     )
 
     if (!response.ok) {
@@ -635,7 +637,7 @@ async function loadOrder() {
 async function loadExistingPayment(orderId) {
   try {
     const response = await fetch(
-      `http://localhost:3000/api/payments/order/${orderId}`
+      `${apiUrl}/payments/order/${orderId}`
     )
 
     if (!response.ok) {
@@ -669,14 +671,14 @@ async function loadExistingPayment(orderId) {
 // the payment method name stored in the database.
 function getPaymentMethodName() {
   return paymentMethod.value === 'card'
-    ? 'Card'
+    ? 'Bank Card'
     : 'EFT'
 }
 
 // Send the payment to the backend.
 async function submitPayment() {
   const response = await fetch(
-    'http://localhost:3000/api/payments',
+    `${apiUrl}/payments`,
     {
       method: 'POST',
       headers: {

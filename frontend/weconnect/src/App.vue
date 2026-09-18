@@ -7,13 +7,13 @@ import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <div class="app-layout">
+  <div class="weconnect-app-layout">
 
     <!-- Shared sidebar -->
     <Sidebar />
 
     <!-- Main page content -->
-    <main class="app-content">
+    <main class="weconnect-app-content">
       <RouterView />
     </main>
 
@@ -22,14 +22,14 @@ import { RouterView } from 'vue-router'
 
 <style scoped>
 /* Keep the sidebar and page content next to each other */
-.app-layout {
+.weconnect-app-layout {
   min-height: 100vh;
   display: flex;
-  background: #E8E2DD;
+  background: #F5F3EF;
 }
 
 /* The current route is displayed in this area */
-.app-content {
+.weconnect-app-content {
   flex: 1;
   min-width: 0;
 }
