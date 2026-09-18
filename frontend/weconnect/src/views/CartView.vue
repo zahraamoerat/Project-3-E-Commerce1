@@ -1,6 +1,8 @@
 <template>
   <div class="cart-page">
     <main class="main-content">
+      <p v-if="error" class="error-message">{{ error }}</p>
+      <p v-if="isLoading" class="loading-message">Loading your cart...</p>
       <div class="cart-topbar">
         <button type="button" class="back-button" @click="goBack">
           <span aria-hidden="true">←</span>
@@ -182,6 +184,8 @@
 </template>
 
 <script>
+import { api } from "@/services/api";
+
 export default {
   name: "CartView",
   data() {
@@ -189,26 +193,24 @@ export default {
       selectedPaymentMethod: "invoice",
       deliveryFee: 150.0,
       cartGroups: [],
+      isLoading: false,
+      error: "",
     };
   },
   computed: {
     totalCartCount() {
-      return this.cartGroups.reduce((count, group) => {
-        return (
-          count + group.items.reduce((sum, item) => sum + item.quantity, 0)
-        );
-      }, 0);
+      return this.cartGroups.reduce(
+        (count, group) =>
+          count + group.items.reduce((sum, item) => sum + item.quantity, 0),
+        0,
+      );
     },
     subtotal() {
-      return this.cartGroups.reduce((total, group) => {
-        return (
-          total +
-          group.items.reduce(
-            (sum, item) => sum + item.unitPrice * item.quantity,
-            0,
-          )
-        );
-      }, 0);
+      return this.cartGroups.reduce(
+        (total, group) =>
+          total + group.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+        0,
+      );
     },
     vatAmount() {
       return this.subtotal * 0.15;
@@ -219,41 +221,103 @@ export default {
         : 0;
     },
   },
+  async mounted() {
+    await this.loadCart();
+  },
   methods: {
-    updateQuantity(cartItemId, delta) {
-      this.cartGroups.forEach((group) => {
-        const item = group.items.find((i) => i.cartItemId === cartItemId);
-        if (item) {
-          item.quantity += delta;
-          if (item.quantity < 1) item.quantity = 1;
-        }
-      });
-    },
-    goBack() {
-      if (window.history.length > 1) {
-        this.$router.back();
-      } else {
-        this.$router.push("/products");
+    async loadCart() {
+      const buyerId = localStorage.getItem("weconnect_buyer_id");
+      if (!buyerId) {
+        this.error = "Please log in as a buyer before viewing your cart.";
+        return;
+      }
+
+      this.isLoading = true;
+      this.error = "";
+
+      try {
+        const items = await api.getCart(buyerId);
+        const groups = new Map();
+
+        items.forEach((item) => {
+          if (!groups.has(item.supplier_id)) {
+            groups.set(item.supplier_id, {
+              supplierId: item.supplier_id,
+              supplierName: item.supplier_name,
+              supplierLocation: "",
+              items: [],
+            });
+          }
+
+          groups.get(item.supplier_id).items.push({
+            cartItemId: item.cart_item_id,
+            productId: item.product_id,
+            name: item.product_name,
+            unitPrice: Number(item.unit_price),
+            quantity: Number(item.quantity),
+            imageUrl: item.image_url,
+          });
+        });
+
+        this.cartGroups = Array.from(groups.values());
+      } catch (error) {
+        this.error = error.message;
+      } finally {
+        this.isLoading = false;
       }
     },
-    removeItem(cartItemId) {
-      this.cartGroups.forEach((group) => {
-        group.items = group.items.filter((i) => i.cartItemId !== cartItemId);
-      });
-      // Remove empty supplier groups
-      this.cartGroups = this.cartGroups.filter(
-        (group) => group.items.length > 0,
-      );
+
+    async updateQuantity(cartItemId, delta) {
+      const buyerId = localStorage.getItem("weconnect_buyer_id");
+      if (!buyerId) return;
+
+      for (const group of this.cartGroups) {
+        const item = group.items.find((i) => i.cartItemId === cartItemId);
+        if (!item) continue;
+
+        const newQuantity = Math.max(1, item.quantity + delta);
+
+        try {
+          await api.updateCartItem(buyerId, cartItemId, newQuantity);
+          item.quantity = newQuantity;
+        } catch (error) {
+          this.error = error.message;
+        }
+        return;
+      }
     },
+
+    async removeItem(cartItemId) {
+      const buyerId = localStorage.getItem("weconnect_buyer_id");
+      if (!buyerId) return;
+
+      try {
+        await api.removeCartItem(buyerId, cartItemId);
+        this.cartGroups.forEach((group) => {
+          group.items = group.items.filter((i) => i.cartItemId !== cartItemId);
+        });
+        this.cartGroups = this.cartGroups.filter((group) => group.items.length > 0);
+      } catch (error) {
+        this.error = error.message;
+      }
+    },
+
+    goBack() {
+      if (window.history.length > 1) this.$router.back();
+      else this.$router.push("/");
+    },
+
     formatCurrency(val) {
-      return val.toLocaleString("en-ZA", {
+      return Number(val).toLocaleString("en-ZA", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
     },
+
     handleCheckout() {
+      if (!this.cartGroups.length) return;
       alert(
-        `Order submitted via ${this.selectedPaymentMethod.toUpperCase()}! Total: R ${this.formatCurrency(this.grandTotal)}`,
+        `Order checkout is ready. Payment method: ${this.selectedPaymentMethod.toUpperCase()}. Total: R ${this.formatCurrency(this.grandTotal)}`,
       );
     },
   },
