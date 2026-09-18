@@ -516,38 +516,7 @@ const handleSignUp = async () => {
   </div>
 </template>
 
-<script setup>
-import { reactive, ref } from "vue";
-import { useRouter } from "vue-router";
 
-const router = useRouter();
-const selectedRole = ref("buyer");
-const submittedSupplier = ref(false);
-
-const error = ref("");
-const isLoading = ref(false);
-
-const form = reactive({
-  firstName: "",
-  lastName: "",
-  email: "",
-  password: "",
-  companyName: "",
-  subscriptionPlan: "Starter Supplier",
-});
-
-const handleSignUp = async () => {
-  if (selectedRole.value === "supplier") {
-    // 1. Supplier Application submitted (Backend sets users.status = 'pending')
-    console.log("Supplier application submitted:", form);
-    submittedSupplier.value = true;
-  } else {
-    // 2. Buyer account created immediately (Backend sets users.status = 'approved')
-    console.log("Buyer signed up directly:", form);
-    router.push("/marketplace");
-  }
-};
-</script>
 
 <style scoped>
 /* Page & Layout Setup */
@@ -883,7 +852,9 @@ const handleSignUp = async () => {
   gap: 0.25rem;
 }
 
-.error-message { color: #b42318; background: #fef3f2; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.8rem; margin-bottom: 1rem; text-align: center; }\n\n/* Footer Navigation Links */
+.error-message { color: #b42318; background: #fef3f2; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.8rem; margin-bottom: 1rem; text-align: center; }
+
+/* Footer Navigation Links */
 .footer-link-box {
   text-align: center;
   margin-top: 1.5rem;
