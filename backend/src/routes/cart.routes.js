@@ -1,14 +1,17 @@
 const express = require("express");
 const db = require("../config/db");
+const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
 const getBuyerId = (request) => {
+  const authenticatedId = Number(request.user?.buyerId);
+  if (Number.isInteger(authenticatedId) && authenticatedId > 0) return authenticatedId;
   const buyerId = Number(request.body.buyerId ?? request.query.buyerId);
   return Number.isInteger(buyerId) && buyerId > 0 ? buyerId : null;
 };
 
-router.get("/", async (request, response, next) => {
+router.get("/", requireAuth, async (request, response, next) => {
   const buyerId = getBuyerId(request);
 
   if (!buyerId) {
@@ -44,7 +47,7 @@ router.get("/", async (request, response, next) => {
   }
 });
 
-router.post("/", async (request, response, next) => {
+router.post("/", requireAuth, async (request, response, next) => {
   const buyerId = getBuyerId(request);
   const productId = Number(request.body.productId);
   const quantity = Number(request.body.quantity ?? 1);
@@ -95,7 +98,7 @@ router.post("/", async (request, response, next) => {
   }
 });
 
-router.patch("/:cartItemId", async (request, response, next) => {
+router.patch("/:cartItemId", requireAuth, async (request, response, next) => {
   const buyerId = getBuyerId(request);
   const cartItemId = Number(request.params.cartItemId);
   const quantity = Number(request.body.quantity);
@@ -129,7 +132,7 @@ router.patch("/:cartItemId", async (request, response, next) => {
   }
 });
 
-router.delete("/:cartItemId", async (request, response, next) => {
+router.delete("/:cartItemId", requireAuth, async (request, response, next) => {
   const buyerId = Number(request.query.buyerId);
   const cartItemId = Number(request.params.cartItemId);
 
