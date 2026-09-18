@@ -6,20 +6,21 @@ const router = express.Router();
 router.use(requireAuth);
 
 // GET /api/business-profile
+// A buyer may not have a buyers row yet - it isn't created at registration,
+// only the first time this page is saved. 404 in that case; the frontend
+// falls back to its placeholder sample data.
 router.get("/", async (req, res) => {
   try {
     const [[profile]] = await pool.query(
-      `SELECT bp.profile_id, bp.business_name, bp.category_id, c.name AS category_name,
-              bp.registration_number, bp.logo_url, bp.description,
-              bp.contact_person, bp.contact_phone, bp.is_verified
-       FROM business_profiles bp
-       LEFT JOIN categories c ON c.category_id = bp.category_id
-       WHERE bp.user_id = ?`,
+      `SELECT buyer_id AS buyerId, business_name AS businessName, category_id AS categoryId,
+              phone AS contactPhone, profile_image AS profileImage
+       FROM buyers
+       WHERE user_id = ?`,
       [req.user.userId]
     );
 
     if (!profile) {
-      return res.status(404).json({ error: "No business profile found for this account" });
+      return res.status(404).json({ error: "No buyer profile found for this account" });
     }
 
     res.json(profile);
@@ -30,34 +31,42 @@ router.get("/", async (req, res) => {
 });
 
 // PUT /api/business-profile
-// Creates the profile if one doesn't exist yet, otherwise updates it.
+// Creates the buyers row on first save (buyers.email is NOT NULL and isn't
+// collected by this form, so it's sourced from the account's own users.email),
+// otherwise updates the existing row.
 router.put("/", async (req, res) => {
   try {
-    const { businessName, categoryId, registrationNumber, contactPerson, contactPhone, description } = req.body;
+    const { businessName, categoryId, contactPhone } = req.body;
 
     if (!businessName || !businessName.trim()) {
       return res.status(400).json({ error: "Business name is required" });
     }
 
     const [[existing]] = await pool.query(
-      "SELECT profile_id FROM business_profiles WHERE user_id = ?",
+      "SELECT buyer_id FROM buyers WHERE user_id = ?",
       [req.user.userId]
     );
 
     if (existing) {
       await pool.query(
-        `UPDATE business_profiles
-         SET business_name = ?, category_id = ?, registration_number = ?,
-             contact_person = ?, contact_phone = ?, description = ?
+        `UPDATE buyers
+         SET business_name = ?, category_id = ?, phone = ?
          WHERE user_id = ?`,
-        [businessName, categoryId, registrationNumber, contactPerson, contactPhone, description, req.user.userId]
+        [businessName, categoryId || null, contactPhone || null, req.user.userId]
       );
     } else {
+      const [[account]] = await pool.query(
+        "SELECT email FROM users WHERE user_id = ?",
+        [req.user.userId]
+      );
+      if (!account) {
+        return res.status(404).json({ error: "Account not found" });
+      }
+
       await pool.query(
-        `INSERT INTO business_profiles
-         (user_id, business_name, category_id, registration_number, contact_person, contact_phone, description)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [req.user.userId, businessName, categoryId, registrationNumber, contactPerson, contactPhone, description]
+        `INSERT INTO buyers (user_id, business_name, email, category_id, phone)
+         VALUES (?, ?, ?, ?, ?)`,
+        [req.user.userId, businessName, account.email, categoryId || null, contactPhone || null]
       );
     }
 

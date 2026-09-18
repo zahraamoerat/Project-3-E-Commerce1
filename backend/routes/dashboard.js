@@ -5,8 +5,10 @@ const { requireAuth } = require("../middleware/auth");
 const router = express.Router();
 router.use(requireAuth);
 
-// Converts DB order_status ENUM values ("Out for delivery", "Dispatched", etc.)
+// Converts DB orders.status ENUM values ("Out for delivery", "Shipped", etc.)
 // into the lowercase_snake_case slugs the frontend's statusLabel()/CSS classes expect.
+// Current allowed values (per the rebuilt schema): Pending, Processing,
+// Shipped, Out for delivery, Delivered, Cancelled.
 function normalizeStatus(status) {
   if (!status) return status;
   return status.toLowerCase().replace(/ /g, "_");
@@ -32,7 +34,7 @@ router.get("/", async (req, res) => {
     // orders/payments/deliveries all key off buyer_id, not user_id directly.
     // NOTE: /api/auth/register only creates a `users` row, so a freshly
     // registered account has no `buyers` row and will 404 here until one
-    // is inserted (manually for now, or by register once that's updated).
+    // is created via the Business Profile page.
     const [[buyer]] = await pool.query(
       "SELECT buyer_id AS buyerId, business_name AS businessName FROM buyers WHERE user_id = ?",
       [userId]
@@ -46,7 +48,7 @@ router.get("/", async (req, res) => {
     // --- Stat cards ---
     const [[activeOrdersRow]] = await pool.query(
       `SELECT COUNT(*) AS count FROM orders
-       WHERE buyer_id = ? AND order_status NOT IN ('Delivered', 'Cancelled')`,
+       WHERE buyer_id = ? AND status NOT IN ('Delivered', 'Cancelled')`,
       [buyerId]
     );
 
@@ -58,9 +60,15 @@ router.get("/", async (req, res) => {
       [buyerId]
     );
 
-    // NOTE: deliveries.current_status is free text (not an ENUM), so the exact
-    // string used for "in transit" isn't confirmed yet — adjust if your team
-    // is storing something other than 'In Transit'.
+    // NOTE: deliveries.current_status is now a real ENUM defaulting to
+    // 'Preparing Dispatch' on the rebuilt schema — the full list of allowed
+    // values hasn't been confirmed yet, so 'In Transit' below is still an
+    // assumption carried over from before the rebuild. If it isn't a valid
+    // enum member, this simply matches 0 rows rather than erroring — worth
+    // confirming with:
+    //   SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+    //   WHERE TABLE_SCHEMA='weconnect' AND TABLE_NAME='deliveries'
+    //     AND COLUMN_NAME='current_status';
     const [[inTransitRow]] = await pool.query(
       `SELECT COUNT(*) AS count
        FROM deliveries d
@@ -72,8 +80,8 @@ router.get("/", async (req, res) => {
     const [[thisMonthRow]] = await pool.query(
       `SELECT COALESCE(SUM(total_amount), 0) AS total
        FROM orders
-       WHERE buyer_id = ? AND order_status != 'Cancelled'
-         AND order_date >= DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')`,
+       WHERE buyer_id = ? AND status != 'Cancelled'
+         AND ordered_at >= DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')`,
       [buyerId]
     );
 
@@ -81,9 +89,9 @@ router.get("/", async (req, res) => {
     const [[lastMonthRow]] = await pool.query(
       `SELECT COALESCE(SUM(total_amount), 0) AS total
        FROM orders
-       WHERE buyer_id = ? AND order_status != 'Cancelled'
-         AND order_date >= DATE_FORMAT(CURRENT_DATE() - INTERVAL 1 MONTH, '%Y-%m-01')
-         AND order_date <  DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')`,
+       WHERE buyer_id = ? AND status != 'Cancelled'
+         AND ordered_at >= DATE_FORMAT(CURRENT_DATE() - INTERVAL 1 MONTH, '%Y-%m-01')
+         AND ordered_at <  DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')`,
       [buyerId]
     );
 
@@ -102,7 +110,7 @@ router.get("/", async (req, res) => {
     const [recentOrdersRaw] = await pool.query(
       `SELECT o.order_id AS orderId, o.order_number AS orderNumber,
               s.business_name AS supplierName,
-              o.order_status AS status, d.estimated_arrival AS eta,
+              o.status AS status, d.estimated_arrival AS eta,
               GROUP_CONCAT(DISTINCT p.product_name SEPARATOR ', ') AS itemsSummary
        FROM orders o
        LEFT JOIN suppliers s ON s.supplier_id = o.supplier_id
@@ -111,8 +119,8 @@ router.get("/", async (req, res) => {
        LEFT JOIN deliveries d ON d.order_id = o.order_id
        WHERE o.buyer_id = ?
        GROUP BY o.order_id, o.order_number, s.business_name,
-                o.order_status, d.estimated_arrival, o.order_date
-       ORDER BY o.order_date DESC
+                o.status, d.estimated_arrival, o.ordered_at
+       ORDER BY o.ordered_at DESC
        LIMIT 5`,
       [buyerId]
     );
@@ -153,7 +161,7 @@ router.get("/", async (req, res) => {
       : null;
 
     // --- Suggested suppliers: featured suppliers the buyer hasn't ordered from yet ---
-    // suppliers has no description column yet, so city is used as a stand-in.
+    // suppliers has no description column, so city is used as a stand-in.
     const [suggestedSuppliers] = await pool.query(
       `SELECT s.supplier_id AS supplierId, s.business_name AS companyName, s.city AS description
        FROM suppliers s
@@ -168,8 +176,6 @@ router.get("/", async (req, res) => {
     );
 
     // --- Notifications ---
-    // notifications has no "type" column — the frontend renders `title`
-    // directly and uses a single neutral dot colour.
     const [notificationsRaw] = await pool.query(
       `SELECT notification_id AS notificationId, title, message,
               is_read AS isRead, created_at AS createdAt

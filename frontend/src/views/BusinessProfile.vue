@@ -13,22 +13,11 @@
         <div class="logo-circle">{{ initials(profile.businessName) }}</div>
         <h2>{{ profile.businessName || "Your business name" }}</h2>
         <p class="category-tag">{{ categoryName }}</p>
-        <span class="verified-badge" :class="{ verified: profile.isVerified }">
-          {{ profile.isVerified ? "✓ Verified business" : "Not yet verified" }}
-        </span>
 
         <dl class="summary-list">
           <div>
-            <dt>Contact person</dt>
-            <dd>{{ profile.contactPerson || "—" }}</dd>
-          </div>
-          <div>
             <dt>Contact phone</dt>
             <dd>{{ profile.contactPhone || "—" }}</dd>
-          </div>
-          <div>
-            <dt>Registration number</dt>
-            <dd>{{ profile.registrationNumber || "—" }}</dd>
           </div>
         </dl>
       </section>
@@ -53,12 +42,6 @@
             </option>
           </select>
 
-          <label>Registration number</label>
-          <input v-model="profile.registrationNumber" type="text" placeholder="e.g. 2021/123456/07" />
-
-          <label>Contact person</label>
-          <input v-model="profile.contactPerson" type="text" />
-
           <label>Contact phone</label>
           <input
             v-model="profile.contactPhone"
@@ -68,9 +51,6 @@
             @input="errors.contactPhone = ''"
           />
           <p v-if="errors.contactPhone" class="field-error">{{ errors.contactPhone }}</p>
-
-          <label>About your business</label>
-          <textarea v-model="profile.description" rows="4" placeholder="Tell suppliers a bit about what you do..."></textarea>
 
           <button class="btn-primary" type="submit" :disabled="saving">
             {{ saving ? "Saving..." : "Save changes" }}
@@ -86,16 +66,12 @@ import { ref, computed, onMounted } from "vue";
 import Swal from "sweetalert2";
 import api from "../services/api";
 
-// Populated from GET /api/business-profile once the backend route exists.
-// Sample data below so the page is viewable while you build.
+// Sample data below is a fallback in case the API call fails -
+// loadProfile() overwrites these with real data on mount.
 const profile = ref({
   businessName: "Ndlovu Farm Supplies",
   categoryId: 1,
-  registrationNumber: "2023/456789/07",
-  contactPerson: "Thabo Ndlovu",
   contactPhone: "071 234 5678",
-  description: "A small farming supply business sourcing seed, fertiliser, and equipment parts for local growers in the Free State.",
-  isVerified: false,
 });
 
 const categories = ref([
@@ -145,9 +121,13 @@ function validate() {
 }
 
 async function loadProfile() {
-  // Once the backend route exists, replace the ref() sample data above with:
-  // const { data } = await api.get("/business-profile");
-  // profile.value = data;
+  try {
+    const { data } = await api.get("/business-profile");
+    profile.value = data;
+  } catch (err) {
+    console.error("Failed to load business profile:", err);
+    // Falls back to the placeholder sample data above.
+  }
 }
 
 async function handleSave() {
@@ -163,9 +143,7 @@ async function handleSave() {
 
   saving.value = true;
   try {
-    // Once the backend route exists:
-    // await api.put("/business-profile", profile.value);
-    await new Promise((resolve) => setTimeout(resolve, 500)); // placeholder delay
+    await api.put("/business-profile", profile.value);
     Swal.fire({
       icon: "success",
       title: "Saved!",
@@ -233,17 +211,6 @@ onMounted(loadProfile);
   color: var(--color-text-muted);
   font-size: 13px;
   margin: 4px 0 12px;
-}
-.verified-badge {
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  background: #EEE;
-  color: var(--color-text-muted);
-}
-.verified-badge.verified {
-  background: #E3F2E7;
-  color: var(--color-success);
 }
 
 .summary-list {

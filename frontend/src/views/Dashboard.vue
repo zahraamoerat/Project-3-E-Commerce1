@@ -17,7 +17,7 @@
         <span class="stat-value">{{ stats.activeOrders }}</span>
         <span class="stat-trend positive">+2 this week</span>
       </div>
-      <div class="card stat-card highlight">
+      <div class="card stat-card">
         <span class="stat-label">Pending payment</span>
         <span class="stat-value">R{{ formatMoney(stats.pendingPayment) }}</span>
         <span class="stat-trend warning">{{ stats.pendingInvoices }} invoice due</span>

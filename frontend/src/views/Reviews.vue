@@ -38,10 +38,10 @@
 
         <button
           class="btn-primary btn-small"
-          :disabled="!draftRatings[order.orderId]?.rating"
+          :disabled="!draftRatings[order.orderId]?.rating || submitting[order.orderId]"
           @click="submitReview(order)"
         >
-          Submit
+          {{ submitting[order.orderId] ? "Submitting..." : "Submit" }}
         </button>
       </div>
     </section>
@@ -74,8 +74,8 @@ import { ref, reactive, onMounted } from "vue";
 import Swal from "sweetalert2";
 import api from "../services/api";
 
-// Populated from GET /api/reviews once the backend route exists.
-// Sample data below so the page is viewable while you build.
+// Sample data below is a fallback in case the API call fails -
+// loadReviews() overwrites these with real data on mount.
 const pendingReviews = ref([
   { orderId: "1038", supplierName: "CropGuard Distributors", deliveredDate: "3 days ago" },
   { orderId: "1030", supplierName: "Boland Packaging Supplies", deliveredDate: "1 week ago" },
@@ -89,9 +89,16 @@ const reviews = ref([
 // Tracks the in-progress star rating + comment for each pending order,
 // before it's submitted.
 const draftRatings = reactive({});
-pendingReviews.value.forEach((o) => {
-  draftRatings[o.orderId] = { rating: 0, comment: "" };
-});
+const submitting = reactive({});
+
+function initDrafts() {
+  pendingReviews.value.forEach((o) => {
+    if (!draftRatings[o.orderId]) {
+      draftRatings[o.orderId] = { rating: 0, comment: "" };
+    }
+  });
+}
+initDrafts();
 
 function setRating(orderId, star) {
   draftRatings[orderId].rating = star;
@@ -99,34 +106,58 @@ function setRating(orderId, star) {
 
 async function submitReview(order) {
   const draft = draftRatings[order.orderId];
+  if (!draft?.rating) return;
 
-  // Once the backend route exists:
-  // await api.post("/reviews", { orderId: order.orderId, rating: draft.rating, comment: draft.comment });
+  submitting[order.orderId] = true;
+  try {
+    const { data } = await api.post("/reviews", {
+      orderId: order.orderId,
+      rating: draft.rating,
+      comment: draft.comment,
+    });
 
-  reviews.value.unshift({
-    ratingId: reviews.value.length + 1,
-    supplierName: order.supplierName,
-    rating: draft.rating,
-    comment: draft.comment,
-    date: "Just now",
-  });
+    reviews.value.unshift({
+      ratingId: data.ratingId,
+      supplierName: order.supplierName,
+      rating: draft.rating,
+      comment: draft.comment,
+      date: "Just now",
+    });
 
-  pendingReviews.value = pendingReviews.value.filter((o) => o.orderId !== order.orderId);
+    pendingReviews.value = pendingReviews.value.filter((o) => o.orderId !== order.orderId);
+    delete draftRatings[order.orderId];
 
-  Swal.fire({
-    icon: "success",
-    title: "Thanks for your feedback!",
-    text: `Your review for ${order.supplierName} has been submitted.`,
-    confirmButtonColor: "#E0703D",
-    timer: 2000,
-    timerProgressBar: true,
-  });
+    Swal.fire({
+      icon: "success",
+      title: "Thanks for your feedback!",
+      text: `Your review for ${order.supplierName} has been submitted.`,
+      confirmButtonColor: "#E0703D",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  } catch (err) {
+    console.error("Failed to submit review:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Couldn't submit review",
+      text: "Something went wrong. Please try again.",
+      confirmButtonColor: "#E0703D",
+    });
+  } finally {
+    submitting[order.orderId] = false;
+  }
 }
 
 async function loadReviews() {
-  // Once the backend route exists, replace the ref() sample data above with:
-  // const { data } = await api.get("/reviews");
-  // pendingReviews.value = data.pending; reviews.value = data.history;
+  try {
+    const { data } = await api.get("/reviews");
+    pendingReviews.value = data.pending;
+    reviews.value = data.history;
+    initDrafts();
+  } catch (err) {
+    console.error("Failed to load reviews:", err);
+    // Falls back to the placeholder sample data above.
+  }
 }
 
 async function confirmDelete(review) {
@@ -141,17 +172,26 @@ async function confirmDelete(review) {
   });
 
   if (result.isConfirmed) {
-    // Once the backend route exists:
-    // await api.delete(`/reviews/${review.ratingId}`);
-    reviews.value = reviews.value.filter((r) => r.ratingId !== review.ratingId);
+    try {
+      await api.delete(`/reviews/${review.ratingId}`);
+      reviews.value = reviews.value.filter((r) => r.ratingId !== review.ratingId);
 
-    Swal.fire({
-      icon: "success",
-      title: "Review deleted",
-      confirmButtonColor: "#E0703D",
-      timer: 1500,
-      timerProgressBar: true,
-    });
+      Swal.fire({
+        icon: "success",
+        title: "Review deleted",
+        confirmButtonColor: "#E0703D",
+        timer: 1500,
+        timerProgressBar: true,
+      });
+    } catch (err) {
+      console.error("Failed to delete review:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Couldn't delete review",
+        text: "Something went wrong. Please try again.",
+        confirmButtonColor: "#E0703D",
+      });
+    }
   }
 }
 

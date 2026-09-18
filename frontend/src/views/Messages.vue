@@ -27,12 +27,11 @@
     </aside>
 
     <!-- Active thread -->
-    <section class="thread card">
+    <section class="thread card" v-if="activeConversation">
       <div class="thread-header">
         <div class="avatar">{{ initials(activeConversation.supplierName) }}</div>
         <div>
           <strong>{{ activeConversation.supplierName }}</strong>
-          <p class="thread-subtitle">Re: Order #{{ activeConversation.relatedOrderId }}</p>
         </div>
       </div>
 
@@ -53,6 +52,10 @@
         <button class="btn-primary" type="submit" :disabled="!newMessage.trim()">Send</button>
       </form>
     </section>
+
+    <section class="thread card empty-thread" v-else>
+      <p class="empty-state">Select a conversation to view messages.</p>
+    </section>
   </div>
 </template>
 
@@ -63,13 +66,12 @@ import api from "../services/api";
 const searchQuery = ref("");
 const newMessage = ref("");
 
-// Populated from GET /api/messages once the backend route exists.
-// Sample data below so the page is viewable while you build.
+// Sample data below is a fallback in case the API call fails -
+// loadConversations() overwrites this with real data on mount.
 const conversations = ref([
   {
     conversationId: 1,
     supplierName: "Highveld Seed Co.",
-    relatedOrderId: "1042",
     lastMessage: "Your maize seed order has been dispatched.",
     lastMessageTime: "10:24",
     unreadCount: 2,
@@ -82,7 +84,6 @@ const conversations = ref([
   {
     conversationId: 2,
     supplierName: "Karoo Fertiliser Traders",
-    relatedOrderId: "1035",
     lastMessage: "Invoice attached for your NPK order.",
     lastMessageTime: "Yesterday",
     unreadCount: 0,
@@ -94,7 +95,6 @@ const conversations = ref([
   {
     conversationId: 3,
     supplierName: "FarmTech Equipment Parts",
-    relatedOrderId: "1038",
     lastMessage: "Thanks for the order, let us know if the parts fit.",
     lastMessageTime: "Mon",
     unreadCount: 0,
@@ -107,7 +107,7 @@ const conversations = ref([
 const activeConversationId = ref(1);
 
 const activeConversation = computed(
-  () => conversations.value.find((c) => c.conversationId === activeConversationId.value) || conversations.value[0]
+  () => conversations.value.find((c) => c.conversationId === activeConversationId.value) || conversations.value[0] || null
 );
 
 const filteredConversations = computed(() => {
@@ -122,32 +122,52 @@ function initials(name) {
   return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
-function selectConversation(conversation) {
+async function selectConversation(conversation) {
   activeConversationId.value = conversation.conversationId;
-  // Once the backend route exists, also call something like:
-  // await api.put(`/messages/${conversation.conversationId}/read`);
+  if (conversation.unreadCount === 0) return;
   conversation.unreadCount = 0;
+  try {
+    await api.put(`/messages/${conversation.conversationId}/read`);
+  } catch (err) {
+    console.error("Failed to mark conversation as read:", err);
+  }
 }
 
-function sendMessage() {
-  if (!newMessage.value.trim()) return;
-  // Once the backend route exists, POST the message instead of pushing locally:
-  // await api.post("/messages", { conversationId: activeConversationId.value, text: newMessage.value });
-  activeConversation.value.messages.push({
-    messageId: activeConversation.value.messages.length + 1,
-    fromMe: true,
-    text: newMessage.value,
-    time: "Just now",
-  });
-  activeConversation.value.lastMessage = newMessage.value;
-  activeConversation.value.lastMessageTime = "Just now";
+async function sendMessage() {
+  const text = newMessage.value.trim();
+  if (!text || !activeConversation.value) return;
+
   newMessage.value = "";
+  try {
+    const { data } = await api.post("/messages", {
+      conversationId: activeConversation.value.conversationId,
+      text,
+    });
+    activeConversation.value.messages.push({
+      messageId: data.messageId,
+      fromMe: true,
+      text,
+      time: "Just now",
+    });
+    activeConversation.value.lastMessage = text;
+    activeConversation.value.lastMessageTime = "Just now";
+  } catch (err) {
+    console.error("Failed to send message:", err);
+    newMessage.value = text; // restore so the buyer doesn't lose what they typed
+  }
 }
 
 async function loadConversations() {
-  // Once the backend route exists, replace the ref() sample data above with:
-  // const { data } = await api.get("/messages");
-  // conversations.value = data;
+  try {
+    const { data } = await api.get("/messages");
+    conversations.value = data;
+    if (data.length && !data.find((c) => c.conversationId === activeConversationId.value)) {
+      activeConversationId.value = data[0].conversationId;
+    }
+  } catch (err) {
+    console.error("Failed to load messages:", err);
+    // Falls back to the placeholder sample data above.
+  }
 }
 
 onMounted(loadConversations);
@@ -289,4 +309,13 @@ onMounted(loadConversations);
   border-top: 1px solid var(--color-border);
 }
 .thread-input input { flex: 1; }
+
+.empty-thread {
+  align-items: center;
+  justify-content: center;
+}
+.empty-state {
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
 </style>
