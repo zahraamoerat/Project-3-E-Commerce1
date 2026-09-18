@@ -4,6 +4,7 @@ import LandingPage from "../views/LandingPage.vue";
 import LoginPage from "../views/LoginPage.vue";
 import SignUpPage from "../views/SignUpPage.vue";
 import CartView from "../views/CartView.vue";
+import MarketplaceView from "../views/MarketplaceView.vue";
 
 const routes = [
   {
@@ -26,6 +27,11 @@ const routes = [
   //   name: "Products",
   //   component: ProductsView,
   // },
+  {
+    path: "/marketplace",
+    name: "Marketplace",
+    component: MarketplaceView,
+  },
   {
     path: "/cart",
     name: "Cart",
