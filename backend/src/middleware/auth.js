@@ -16,6 +16,8 @@ const createToken = (user, expiresInHours = 8) => {
     id: user.user_id || user.id,
     email: user.email,
     role: user.user_role || user.role,
+    buyerId: user.buyerId || null,
+    supplierId: user.supplierId || null,
     exp: Math.floor(Date.now() / 1000) + expiresInHours * 3600,
   };
 
