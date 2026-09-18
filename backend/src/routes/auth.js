@@ -108,7 +108,7 @@ router.post("/login", async (req, res) => {
     }
 
     const token = createToken({ ...user, buyerId: user.buyer_id, supplierId: user.supplier_id });
-    res.json({ token, role: user.user_role, userId: user.user_id });
+    res.json({ token, role: user.user_role, userId: user.user_id, buyerId: user.buyer_id || null, supplierId: user.supplier_id || null });
   } catch (error) {
     res.status(500).json({ message: "Login failed.", error: error.message });
   }
