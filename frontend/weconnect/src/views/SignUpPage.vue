@@ -98,6 +98,7 @@
         </div>
 
         <!-- Registration Form -->
+        <p v-if="error" class="error-message">{{ error }}</p>
         <form @submit.prevent="handleSignUp" class="form-space">
           <div class="grid-2-col">
             <div>
@@ -212,9 +213,9 @@
           <!-- Submit Button -->
           <button type="submit" class="primary-button">
             {{
-              selectedRole === "supplier"
-                ? "Submit Supplier Application"
-                : "Create Buyer Account"
+              isLoading
+                ? "Submitting..."
+                : (selectedRole === "supplier" ? "Submit Supplier Application" : "Create Buyer Account")
             }}
           </button>
         </form>
@@ -238,6 +239,293 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 const selectedRole = ref("buyer");
 const submittedSupplier = ref(false);
+
+const error = ref("");
+const isLoading = ref(false);
+
+const form = reactive({
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+  companyName: "",
+  subscriptionPlan: "Starter Supplier",
+});
+
+const handleSignUp = async () => {
+  error.value = "";
+  isLoading.value = true;
+
+  try {
+    const { api } = await import("@/services/api");
+
+    if (selectedRole.value === "supplier") {
+      await api.registerSupplier({
+        email: form.email,
+        password: form.password,
+        first_name: form.firstName,
+        last_name: form.lastName,
+        business_name: form.companyName,
+      });
+      submittedSupplier.value = true;
+    } else {
+      await api.registerBuyer({
+        email: form.email,
+        password: form.password,
+        business_name: form.companyName,
+        contact_person: (form.firstName + " " + form.lastName).trim(),
+      });
+      router.push("/login");
+    }
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    isLoading.value = false;
+  }
+};emplate>
+  <div class="page-wrapper">
+    <!-- Navigation Header -->
+    <header class="header-container">
+      <div class="brand-group" @click="$router.push('/')">
+        <img
+          src="../assets/website-logo.png"
+          alt="WeConnect Logo"
+          class="logo-icon"
+        />
+        <span class="brand-title">WeConnect</span>
+      </div>
+      <span class="sub-header-text">B2B Trade Corridor</span>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+      <!-- SUPPLIER PENDING STATE (Shows after supplier submits application) -->
+      <div v-if="submittedSupplier" class="card-box text-center">
+        <div class="status-icon">⏳</div>
+        <h2 class="card-title">Supplier Application Submitted!</h2>
+        <p class="status-description">
+          Thank you for registering <strong>{{ form.companyName }}</strong
+          >. Your supplier application and
+          <strong>{{ form.subscriptionPlan }}</strong> subscription request have
+          been sent to our team for verification.
+        </p>
+
+        <div class="info-banner">
+          <p class="font-bold">What happens next?</p>
+          <ul class="info-list">
+            <li>
+              Our admin team will review your business and registration
+              credentials.
+            </li>
+            <li>
+              You will receive an email once your account and seller access are
+              approved.
+            </li>
+            <li>
+              Upon approval, you will be directed to activate your subscription
+              and access your Supplier Dashboard.
+            </li>
+          </ul>
+        </div>
+
+        <button
+          @click="$router.push('/login')"
+          class="primary-button max-w-xs mx-auto"
+        >
+          Return to Login
+        </button>
+      </div>
+
+      <!-- SIGN UP FORM -->
+      <div v-else class="card-box">
+        <!-- Title Header -->
+        <div class="header-block">
+          <div class="tag-row">
+            <span class="tag-line"></span>
+            <span class="tag-text">GET STARTED</span>
+          </div>
+          <h1 class="main-heading">Create your WeConnect account</h1>
+          <p class="sub-heading">
+            Select your account type to configure your workspace.
+          </p>
+        </div>
+
+        <!-- Role Switcher -->
+        <div class="role-switcher">
+          <button
+            type="button"
+            @click="selectedRole = 'buyer'"
+            :class="[
+              'role-btn',
+              selectedRole === 'buyer'
+                ? 'role-btn-active'
+                : 'role-btn-inactive',
+            ]"
+          >
+            <span>🧺</span>
+            <span>Small Business (Buyer)</span>
+          </button>
+
+          <button
+            type="button"
+            @click="selectedRole = 'supplier'"
+            :class="[
+              'role-btn',
+              selectedRole === 'supplier'
+                ? 'role-btn-active'
+                : 'role-btn-inactive',
+            ]"
+          >
+            <span>📦</span>
+            <span>Supplier / Wholesaler</span>
+          </button>
+        </div>
+
+        <!-- Registration Form -->
+        <p v-if="error" class="error-message">{{ error }}</p>
+        <form @submit.prevent="handleSignUp" class="form-space">
+          <div class="grid-2-col">
+            <div>
+              <label class="form-label">FIRST NAME</label>
+              <input
+                v-model="form.firstName"
+                type="text"
+                required
+                placeholder="Thandeka"
+                class="form-input"
+              />
+            </div>
+            <div>
+              <label class="form-label">LAST NAME</label>
+              <input
+                v-model="form.lastName"
+                type="text"
+                required
+                placeholder="Mthembu"
+                class="form-input"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">WORK EMAIL</label>
+            <input
+              v-model="form.email"
+              type="email"
+              required
+              placeholder="thandeka@kayakitchen.co.za"
+              class="form-input"
+            />
+          </div>
+
+          <div>
+            <label class="form-label">PASSWORD</label>
+            <input
+              v-model="form.password"
+              type="password"
+              required
+              placeholder="••••••••••••"
+              class="form-input"
+            />
+          </div>
+
+          <div>
+            <label class="form-label">
+              {{
+                selectedRole === "buyer"
+                  ? "BUSINESS NAME"
+                  : "SUPPLIER COMPANY NAME"
+              }}
+            </label>
+            <input
+              v-model="form.companyName"
+              type="text"
+              required
+              :placeholder="
+                selectedRole === 'buyer'
+                  ? 'Kaya Kitchen'
+                  : 'Cape Fresh Packaging Co.'
+              "
+              class="form-input"
+            />
+          </div>
+
+          <!-- SUPPLIER ONLY: Plan Selection & Admin Application Notice -->
+          <div v-if="selectedRole === 'supplier'" class="supplier-section">
+            <label class="form-label highlight-label"
+              >SELECT TARGET SUBSCRIPTION PLAN</label
+            >
+            <div class="grid-2-col">
+              <div
+                @click="form.subscriptionPlan = 'Starter Supplier'"
+                :class="[
+                  'plan-card',
+                  form.subscriptionPlan === 'Starter Supplier'
+                    ? 'plan-card-active'
+                    : 'plan-card-inactive',
+                ]"
+              >
+                <div class="plan-header">
+                  <span class="plan-title">Starter Supplier</span>
+                  <span class="plan-price">R499/mo</span>
+                </div>
+                <p class="plan-desc">
+                  Up to 50 active product listings & basic GPS dispatch.
+                </p>
+              </div>
+
+              <div
+                @click="form.subscriptionPlan = 'Pro Fleet'"
+                :class="[
+                  'plan-card',
+                  form.subscriptionPlan === 'Pro Fleet'
+                    ? 'plan-card-active'
+                    : 'plan-card-inactive',
+                ]"
+              >
+                <div class="plan-header">
+                  <span class="plan-title">Pro Fleet</span>
+                  <span class="plan-price">R1,299/mo</span>
+                </div>
+                <p class="plan-desc">
+                  Unlimited products, priority route dispatch & analytics.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="primary-button">
+            {{
+              isLoading
+                ? "Submitting..."
+                : (selectedRole === "supplier" ? "Submit Supplier Application" : "Create Buyer Account")
+            }}
+          </button>
+        </form>
+      </div>
+
+      <!-- Footer Link -->
+      <div class="footer-link-box">
+        <router-link to="/login" class="footer-link">
+          Already have an account?
+          <span class="link-highlight">Log in here</span>
+        </router-link>
+      </div>
+    </main>
+  </div>
+</template>
+
+<script setup>
+import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+const selectedRole = ref("buyer");
+const submittedSupplier = ref(false);
+
+const error = ref("");
+const isLoading = ref(false);
 
 const form = reactive({
   firstName: "",
@@ -595,7 +883,7 @@ const handleSignUp = async () => {
   gap: 0.25rem;
 }
 
-/* Footer Navigation Links */
+.error-message { color: #b42318; background: #fef3f2; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.8rem; margin-bottom: 1rem; text-align: center; }\n\n/* Footer Navigation Links */
 .footer-link-box {
   text-align: center;
   margin-top: 1.5rem;
