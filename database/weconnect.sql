@@ -206,6 +206,8 @@ CREATE TABLE cart_items (
         REFERENCES buyers(buyer_id)
         ON DELETE CASCADE,
 
+    CONSTRAINT uq_cart_buyer_product UNIQUE (buyer_id, product_id),
+
     CONSTRAINT fk_cart_product
         FOREIGN KEY (product_id)
         REFERENCES products(product_id)
