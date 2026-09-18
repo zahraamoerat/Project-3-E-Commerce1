@@ -10,8 +10,8 @@ export async function getOrderItems(orderId) {
       oi.quantity,
       oi.unit_price,
       oi.subtotal,
-      p.name AS product_name,
-      p.image AS product_image
+      p.product_name AS product_name,
+      p.product_image AS product_image
     FROM order_items oi
     INNER JOIN products p
       ON oi.product_id = p.product_id

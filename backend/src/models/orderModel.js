@@ -6,9 +6,9 @@ export async function getAllOrders() {
     SELECT
       o.order_id,
       o.order_number,
-      o.order_status,
+      o.status AS order_status,
       o.total_amount,
-      o.order_date,
+      o.ordered_at AS order_date,
       o.updated_at,
 
       b.business_name AS buyer_name,
@@ -32,7 +32,7 @@ export async function getAllOrders() {
     LEFT JOIN deliveries d
       ON d.order_id = o.order_id
 
-    ORDER BY o.order_date DESC
+    ORDER BY o.ordered_at DESC
   `);
 
   return rows;
@@ -44,9 +44,9 @@ export async function getOrderById(orderId) {
     SELECT
       o.order_id,
       o.order_number,
-      o.order_status,
+      o.status AS order_status,
       o.total_amount,
-      o.order_date,
+      o.ordered_at AS order_date,
       o.updated_at,
 
       b.business_name AS buyer_name,

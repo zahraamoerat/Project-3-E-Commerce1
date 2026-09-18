@@ -16,7 +16,7 @@ export async function getAllDeliveries() {
       d.updated_at,
 
       o.order_number,
-      o.order_status,
+      o.status AS order_status,
       o.total_amount,
 
       b.business_name AS buyer_name,

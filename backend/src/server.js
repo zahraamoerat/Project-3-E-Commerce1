@@ -1,15 +1,21 @@
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import pool from './database/connection.js';
 import orderRoutes from './routes/orderRoutes.js';
 import deliveryRoutes from './routes/deliveryRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import orderItemRoutes from './routes/orderItemRoutes.js';
+import productRoutes from './routes/productRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Allow the Vue frontend to communicate with the backend.
+app.use(cors());
 
 // Allows the API to receive JSON data from the frontend.
 app.use(express.json());
@@ -26,6 +32,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/orders', orderItemRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/cart', cartRoutes);
 // Test the MySQL connection.
 app.get('/api/test-db', async (req, res) => {
   try {
