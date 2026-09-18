@@ -5,6 +5,7 @@ const cors = require("cors");
 const authRoutes = require("./src/routes/auth");
 const cartRoutes = require("./src/routes/cart.routes");
 const healthRoutes = require("./src/routes/health.routes");
+const productRoutes = require("./src/routes/products.routes");
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.get("/", (req, res) => {
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/products", productRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found on Marketplace API." });
