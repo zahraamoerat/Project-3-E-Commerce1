@@ -29,6 +29,11 @@ export const useProductStore = defineStore("product", {
         this.isLoading = false;
       }
     },
+    async addToCart(productId, quantity = 1) {
+      const buyerId = localStorage.getItem("weconnect_buyer_id");
+      if (!buyerId) throw new Error("Please log in as a buyer before adding items to your cart.");
+      return api.addToCart(buyerId, productId, quantity);
+    },
     addProduct(newProduct) {
       this.products.push({
         id: Date.now(),
