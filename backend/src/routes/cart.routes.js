@@ -5,9 +5,8 @@ const { requireAuth } = require("../middleware/auth");
 const router = express.Router();
 
 const getBuyerId = (request) => {
-  const authenticatedId = Number(request.user?.buyerId);
-  if (Number.isInteger(authenticatedId) && authenticatedId > 0) return authenticatedId;
-  const buyerId = Number(request.body.buyerId ?? request.query.buyerId);
+  if (request.user?.role !== "buyer") return null;
+  const buyerId = Number(request.user.buyerId);
   return Number.isInteger(buyerId) && buyerId > 0 ? buyerId : null;
 };
 
@@ -133,18 +132,17 @@ router.patch("/:cartItemId", requireAuth, async (request, response, next) => {
 });
 
 router.delete("/:cartItemId", requireAuth, async (request, response, next) => {
-  const buyerId = Number(request.query.buyerId);
+  const buyerId = getBuyerId(request);
   const cartItemId = Number(request.params.cartItemId);
 
   if (
-    !Number.isInteger(buyerId) ||
-    buyerId < 1 ||
+    !buyerId ||
     !Number.isInteger(cartItemId) ||
     cartItemId < 1
   ) {
     return response
       .status(400)
-      .json({ message: "Valid buyerId and cartItemId are required." });
+      .json({ message: "A buyer login and valid cartItemId are required." });
   }
 
   try {
