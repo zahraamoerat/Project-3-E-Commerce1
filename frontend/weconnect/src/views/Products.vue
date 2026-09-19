@@ -47,9 +47,17 @@
           </div>
         </div>
 
-        <div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div><div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div><div v-if="error" class="supplier_products_message supplier_products_error">{{ error }}</div><div v-if="loading" class="supplier_products_message">Loading products…</div><div v-if="loading" class="supplier_products_message">Loading products…</div>
+       <div v-if="dataError" class="supplier_products_message supplier_products_error">
+  {{ dataError }}
+</div>
 
-        <div v-if="viewMode === 'list'" class="supplier_products_table-container">
+<div v-if="error" class="supplier_products_message supplier_products_error">
+  {{ error }}
+</div>
+
+<div v-if="loading" class="supplier_products_message">
+  Loading products…
+</div>
           <table>
             <thead>
               <tr>
@@ -155,12 +163,11 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const { products, removeProduct, loading, error: dataError } = useSupplierData();
+
 const searchQuery = ref("");
 const sortBy = ref("name");
 const sortDirection = ref("asc");
 const selectedStatus = ref("All");
-const sortBy = ref("name");
-const sortDirection = ref("asc");
 const viewMode = ref("list");
 const deletingProductId = ref(null);
 const error = ref("");
