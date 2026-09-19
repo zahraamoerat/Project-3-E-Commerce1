@@ -102,6 +102,13 @@ async function updateProduct(id, changes) {
   return result;
 }
 
+async function duplicateProduct(id) {
+  const result = await request(`/products/${id}/duplicate`, { method: "POST" });
+  const created = await request(`/products/${result.product_id}`);
+  products.value.unshift(created);
+  return created;
+}
+
 async function updateProductStock(id, quantity) {
   await request(`/products/${id}/stock`, { method: "PATCH", body: JSON.stringify({ quantity }) });
   const updated = await request(`/products/${id}`);
@@ -161,7 +168,7 @@ async function uploadProductImages(imageSources) {
 }
 
 export function useSupplierData() {
-  return { products, orders, deliveries, reviews, profile, categories, categoriesLoading, categoriesError, loading, error, imagePlaceholders, refreshStatus, loadCategories, loadSupplierData, uploadProductImages, addProduct, updateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
+  return { products, orders, deliveries, reviews, profile, categories, categoriesLoading, categoriesError, loading, error, imagePlaceholders, refreshStatus, loadCategories, loadSupplierData, uploadProductImages, addProduct, updateProduct, duplicateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
 }
 
 export const supplierStats = {
