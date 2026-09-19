@@ -97,7 +97,7 @@
                   <strong>{{ product.product_name }}</strong>
                 </td>
                 <td class="supplier_products_sku">{{ product.sku || "—" }}</td>
-                <td>{{ product.category_name }}</td><td><span :class="[`catalog-badge`, product.catalog_status === "Archived" ? "catalog-badge--archived" : "catalog-badge--active"]">{{ product.catalog_status || "Active" }}</span></td>
+                <td>{{ product.category_name }}</td><td><span :class="['catalog-badge', product.catalog_status === 'Archived' ? 'catalog-badge--archived' : 'catalog-badge--active']">{{ product.catalog_status || "Active" }}</span></td>
                 <td>{{ formatPrice(product.price) }}</td>
                 <td>{{ Number(product.quantity).toLocaleString() }} units</td>
                 <td>
