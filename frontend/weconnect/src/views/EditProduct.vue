@@ -8,7 +8,7 @@
       </div>
       <RouterLink to="/products" class="supplier_edit_product_ghost-button">Back to products</RouterLink>
     </header>
-    <div v-if="error" class="supplier_edit_product_empty supplier_edit_product_error"><p>{{ error }}</p></div><div v-if="error" class="supplier_edit_product_empty supplier_edit_product_error"><p>{{ error }}</p></div><div v-if="!product" class="supplier_edit_product_empty">
+    <div v-if="error" class="supplier_edit_product_empty supplier_edit_product_error"><p>{{ error }}</p></div><div v-if="!product" class="supplier_edit_product_empty">
       <h2>Product not found</h2>
       <RouterLink to="/products" class="supplier_edit_product_primary-button">Return to products</RouterLink>
     </div>
