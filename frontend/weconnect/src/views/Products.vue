@@ -71,7 +71,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="product in filteredProducts" :key="product.product_id">
+              <tr v-for="product in paginatedProducts" :key="product.product_id">
                 <td class="supplier_products_product-cell">
                   <span class="supplier_products_product-icon">
                     <FontAwesomeIcon :icon="faCube" />
@@ -139,12 +139,11 @@
         </div>
 
         <footer class="supplier_products_card-footer">
-          <span>Showing {{ filteredProducts.length ? `1-${filteredProducts.length}` : "0" }} of {{
-            filteredProducts.length }}</span>
+          <span>Showing {{ pageStart }}-{{ pageEnd }} of {{ filteredProducts.length }}</span>
           <div class="supplier_products_pagination">
-            <button type="button" class="supplier_products_pagination-button" disabled aria-label="Previous page">‹</button>
-            <button type="button" class="supplier_products_pagination-button supplier_products_pagination-button--current">1</button>
-            <button type="button" class="supplier_products_pagination-button" disabled aria-label="Next page">›</button>
+            <button type="button" class="supplier_products_pagination-button" :disabled="currentPage === 1" aria-label="Previous page" @click="goToPage(currentPage - 1)">‹</button>
+            <button v-for="page in totalPages" :key="page" type="button" class="supplier_products_pagination-button" :class="{ 'supplier_products_pagination-button--current': currentPage === page }" :aria-current="currentPage === page ? 'page' : undefined" @click="goToPage(page)">{{ page }}</button>
+            <button type="button" class="supplier_products_pagination-button" :disabled="currentPage === totalPages" aria-label="Next page" @click="goToPage(currentPage + 1)">›</button>
           </div>
         </footer>
       </section>
@@ -153,7 +152,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
@@ -166,6 +165,8 @@ import {
 const { products, removeProduct, loading, error: dataError } = useSupplierData();
 
 const searchQuery = ref("");
+const currentPage = ref(1);
+const pageSize = 10;
 const sortBy = ref("name");
 const sortDirection = ref("asc");
 const selectedStatus = ref("All");
@@ -201,6 +202,19 @@ const filteredProducts = computed(() => {
     return sortDirection.value === "asc" ? result : -result;
   });
 });
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredProducts.value.length / pageSize)));
+const paginatedProducts = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return filteredProducts.value.slice(start, start + pageSize);
+});
+const pageStart = computed(() => filteredProducts.value.length ? (currentPage.value - 1) * pageSize + 1 : 0);
+const pageEnd = computed(() => Math.min(currentPage.value * pageSize, filteredProducts.value.length));
+
+function goToPage(page) {
+  currentPage.value = Math.min(Math.max(1, page), totalPages.value);
+}
+watch([searchQuery, selectedStatus, sortBy, sortDirection], () => { currentPage.value = 1; });
 
 function toggleSort(field) {
   if (sortBy.value === field) sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
