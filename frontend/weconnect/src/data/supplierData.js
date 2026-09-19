@@ -72,7 +72,6 @@ export async function loadSupplierData(force = false) {
       if (data.profile) Object.assign(profile.value, data.profile);
     } catch (overviewError) {
       console.error("Supplier overview could not be loaded:", overviewError);
-      error.value = overviewError.message;
     }
 
     loaded = true;
