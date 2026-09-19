@@ -5,6 +5,8 @@ import { testDatabaseConnection } from "./config/db.js";
 
 import productRoutes from "./routes/productRoutes.js";
 import supplierRoutes from "./routes/supplierRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
+import path from "path";
 
 dotenv.config();
 
@@ -46,6 +48,7 @@ app.use((req, res, next) => {
 ========================= */
 
 app.use(express.json());
+app.use("/uploads", express.static(path.resolve("uploads")));
 
 /* =========================
    HEALTH CHECK
@@ -74,6 +77,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/products", productRoutes);
 app.use("/api/supplier", supplierRoutes);
+app.use("/api/uploads", uploadRoutes);
 
 /* =========================
    ERROR HANDLER
