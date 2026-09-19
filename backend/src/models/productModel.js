@@ -28,14 +28,26 @@ function shapeProduct(product, media = []) {
 
 export async function getProducts() {
   const [rows] = await db.execute(`${productSelect} WHERE p.is_active = TRUE ORDER BY p.product_id DESC`);
-  const [media] = await db.execute("SELECT product_id, media_url FROM product_media WHERE media_type = 'image' ORDER BY sort_order, media_id");
+  let media = [];
+  try {
+    const [mediaRows] = await db.execute("SELECT product_id, media_url FROM product_media WHERE media_type = 'image' ORDER BY sort_order, media_id");
+    media = mediaRows;
+  } catch (error) {
+    if (!["ER_NO_SUCH_TABLE", "ER_BAD_FIELD_ERROR"].includes(error.code)) throw error;
+  }
   return rows.map((row) => shapeProduct(row, media.filter((item) => item.product_id === row.product_id)));
 }
 
 export async function getProductById(productId) {
   const [rows] = await db.execute(`${productSelect} WHERE p.product_id = ? LIMIT 1`, [productId]);
   if (!rows[0]) return null;
-  const [media] = await db.execute("SELECT media_url FROM product_media WHERE product_id = ? AND media_type = 'image' ORDER BY sort_order, media_id", [productId]);
+  let media = [];
+  try {
+    const [mediaRows] = await db.execute("SELECT media_url FROM product_media WHERE product_id = ? AND media_type = 'image' ORDER BY sort_order, media_id", [productId]);
+    media = mediaRows;
+  } catch (error) {
+    if (!["ER_NO_SUCH_TABLE", "ER_BAD_FIELD_ERROR"].includes(error.code)) throw error;
+  }
   return shapeProduct(rows[0], media);
 }
 
