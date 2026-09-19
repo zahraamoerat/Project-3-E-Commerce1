@@ -1,20 +1,15 @@
 <template>
-  <div class="orders-page">
-    <h1>Orders</h1>
-    <p>Orders page is working.</p>
-  </div>
+  <div class="supplier_deliveries_page"><header><h1>Deliveries</h1><p>Track shipments and update delivery status.</p></header>
+  <div v-if="error" class="message error">{{ error }}</div><div v-if="loading" class="state">Loading deliveries…</div>
+  <section v-else class="card"><div class="controls"><input v-model.trim="search" type="search" placeholder="Search order, destination or carrier…" aria-label="Search deliveries"><select v-model="statusFilter"><option value="All">All statuses</option><option v-for="s in statuses" :key="s">{{ s }}</option></select></div>
+  <div v-if="filtered.length===0" class="state">No deliveries match your filters.</div><div v-else class="table-wrap"><table><thead><tr><th>Delivery</th><th>Order</th><th>Destination</th><th>Carrier</th><th>ETA</th><th>Status</th></tr></thead><tbody>
+  <tr v-for="delivery in filtered" :key="delivery.id"><td><strong>{{ delivery.id }}</strong></td><td>{{ delivery.order }}</td><td>{{ delivery.destination }}</td><td>{{ delivery.carrier || "—" }}</td><td>{{ delivery.eta || "—" }}</td><td><select :value="delivery.status" :disabled="updatingId===delivery.id" @change="changeStatus(delivery,$event.target.value)"><option v-for="s in statuses" :key="s">{{ s }}</option></select></td></tr>
+  </tbody></table></div></section></div>
 </template>
-
 <script setup>
-// Orders page logic can be added here.
+import { computed,ref } from "vue";import {useSupplierData} from "@/data/supplierData";
+const {deliveries,loading,updateDeliveryStatus}=useSupplierData();const search=ref("");const statusFilter=ref("All");const updatingId=ref(null);const error=ref("");const statuses=["Ready for pickup","In transit","Delivered"];
+const filtered=computed(()=>deliveries.value.filter(d=>{const q=search.value.toLowerCase();return(!q||[d.id,d.order,d.destination,d.carrier].filter(Boolean).join(" ").toLowerCase().includes(q))&&(statusFilter.value==="All"||d.status===statusFilter.value)}));
+async function changeStatus(delivery,status){updatingId.value=delivery.id;error.value="";try{await updateDeliveryStatus(delivery.id,status)}catch(e){error.value=e.message||"Unable to update delivery status."}finally{updatingId.value=null}}
 </script>
-
-<style scoped>
-.orders-page {
-  padding: 24px;
-}
-
-h1 {
-  margin-bottom: 10px;
-}
-</style>
+<style scoped>.supplier_deliveries_page{min-height:100vh;padding:30px;max-width:1280px;margin:auto;background:#f7f5f2;color:#4d3933}.supplier_deliveries_page header{margin-bottom:20px}.supplier_deliveries_page h1{margin:0;font:700 30px Georgia,serif}.supplier_deliveries_page p{color:#85736d}.card{background:#fff;border:1px solid #e5dfda;border-radius:13px;overflow:hidden}.controls{display:flex;gap:10px;padding:16px;border-bottom:1px solid #eeeae7}.controls input,.controls select,td select{padding:9px 11px;border:1px solid #e4ddd8;border-radius:7px;background:#fff;color:#4d3933}.controls input{flex:1}.table-wrap{overflow:auto}table{width:100%;min-width:850px;border-collapse:collapse}th,td{padding:13px 16px;border-bottom:1px solid #f0ece9;text-align:left;font-size:13px}th{font-size:11px;color:#9b8a82}.state{padding:35px;text-align:center;color:#8e7d75}.message{margin-bottom:14px;padding:11px;border-radius:7px}.error{background:#fae5e1;color:#a8473d}@media(max-width:600px){.supplier_deliveries_page{padding:18px 14px}.controls{flex-direction:column}}</style>
