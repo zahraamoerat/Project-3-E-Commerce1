@@ -12,7 +12,7 @@
         <span class="supplier_add_products_required-note"><b>*</b> Required fields</span>
       </div>
     </header>
-    <div v-if="message" class="supplier_add_products_notice">{{ message }}</div><div v-if="error" class="supplier_add_products_notice supplier_add_products_error">{{ error }}</div><div v-if="error" class="supplier_add_products_notice supplier_add_products_error">{{ error }}</div>
+    <div v-if="message" class="supplier_add_products_notice">{{ message }}</div><div v-if="error" class="supplier_add_products_notice supplier_add_products_error">{{ error }}</div>
     <form class="supplier_add_products_form-layout" @submit.prevent="publish">
       <div class="supplier_add_products_form-column">
         <section class="supplier_add_products_form-section">
