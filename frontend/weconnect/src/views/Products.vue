@@ -4,7 +4,8 @@
       <header class="supplier_products_page-header">
         <div>
           <h1>Products</h1>
-          <p>Manage your product catalog and pricing.</p>
+          <p>Manage your product catalog, pricing and inventory.</p>
+          <button type="button" class="supplier_products_export-button" @click="exportCsv">Export CSV</button>
         </div>
         <RouterLink to="/products/add" class="supplier_products_add-product-button">
           <FontAwesomeIcon :icon="faPlus" />
@@ -25,6 +26,7 @@
             <input v-model="searchQuery" type="text" placeholder="Search products..." />
           </label>
 
+          <button type="button" class="supplier_products_advanced-button" @click="advancedFiltersOpen = !advancedFiltersOpen">Advanced filters</button>
           <div class="supplier_products_status-filters" aria-label="Filter products by stock">
             <button v-for="filter in statusFilters" :key="filter.value" type="button" class="supplier_products_filter-button"
               :class="{ 'filter-button--active': selectedStatus === filter.value }"
@@ -49,7 +51,15 @@
           </div>
         </div>
 
-       <div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div>
+       <div v-if="advancedFiltersOpen" class="supplier_products_advanced-panel">
+  <label>Category<select v-model="categoryFilter"><option v-for="category in categoryOptions" :key="category" :value="category">{{ category }}</option></select></label>
+  <label>Min price<input v-model="minPrice" type="number" min="0" step="0.01" placeholder="0" /></label>
+  <label>Max price<input v-model="maxPrice" type="number" min="0" step="0.01" placeholder="No limit" /></label>
+  <label>Min stock<input v-model="minStock" type="number" min="0" step="1" placeholder="0" /></label>
+  <label>Max stock<input v-model="maxStock" type="number" min="0" step="1" placeholder="No limit" /></label>
+  <button type="button" class="supplier_products_clear-filters" @click="clearAdvancedFilters">Reset advanced</button>
+</div>
+<div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div>
 <div v-if="selectedProductIds.length" class="supplier_products_bulk-bar">
   <strong>{{ selectedProductIds.length }} selected</strong>
   <button type="button" @click="bulkStock">Adjust stock</button>
@@ -104,6 +114,7 @@
                     aria-label="Edit product">
                     <FontAwesomeIcon :icon="faPen" />
                   </RouterLink>
+                  <button class="supplier_products_icon-button" type="button" aria-label="Duplicate product" @click="duplicate(product)" :disabled="duplicatingProductId === product.product_id"><FontAwesomeIcon :icon="faCopy" /></button>
                   <button class="supplier_products_icon-button" type="button" aria-label="Delete product"
                     :disabled="deletingProductId === product.product_id" @click="deleteProduct(product)">
                     <FontAwesomeIcon :icon="faTrashCan" />
@@ -136,6 +147,7 @@
               <div class="supplier_products_tile-actions">
                 <RouterLink :to="`/products/view/${product.product_id}`" class="supplier_products_tile-view">View product</RouterLink>
                 <RouterLink :to="`/products/edit/${product.product_id}`" class="supplier_products_tile-edit">Edit product</RouterLink>
+                <button class="supplier_products_icon-button" type="button" aria-label="Duplicate product" @click="duplicate(product)" :disabled="duplicatingProductId === product.product_id"><FontAwesomeIcon :icon="faCopy" /></button>
                 <button class="supplier_products_icon-button" type="button" aria-label="Delete product"
                   :disabled="deletingProductId === product.product_id" @click="deleteProduct(product)">
                   <FontAwesomeIcon :icon="faTrashCan" />
@@ -167,10 +179,10 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { useSupplierData } from "@/data/supplierData";
 import {
   faCube, faList, faMagnifyingGlass, faPen, faPlus,
-  faTableCells, faTrashCan, faEye
+  faTableCells, faTrashCan, faEye, faCopy
 } from "@fortawesome/free-solid-svg-icons";
 
-const { products, removeProduct, updateProductStock, loading, error: dataError } = useSupplierData();
+const { products, removeProduct, duplicateProduct, updateProductStock, loading, error: dataError } = useSupplierData();
 
 const searchQuery = ref("");
 const currentPage = ref(1);
@@ -181,7 +193,15 @@ const sortDirection = ref("asc");
 const selectedStatus = ref("All");
 const viewMode = ref("list");
 const deletingProductId = ref(null);
+const duplicatingProductId = ref(null);
+const categoryFilter = ref("All");
+const minPrice = ref("");
+const maxPrice = ref("");
+const minStock = ref("");
+const maxStock = ref("");
 const error = ref("");
+const categoryOptions = computed(() => ["All", ...new Set(products.value.map((product) => product.category_name).filter(Boolean).sort())]);
+const advancedFiltersOpen = ref(false);
 const statusFilters = [
   { label: "All products", value: "All" },
   { label: "In stock", value: "In stock" },
@@ -195,7 +215,12 @@ const filteredProducts = computed(() => {
     const searchable = [product.product_name, product.category_name, product.sku]
       .filter(Boolean).map(String).join(" ").toLowerCase();
     return (!query || searchable.includes(query)) &&
-      (selectedStatus.value === "All" || product.stockStatus === selectedStatus.value);
+      (selectedStatus.value === "All" || product.stockStatus === selectedStatus.value) &&
+      (categoryFilter.value === "All" || product.category_name === categoryFilter.value) &&
+      (minPrice.value === "" || Number(product.price) >= Number(minPrice.value)) &&
+      (maxPrice.value === "" || Number(product.price) <= Number(maxPrice.value)) &&
+      (minStock.value === "" || Number(product.quantity) >= Number(minStock.value)) &&
+      (maxStock.value === "" || Number(product.quantity) <= Number(maxStock.value));
   });
   return [...list].sort((a, b) => {
     let left, right;
@@ -244,12 +269,16 @@ async function bulkArchive() {
 function goToPage(page) {
   currentPage.value = Math.min(Math.max(1, page), totalPages.value);
 }
-watch([searchQuery, selectedStatus, sortBy, sortDirection], () => { currentPage.value = 1; });
+watch([searchQuery, selectedStatus, sortBy, sortDirection, categoryFilter, minPrice, maxPrice, minStock, maxStock], () => { currentPage.value = 1; });
 
 function toggleSort(field) {
   if (sortBy.value === field) sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
   else { sortBy.value = field; sortDirection.value = "asc"; }
 }
+function clearAdvancedFilters() { categoryFilter.value = "All"; minPrice.value = ""; maxPrice.value = ""; minStock.value = ""; maxStock.value = ""; }
+async function duplicate(product) { duplicatingProductId.value = product.product_id; error.value = ""; try { const created = await duplicateProduct(product.product_id); await Swal.fire({ title: "Product duplicated", text: `${created.product_name} was added to your catalog.`, icon: "success", toast: true, position: "top-end", timer: 2200, showConfirmButton: false }); } catch (err) { error.value = err.message || "Unable to duplicate product."; } finally { duplicatingProductId.value = null; } }
+function csvEscape(value) { const text = value === null || value === undefined ? "" : String(value); return `"${text.replace(/"/g, '""')}"`; }
+function exportCsv() { const rows = filteredProducts.value.map((product) => [product.product_id, product.product_name, product.sku || "", product.category_name || "", product.price, product.quantity, product.stockStatus]); const csv = [["Product ID","Product Name","SKU","Category","Price","Stock","Status"], ...rows].map((row) => row.map(csvEscape).join(",")).join("\n"); const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "products-export.csv"; link.click(); URL.revokeObjectURL(url); }
 function formatPrice(price) {
   return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(Number(price || 0));
 }
@@ -333,6 +362,12 @@ async function deleteProduct(product) {
   text-decoration: none;
 }
 
+ .supplier_products_export-button { border: 1px solid #dfd3cb; border-radius: 9px; background: #fff; color: #684d45; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+.supplier_products_export-button:hover { border-color: #c9631f; color: #c9631f; }
+.supplier_products_advanced-button { border: 1px solid #e7e0db; border-radius: 8px; background: #fff; color: #685750; padding: 8px 12px; font-weight: 700; cursor: pointer; }
+.supplier_products_advanced-panel { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 13px 20px; background: #faf8f6; border-bottom: 1px solid #eeeae7; }
+.supplier_products_advanced-panel label { display: flex; flex-direction: column; gap: 5px; color: #8a7971; font-size: 11px; font-weight: 700; }
+.supplier_products_advanced-panel input, .supplier_products_advanced-panel select { min-width: 130px; height: 34px; border: 1px solid #e4ded9; border-radius: 7px; background: #fff; padding: 0 8px; color: #57453e; }
 .supplier_products_add-product-button:hover {
   background: #ce6930;
 }
