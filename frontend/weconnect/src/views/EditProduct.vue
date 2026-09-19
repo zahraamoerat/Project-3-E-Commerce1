@@ -17,13 +17,11 @@
           DETAILS</span>
         <h2>{{ product.product_name }}</h2><label>Product name<input v-model.trim="form.product_name"
             required /></label>
-        <div class="supplier_edit_product_two-columns"><label>Category<select v-model="form.category_name">
-              <option>Eco-friendly Packaging</option>
-              <option>Food & Beverage</option>
-              <option>Cleaning Supplies</option>
-              <option>Office Supplies</option>
-              <option>Shipping Supplies</option>
-            </select></label><label>SKU<input v-model="form.sku" /></label></div><label>Description<textarea
+        <div class="supplier_edit_product_two-columns"><label>Category<select v-model="form.category_name" :disabled="categoriesLoading">
+              <option disabled value="">Select a category</option>
+              <option v-for="category in categories" :key="category.category_id" :value="category.category_name">{{ category.category_name }}</option>
+            </select></label>
+            <p v-if="categoriesError" class="supplier_edit_product_field-error">{{ categoriesError }}</p><label>SKU<input v-model="form.sku" /></label></div><label>Description<textarea
             v-model="form.description" rows="7"></textarea></label>
       </section>
       <aside class="supplier_edit_product_edit-side">
@@ -69,7 +67,8 @@
 import { computed, reactive, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
-const route=useRoute();const router=useRouter();const {products,updateProduct,uploadProductImages}=useSupplierData();const product=computed(()=>products.value.find(i=>i.product_id===Number(route.params.id))||null);
+const route=useRoute();const router=useRouter();const {products,updateProduct,uploadProductImages,categories,categoriesLoading,categoriesError,loadCategories}=useSupplierData();
+loadCategories();const product=computed(()=>products.value.find(i=>i.product_id===Number(route.params.id))||null);
 const form=reactive({product_name:"",category_name:"",sku:"",description:"",price:null,comparePrice:null,quantity:0,low_stock_threshold:10,image:"",images:[]});const message=ref("");const error=ref("");const saving=ref(false);
 watch(product,v=>{if(!v)return;Object.assign(form,{product_name:v.product_name||"",category_name:v.category_name||"",sku:v.sku||"",description:v.description||"",price:v.price,comparePrice:v.compare_price,quantity:v.quantity,low_stock_threshold:v.low_stock_threshold,image:v.image||"",images:v.images?.length?[...v.images]:(v.image?[v.image]:[])})},{immediate:true});
 function validate(){if(form.product_name.trim().length<3)return"Product name must be at least 3 characters.";if(!form.category_name)return"Select a product category.";if(!Number.isFinite(Number(form.price))||Number(form.price)<=0)return"Price must be greater than zero.";if(form.comparePrice!==null&&form.comparePrice!==""&&Number(form.comparePrice)<Number(form.price))return"Compare at price must be greater than or equal to the selling price.";if(!Number.isInteger(Number(form.quantity))||Number(form.quantity)<0)return"Quantity must be a non-negative whole number.";if(!Number.isInteger(Number(form.low_stock_threshold))||Number(form.low_stock_threshold)<0)return"Low-stock threshold must be a non-negative whole number.";if(form.sku&&!/^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/.test(form.sku))return"SKU must be 3–40 characters and use only letters, numbers, dots, underscores or hyphens.";return"";}
@@ -88,6 +87,7 @@ async function save(){error.value="";const validation=validate();if(validation){
 
 .supplier_edit_product_edit-header,
 .supplier_edit_product_edit-grid,
+.supplier_edit_product_field-error { margin: -8px 0 12px; color: #a8473d; font-size: 11px; }
 .supplier_edit_product_empty {
   max-width: 1120px;
   margin: 0 auto
