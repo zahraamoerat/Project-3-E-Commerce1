@@ -40,11 +40,10 @@ export async function getSupplierOverview(req, res, next) {
         CONCAT_WS(', ', city, province) AS location,
         business_name AS owner, '' AS description
       FROM suppliers WHERE supplier_id = ? LIMIT 1`, [id]);
-    const orderStatus = (status) => status === "Shipped" ? "Ready to ship" : status;
     const deliveryStatus = (status) => status === "Preparing Dispatch" ? "Ready for pickup" : status === "In Transit" ? "In transit" : status;
     res.json({
       products,
-      orders: orders.map((order) => ({ ...order, total: Number(order.total), status: orderStatus(order.status) })),
+      orders: orders.map((order) => ({ ...order, total: Number(order.total) })),
       deliveries: deliveries.map((delivery) => ({ ...delivery, status: deliveryStatus(delivery.status) })),
       reviews: reviews.map((review) => ({ ...review, rating: Number(review.rating), replied: Boolean(review.replied) })),
       profile: supplierRows[0] || null,
