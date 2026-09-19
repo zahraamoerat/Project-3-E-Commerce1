@@ -41,3 +41,5 @@ __screenshots__/
 node_modules/
 
 .env
+# Runtime product uploads
+backend/uploads/

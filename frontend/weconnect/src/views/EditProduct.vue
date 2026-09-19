@@ -8,7 +8,7 @@
       </div>
       <RouterLink to="/products" class="supplier_edit_product_ghost-button">Back to products</RouterLink>
     </header>
-    <div v-if="!product" class="supplier_edit_product_empty">
+    <div v-if="error" class="supplier_edit_product_empty supplier_edit_product_error"><p>{{ error }}</p></div><div v-if="!product" class="supplier_edit_product_empty">
       <h2>Product not found</h2>
       <RouterLink to="/products" class="supplier_edit_product_primary-button">Return to products</RouterLink>
     </div>
@@ -17,13 +17,11 @@
           DETAILS</span>
         <h2>{{ product.product_name }}</h2><label>Product name<input v-model.trim="form.product_name"
             required /></label>
-        <div class="supplier_edit_product_two-columns"><label>Category<select v-model="form.category_name">
-              <option>Eco-friendly Packaging</option>
-              <option>Food & Beverage</option>
-              <option>Cleaning Supplies</option>
-              <option>Office Supplies</option>
-              <option>Shipping Supplies</option>
-            </select></label><label>SKU<input v-model="form.sku" /></label></div><label>Description<textarea
+        <div class="supplier_edit_product_two-columns"><label>Category<select v-model="form.category_name" :disabled="categoriesLoading">
+              <option disabled value="">Select a category</option>
+              <option v-for="category in categories" :key="category.category_id" :value="category.category_name">{{ category.category_name }}</option>
+            </select></label>
+            <p v-if="categoriesError" class="supplier_edit_product_field-error">{{ categoriesError }}</p><label>SKU<input v-model="form.sku" /></label></div><label>Description<textarea
             v-model="form.description" rows="7"></textarea></label>
       </section>
       <aside class="supplier_edit_product_edit-side">
@@ -69,17 +67,14 @@
 import { computed, reactive, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
-const route = useRoute(); const router = useRouter(); const { products, updateProduct } = useSupplierData();
-const product = computed(() => products.value.find((item) => item.product_id === Number(route.params.id)) || null);
-const form = reactive({ product_name: "", category_name: "", sku: "", description: "", price: 0, quantity: 0, low_stock_threshold: 10, image: "", images: [] });
-watch(product, (value) => {
-  if (!value) return;
-  Object.assign(form, { product_name: value.product_name, category_name: value.category_name, sku: value.sku, description: value.description, price: value.price, quantity: value.quantity, low_stock_threshold: value.low_stock_threshold, image: value.image || "", images: value.images?.length ? [...value.images] : (value.image ? [value.image] : []) });
-}, { immediate: true });
-const message = ref("");
-function selectImages(event) { const files = [...(event.target.files || [])]; form.images.push(...files.map((file) => URL.createObjectURL(file))); event.target.value = ""; }
-function removeImage(index) { form.images.splice(index, 1); form.image = form.images[0] || ""; }
-function save() { updateProduct(route.params.id, { ...form, image: form.images[0] || "", images: [...form.images] }); message.value = "Changes saved locally."; setTimeout(() => router.push("/products"), 650); }
+const route=useRoute();const router=useRouter();const {products,updateProduct,uploadProductImages,categories,categoriesLoading,categoriesError,loadCategories}=useSupplierData();
+loadCategories();const product=computed(()=>products.value.find(i=>i.product_id===Number(route.params.id))||null);
+const form=reactive({product_name:"",category_name:"",sku:"",description:"",price:null,comparePrice:null,quantity:0,low_stock_threshold:10,image:"",images:[]});const message=ref("");const error=ref("");const saving=ref(false);
+watch(product,v=>{if(!v)return;Object.assign(form,{product_name:v.product_name||"",category_name:v.category_name||"",sku:v.sku||"",description:v.description||"",price:v.price,comparePrice:v.compare_price,quantity:v.quantity,low_stock_threshold:v.low_stock_threshold,image:v.image||"",images:v.images?.length?[...v.images]:(v.image?[v.image]:[])})},{immediate:true});
+function validate(){if(form.product_name.trim().length<3)return"Product name must be at least 3 characters.";if(!form.category_name)return"Select a product category.";if(!Number.isFinite(Number(form.price))||Number(form.price)<=0)return"Price must be greater than zero.";if(form.comparePrice!==null&&form.comparePrice!==""&&Number(form.comparePrice)<Number(form.price))return"Compare at price must be greater than or equal to the selling price.";if(!Number.isInteger(Number(form.quantity))||Number(form.quantity)<0)return"Quantity must be a non-negative whole number.";if(!Number.isInteger(Number(form.low_stock_threshold))||Number(form.low_stock_threshold)<0)return"Low-stock threshold must be a non-negative whole number.";if(form.sku&&!/^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/.test(form.sku))return"SKU must be 3–40 characters and use only letters, numbers, dots, underscores or hyphens.";return"";}
+function selectImages(e){const files=[...(e.target.files||[])];const rejected=[];for(const file of files){if(form.images.length>=8){rejected.push("Maximum of 8 product images allowed.");break;}if(!["image/png","image/jpeg"].includes(file.type)){rejected.push(file.name+": PNG/JPEG only");continue;}if(file.size>10*1024*1024){rejected.push(file.name+": larger than 10MB");continue;}form.images.push(URL.createObjectURL(file));}if(rejected.length)error.value=rejected.join(" • ");form.image=form.images[0]||"";e.target.value="";}
+function removeImage(i){const image=form.images[i];if(image?.startsWith("blob:"))URL.revokeObjectURL(image);form.images.splice(i,1);form.image=form.images[0]||"";}
+async function save(){error.value="";const validation=validate();if(validation){error.value=validation;return;}saving.value=true;try{const images=await uploadProductImages(form.images);await updateProduct(route.params.id,{...form,product_name:form.product_name.trim(),description:form.description.trim(),image:images[0]||"",images});message.value="Product updated successfully.";setTimeout(()=>router.push("/products"),500);}catch(e){error.value=e.message||"Unable to update the product.";}finally{saving.value=false;}}
 </script>
 <style scoped>
 .supplier_edit_product_edit-page {
@@ -92,6 +87,7 @@ function save() { updateProduct(route.params.id, { ...form, image: form.images[0
 
 .supplier_edit_product_edit-header,
 .supplier_edit_product_edit-grid,
+.supplier_edit_product_field-error { margin: -8px 0 12px; color: #a8473d; font-size: 11px; }
 .supplier_edit_product_empty {
   max-width: 1120px;
   margin: 0 auto

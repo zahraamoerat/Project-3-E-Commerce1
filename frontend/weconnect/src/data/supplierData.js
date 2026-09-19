@@ -2,6 +2,10 @@ import { computed, ref } from "vue";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
+const categories = ref([]);
+const categoriesLoading = ref(false);
+const categoriesError = ref("");
+
 const imagePlaceholders = {
   packaging: "https://placehold.co/800x800?text=Product",
   coffee: "https://placehold.co/800x800?text=Product",
@@ -22,8 +26,13 @@ async function request(path, options = {}) {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options,
   });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.message || "The server request failed.");
+  const rawBody = await response.text();
+  let body = {};
+  try { body = rawBody ? JSON.parse(rawBody) : {}; } catch { body = {}; }
+  if (!response.ok) {
+    const detail = body.message || rawBody?.trim();
+    throw new Error(detail ? `Request failed (${response.status}): ${detail}` : `Request failed (${response.status}): ${response.statusText || "The server request failed."}`);
+  }
   return body;
 }
 
@@ -33,26 +42,48 @@ function refreshStatus(product) {
   product.stockStatus = quantity === 0 ? "Out of stock" : quantity <= threshold ? "Low stock" : "In stock";
 }
 
-export async function loadSupplierData() {
-  if (loaded) return;
+export async function loadCategories(force = false) {
+  if (categories.value.length && !force) return categories.value;
+  categoriesLoading.value = true;
+  try {
+    categories.value = await request("/categories");
+    categoriesError.value = "";
+  } catch (requestError) {
+    categoriesError.value = requestError.message;
+  } finally {
+    categoriesLoading.value = false;
+  }
+  return categories.value;
+}
+
+export async function loadSupplierData(force = false) {
+  if (loaded && !force) return;
   loading.value = true;
   try {
-    const data = await request("/supplier/overview");
-    products.value = data.products || [];
-    orders.value = data.orders || [];
-    deliveries.value = data.deliveries || [];
-    reviews.value = data.reviews || [];
-    if (data.profile) Object.assign(profile.value, data.profile);
-    loaded = true;
+    const productData = await request("/products");
+    products.value = productData || [];
     error.value = "";
+
+    try {
+      const data = await request("/supplier/overview");
+      orders.value = data.orders || [];
+      deliveries.value = data.deliveries || [];
+      reviews.value = data.reviews || [];
+      if (data.profile) Object.assign(profile.value, data.profile);
+    } catch (overviewError) {
+      console.error("Supplier overview could not be loaded:", overviewError);
+    }
+
+    loaded = true;
   } catch (requestError) {
     error.value = requestError.message;
-    console.error("Unable to load supplier data:", requestError);
+    console.error("Unable to load products:", requestError);
   } finally {
     loading.value = false;
   }
 }
 
+loadCategories();
 loadSupplierData();
 
 async function addProduct(product) {
@@ -69,6 +100,13 @@ async function updateProduct(id, changes) {
   const index = products.value.findIndex((item) => item.product_id === Number(id));
   if (index !== -1) products.value[index] = updated;
   return result;
+}
+
+async function duplicateProduct(id) {
+  const result = await request(`/products/${id}/duplicate`, { method: "POST" });
+  const created = await request(`/products/${result.product_id}`);
+  products.value.unshift(created);
+  return created;
 }
 
 async function updateProductStock(id, quantity) {
@@ -112,8 +150,25 @@ async function updateProfile(changes) {
   return updated;
 }
 
+async function uploadProductImages(imageSources) {
+  if (imageSources.length > 8) throw new Error("A product can have a maximum of 8 images.");
+  const blobs = imageSources.filter((source) => String(source).startsWith("blob:"));
+  if (!blobs.length) return imageSources;
+  const formData = new FormData();
+  for (let index = 0; index < blobs.length; index += 1) {
+    const blob = await (await fetch(blobs[index])).blob();
+    formData.append("images", blob, `product-${Date.now()}-${index}.${blob.type === "image/png" ? "png" : "jpg"}`);
+  }
+  const response = await fetch(`${API_URL}/uploads/products`, { method: "POST", body: formData });
+  const rawBody = await response.text();
+  let body = {};
+  try { body = rawBody ? JSON.parse(rawBody) : {}; } catch { body = {}; }
+  if (!response.ok) throw new Error(body.message || rawBody?.trim() || "Unable to upload product images.");
+  return [...imageSources.filter((source) => !String(source).startsWith("blob:")), ...(body.urls || [])];
+}
+
 export function useSupplierData() {
-  return { products, orders, deliveries, reviews, profile, loading, error, imagePlaceholders, refreshStatus, loadSupplierData, addProduct, updateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
+  return { products, orders, deliveries, reviews, profile, categories, categoriesLoading, categoriesError, loading, error, imagePlaceholders, refreshStatus, loadCategories, loadSupplierData, uploadProductImages, addProduct, updateProduct, duplicateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
 }
 
 export const supplierStats = {

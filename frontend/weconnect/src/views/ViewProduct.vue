@@ -26,8 +26,8 @@
         <section class="supplier_view_product_product-info">
           <span class="supplier_view_product_product-category">{{ product.category_name }}</span>
           <h1>{{ product.product_name }}</h1>
-          <div class="supplier_view_product_rating"><span class="supplier_view_product_stars">*****</span><span>4.8 (245 reviews)</span></div>
-          <div class="supplier_view_product_price-row"><strong>{{ formatPrice(product.price) }}</strong><del>{{ formatPrice(Math.round(product.price * 1.3)) }}</del></div>
+          <div class="supplier_view_product_rating"><span v-if="product.compare_price" class="supplier_view_product_stars">Pricing</span><span>Product information from the supplier catalog</span></div>
+          <div class="supplier_view_product_price-row"><strong>{{ formatPrice(product.price) }}</strong><del v-if="comparePrice">{{ formatPrice(comparePrice) }}</del></div>
           <p class="supplier_view_product_description">{{ product.description || `Wholesale-grade ${product.product_name.toLowerCase()}, sourced for consistency and durability at scale.` }}</p>
 
           <div class="supplier_view_product_detail-block">
@@ -57,7 +57,7 @@
       <div class="supplier_view_product_tab-content">
         <p v-if="activeTab === 'description'">{{ product.description || 'This product is manufactured to consistent standards and ships in bulk-ready cartons for restaurants, retailers, and hospitality buyers.' }}</p>
         <dl v-else-if="activeTab === 'info'" class="supplier_view_product_info-list"><div><dt>Category</dt><dd>{{ product.category_name }}</dd></div><div><dt>SKU</dt><dd>{{ product.sku || 'Not provided' }}</dd></div><div><dt>Units in stock</dt><dd>{{ product.quantity }}</dd></div></dl>
-        <div v-else class="supplier_view_product_review-summary"><strong>4.8</strong><span class="supplier_view_product_stars">*****</span><span>out of 5 from 97 reviews</span></div>
+        <div v-else class="supplier_view_product_review-summary"><strong>Reviews</strong><span>Customer review summaries are shown on the Reviews page.</span></div>
       </div>
     </template>
   </div>
@@ -68,87 +68,23 @@ import { computed, ref } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import Swal from "sweetalert2";
 import { useSupplierData } from "@/data/supplierData";
-
-const route = useRoute();
-const { products } = useSupplierData();
-const product = computed(() => products.value.find((item) => item.product_id === Number(route.params.id)) || null);
-const productImages = computed(() => product.value?.images?.length ? product.value.images : product.value?.image ? [product.value.image] : []);
-const activeImage = ref(0);
-const selectedSwatch = ref(0);
-const selectedSize = ref(2);
-const quantity = ref(1);
-const activeTab = ref("reviews");
-const isSaved = ref(false);
-const swatches = ["#c9a67c", "#3c2b26", "#f2ede4", "#3f7a53", "#7c5f55"];
-const packSizes = ["25 pack", "50 pack", "100 pack", "250 pack", "500 pack"];
-const finishNames = ["Natural", "Espresso", "Ivory", "Sage", "Walnut"];
-const selectedFinishLabel = computed(() => finishNames[selectedSwatch.value]);
-
-function formatPrice(price) {
-  return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(price);
-}
-
-function showSizeGuide() {
-  Swal.fire({
-    title: "Pack size guide",
-    html: `<div class="supplier_view_product_sweet-size-guide"><p><b>25 pack</b><span>Trial quantity for smaller orders</span></p><p><b>50 pack</b><span>Popular for regular restocks</span></p><p><b>100+ pack</b><span>Best value for wholesale buyers</span></p></div>`,
-    confirmButtonText: "Got it",
-    confirmButtonColor: "#684b41",
-  });
-}
-
-function addToOrder() {
-  Swal.fire({
-    title: "Added to order",
-    text: `${quantity.value} × ${product.value.product_name} (${packSizes[selectedSize.value]})`,
-    icon: "success",
-    toast: true,
-    position: "top-end",
-    timer: 2600,
-    showConfirmButton: false,
-    timerProgressBar: true,
-  });
-}
-
-function orderNow() {
-  Swal.fire({
-    title: "Start this order?",
-    text: `${quantity.value} × ${product.value.product_name} will be requested from this supplier.`,
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "Start order",
-    cancelButtonText: "Keep browsing",
-    confirmButtonColor: "#e0793c",
-    cancelButtonColor: "#684b41",
-    reverseButtons: true,
-  }).then((result) => {
-    if (result.isConfirmed) {
-      Swal.fire({ title: "Order started", text: "Your order request is ready for review.", icon: "success", confirmButtonColor: "#684b41" });
-    }
-  });
-}
-
-function toggleSaved() {
-  isSaved.value = !isSaved.value;
-  Swal.fire({
-    title: isSaved.value ? "Saved for later" : "Removed from saved items",
-    icon: isSaved.value ? "success" : "info",
-    toast: true,
-    position: "top-end",
-    timer: 1800,
-    showConfirmButton: false,
-  });
-}
-
-async function shareProduct(network) {
-  const shareData = { title: product.value.product_name, text: product.value.description, url: window.location.href };
-  if (network === "Share" && navigator.share) {
-    await navigator.share(shareData);
-    return;
-  }
-  if (navigator.clipboard) await navigator.clipboard.writeText(window.location.href);
-  Swal.fire({ title: `Link ready for ${network}`, text: "The product link has been copied to your clipboard.", icon: "success", toast: true, position: "top-end", timer: 2200, showConfirmButton: false });
-}
+const route=useRoute();
+const { products }=useSupplierData();
+const product=computed(()=>products.value.find((item)=>item.product_id===Number(route.params.id))||null);
+const productImages=computed(()=>product.value?.images?.length?product.value.images:product.value?.image?[product.value.image]:[]);
+const activeImage=ref(0); const selectedSwatch=ref(0); const selectedSize=ref(0); const quantity=ref(1); const activeTab=ref("details"); const isSaved=ref(false);
+const packSizes=["25 pack","50 pack","100 pack","250 pack","500 pack"];
+const finishNames=["Natural","Espresso","Ivory","Sage","Walnut"];
+const swatches=["#c9a67c","#3c2b26","#f2ede4","#3f7a53","#7c5f55"];
+const selectedFinishLabel=computed(()=>finishNames[selectedSwatch.value]);
+const maxQuantity=computed(()=>Math.max(0,Number(product.value?.quantity||0)));
+const comparePrice=computed(()=>product.value?.compare_price);
+function formatPrice(price){return new Intl.NumberFormat("en-ZA",{style:"currency",currency:"ZAR",maximumFractionDigits:0}).format(Number(price||0));}
+function showSizeGuide(){Swal.fire({title:"Pack size guide",html:"<p>Choose a pack size that matches your order volume.</p>",confirmButtonText:"Got it",confirmButtonColor:"#684b41"});}
+function addToOrder(){Swal.fire({title:"Added to order",text:`${quantity.value} × ${product.value.product_name} (${packSizes[selectedSize.value]})`,icon:"success",toast:true,position:"top-end",timer:2200,showConfirmButton:false});}
+function orderNow(){Swal.fire({title:"Start this order?",text:`${quantity.value} × ${product.value.product_name} will be requested from this supplier.`,icon:"question",showCancelButton:true,confirmButtonText:"Start order",cancelButtonText:"Keep browsing",confirmButtonColor:"#e0793c"}).then((r)=>{if(r.isConfirmed) Swal.fire({title:"Order request ready",text:"Review the order before submitting it.",icon:"success",confirmButtonColor:"#684b41"});});}
+function toggleSaved(){isSaved.value=!isSaved.value;Swal.fire({title:isSaved.value?"Saved for later":"Removed from saved items",icon:"info",toast:true,position:"top-end",timer:1600,showConfirmButton:false});}
+async function shareProduct(network){const shareData={title:product.value.product_name,text:product.value.description||"",url:window.location.href};if(network==="Share"&&navigator.share){await navigator.share(shareData);return;}if(navigator.clipboard)await navigator.clipboard.writeText(window.location.href);Swal.fire({title:"Link copied",text:"The product link has been copied to your clipboard.",icon:"success",toast:true,position:"top-end",timer:1800,showConfirmButton:false});}
 </script>
 
 <style scoped>

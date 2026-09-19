@@ -6,7 +6,8 @@ import {
   fetchProductById,
   editProduct,
   removeProduct,
-  patchProductStock
+  patchProductStock,
+  duplicateProduct
 } from "../controllers/productController.js";
 
 const router = express.Router();
@@ -25,6 +26,8 @@ router.get("/", fetchProducts);
   GET
   /api/products/:id
 */
+router.post("/:id/duplicate", duplicateProduct);
+
 router.get("/:id", fetchProductById);
 
 /*

@@ -2,6 +2,7 @@ import db from "../config/db.js";
 import { getProducts } from "../models/productModel.js";
 
 const supplierId = () => Number(process.env.SUPPLIER_ID || 1);
+const validEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
 
 export async function getSupplierOverview(req, res, next) {
   try {
@@ -73,7 +74,9 @@ export async function updateDelivery(req, res, next) {
 
 export async function replyToReview(req, res, next) {
   try {
-    const [result] = await db.execute("INSERT INTO review_replies (review_id, supplier_id, reply_text) VALUES (?, ?, ?)", [req.params.id, supplierId(), req.body.reply_text || "Thank you for your feedback."]);
+    const reply = String(req.body.reply_text || "").trim();
+    if (reply.length < 2 || reply.length > 1000) return res.status(400).json({ message: "Reply must be between 2 and 1000 characters." });
+    const [result] = await db.execute("INSERT INTO review_replies (review_id, supplier_id, reply_text) VALUES (?, ?, ?)", [req.params.id, supplierId(), reply]);
     res.status(201).json({ message: "Reply saved.", reply_id: result.insertId });
   } catch (error) { next(error); }
 }
@@ -84,6 +87,8 @@ export async function updateProfile(req, res, next) {
     const fields = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowed.includes(key)));
     const [supplier] = await db.execute("SELECT business_name, email, phone, city, province FROM suppliers WHERE supplier_id = ? LIMIT 1", [supplierId()]);
     if (!supplier[0]) return res.status(404).json({ message: "Supplier not found." });
+    if (fields.email !== undefined && !validEmail(fields.email)) return res.status(400).json({ message: "Please enter a valid email address." });
+    if (fields.businessName !== undefined && String(fields.businessName).trim().length < 2) return res.status(400).json({ message: "Business name must be at least 2 characters." });
     const [city = "", province = ""] = String(fields.location ?? `${supplier[0].city || ""}, ${supplier[0].province || ""}`).split(",").map((value) => value.trim());
     await db.execute("UPDATE suppliers SET business_name = ?, email = ?, phone = ?, city = ?, province = ? WHERE supplier_id = ?", [fields.businessName || supplier[0].business_name, fields.email || supplier[0].email, fields.phone || supplier[0].phone, city, province, supplierId()]);
     res.json({ ...fields, location: [city, province].filter(Boolean).join(", ") });
