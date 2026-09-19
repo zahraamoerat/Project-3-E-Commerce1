@@ -22,8 +22,9 @@ const error = ref("");
 let loaded = false;
 
 async function request(path, options = {}) {
+  const token = localStorage.getItem("weconnect_token");
   const response = await fetch(`${API_URL}${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
     ...options,
   });
   const rawBody = await response.text();
