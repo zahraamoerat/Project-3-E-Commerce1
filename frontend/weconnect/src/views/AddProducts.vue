@@ -12,7 +12,7 @@
         <span class="supplier_add_products_required-note"><b>*</b> Required fields</span>
       </div>
     </header>
-    <div v-if="message" class="supplier_add_products_notice">{{ message }}</div>
+    <div v-if="message" class="supplier_add_products_notice">{{ message }}</div><div v-if="error" class="supplier_add_products_notice supplier_add_products_error">{{ error }}</div>
     <form class="supplier_add_products_form-layout" @submit.prevent="publish">
       <div class="supplier_add_products_form-column">
         <section class="supplier_add_products_form-section">
@@ -168,7 +168,7 @@
         <div class="supplier_add_products_form-actions"><button type="button"
             class="supplier_add_products_discard-button" @click="router.push('/products')">Discard</button><button
             type="button" class="supplier_add_products_schedule-button" @click="saveDraft">Save as draft</button><button
-            type="submit" class="supplier_add_products_primary-button">Add Product</button></div>
+            type="submit" class="supplier_add_products_primary-button" :disabled="saving">{{ saving ? "Saving…" : "Add Product" }}</button></div>
       </div>
     </form>
   </div>
@@ -178,15 +178,76 @@
 import { reactive, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
+
 const router = useRouter();
-const { addProduct, imagePlaceholders } = useSupplierData();
+const { addProduct, uploadProductImages, imagePlaceholders } = useSupplierData();
 const message = ref("");
-const form = reactive({ product_name: "", category_name: "", subcategory: "", sku: "", description: "", price: 0, comparePrice: 0, quantity: 0, low_stock_threshold: 50, unit: "pack", sellingType: "online", weight: 0, length: 0, breadth: 0, width: 0, images: [] });
-function selectImages(event) { const files = [...(event.target.files || [])]; form.images.push(...files.map((file) => URL.createObjectURL(file))); event.target.value = ""; }
-function removeImage(index) { form.images.splice(index, 1); }
-function productPayload() { return { ...form, image: form.images[0] || imagePlaceholders.packaging, images: [...form.images] }; }
-function publish() { if (!form.product_name || !form.category_name) return; addProduct(productPayload()); message.value = "Product published to your local catalog."; setTimeout(() => router.push("/products"), 650); }
-function saveDraft() { addProduct({ ...productPayload(), product_name: form.product_name || "Untitled draft", category_name: form.category_name || "Eco-friendly Packaging" }); message.value = "Draft saved locally."; setTimeout(() => router.push("/products"), 650); }
+const error = ref("");
+const saving = ref(false);
+const form = reactive({
+  product_name: "", category_name: "", subcategory: "", sku: "", description: "",
+  price: null, comparePrice: null, quantity: 0, low_stock_threshold: 10,
+  unit: "pack", sellingType: "online", weight: null, length: null, breadth: null,
+  width: null, images: []
+});
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+function selectImages(event) {
+  const files = [...(event.target.files || [])], valid = [], rejected = [];
+  for (const file of files) {
+    if (!["image/png", "image/jpeg"].includes(file.type)) rejected.push(`${file.name}: PNG/JPEG only`);
+    else if (file.size > MAX_FILE_SIZE) rejected.push(`${file.name}: larger than 10MB`);
+    else valid.push(URL.createObjectURL(file));
+  }
+  form.images.push(...valid);
+  if (rejected.length) error.value = rejected.join(" • ");
+  event.target.value = "";
+}
+function removeImage(index) {
+  const image = form.images[index];
+  if (image?.startsWith("blob:")) URL.revokeObjectURL(image);
+  form.images.splice(index, 1);
+}
+function validate() {
+  const name = form.product_name.trim();
+  if (name.length < 3) return "Product name must be at least 3 characters.";
+  if (!form.category_name) return "Select a product category.";
+  if (!Number.isFinite(Number(form.price)) || Number(form.price) <= 0) return "Price must be greater than zero.";
+  if (form.comparePrice !== null && form.comparePrice !== "" && Number(form.comparePrice) < Number(form.price)) return "Compare at price must be greater than or equal to the selling price.";
+  if (!Number.isInteger(Number(form.quantity)) || Number(form.quantity) < 0) return "Quantity must be a non-negative whole number.";
+  if (!Number.isInteger(Number(form.low_stock_threshold)) || Number(form.low_stock_threshold) < 0) return "Low-stock threshold must be a non-negative whole number.";
+  if (form.sku && !/^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/.test(form.sku)) return "SKU must be 3–40 characters and use only letters, numbers, dots, underscores or hyphens.";
+  return "";
+}
+async function uploadImages() { return uploadProductImages(form.images); }
+function productPayload(images) {
+  return { ...form, product_name: form.product_name.trim(), description: form.description.trim(), image: images[0] || imagePlaceholders.packaging, images };
+}
+async function publish() {
+  error.value = ""; message.value = "";
+  const validationError = validate();
+  if (validationError) { error.value = validationError; return; }
+  saving.value = true;
+  try {
+    const images = await uploadImages();
+    await addProduct(productPayload(images));
+    message.value = "Product published successfully.";
+    setTimeout(() => router.push("/products"), 500);
+  } catch (err) { error.value = err.message || "Unable to publish the product."; }
+  finally { saving.value = false; }
+}
+async function saveDraft() {
+  error.value = "";
+  const validationError = form.product_name ? validate() : "";
+  if (validationError) { error.value = validationError; return; }
+  saving.value = true;
+  try {
+    const images = await uploadImages();
+    await addProduct(productPayload(images));
+    message.value = "Draft saved.";
+    setTimeout(() => router.push("/products"), 500);
+  } catch (err) { error.value = err.message || "Unable to save the draft."; }
+  finally { saving.value = false; }
+}
 </script>
 
 <style scoped>
@@ -599,6 +660,8 @@ textarea {
   color: #407b47;
   font-size: 11px;
 }
+
+.supplier_add_products_error { background:#fff0ee; border-color:#efc7c1; color:#a8473d; }
 
 @media(max-width:850px) {
   .supplier_add_products_form-page {
