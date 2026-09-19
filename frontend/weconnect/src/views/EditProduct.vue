@@ -8,7 +8,7 @@
       </div>
       <RouterLink to="/products" class="supplier_edit_product_ghost-button">Back to products</RouterLink>
     </header>
-    <div v-if="error" class="supplier_edit_product_empty supplier_edit_product_error"><p>{{ error }}</p></div><div v-if="!product" class="supplier_edit_product_empty">
+    <div v-if="error" class="supplier_edit_product_empty supplier_edit_product_error"><p>{{ error }}</p></div><div v-if="error" class="supplier_edit_product_empty supplier_edit_product_error"><p>{{ error }}</p></div><div v-if="!product" class="supplier_edit_product_empty">
       <h2>Product not found</h2>
       <RouterLink to="/products" class="supplier_edit_product_primary-button">Return to products</RouterLink>
     </div>
@@ -69,66 +69,13 @@
 import { computed, reactive, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
-
-const route = useRoute();
-const router = useRouter();
-const { products, updateProduct, uploadProductImages } = useSupplierData();
-const product = computed(() => products.value.find((item) => item.product_id === Number(route.params.id)) || null);
-const form = reactive({ product_name:"", category_name:"", sku:"", description:"", price:null, comparePrice:null, quantity:0, low_stock_threshold:10, image:"", images:[] });
-const message = ref("");
-const error = ref("");
-const saving = ref(false);
-
-watch(product, (value) => {
-  if (!value) return;
-  Object.assign(form, {
-    product_name:value.product_name || "", category_name:value.category_name || "", sku:value.sku || "",
-    description:value.description || "", price:value.price, comparePrice:value.compare_price,
-    quantity:value.quantity, low_stock_threshold:value.low_stock_threshold, image:value.image || "",
-    images:value.images?.length ? [...value.images] : (value.image ? [value.image] : [])
-  });
-}, { immediate:true });
-
-function validate() {
-  if (form.product_name.trim().length < 3) return "Product name must be at least 3 characters.";
-  if (!form.category_name) return "Select a product category.";
-  if (!Number.isFinite(Number(form.price)) || Number(form.price) <= 0) return "Price must be greater than zero.";
-  if (form.comparePrice !== null && form.comparePrice !== "" && Number(form.comparePrice) < Number(form.price)) return "Compare at price must be greater than or equal to the selling price.";
-  if (!Number.isInteger(Number(form.quantity)) || Number(form.quantity) < 0) return "Quantity must be a non-negative whole number.";
-  if (!Number.isInteger(Number(form.low_stock_threshold)) || Number(form.low_stock_threshold) < 0) return "Low-stock threshold must be a non-negative whole number.";
-  if (form.sku && !/^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/.test(form.sku)) return "SKU must be 3–40 characters and use only letters, numbers, dots, underscores or hyphens.";
-  return "";
-}
-function selectImages(event) {
-  for (const file of [...(event.target.files || [])]) {
-    if (!["image/png","image/jpeg"].includes(file.type) || file.size > 10*1024*1024) continue;
-    form.images.push(URL.createObjectURL(file));
-  }
-  form.image = form.images[0] || "";
-  event.target.value = "";
-}
-function removeImage(index) {
-  const image=form.images[index];
-  if(image?.startsWith("blob:")) URL.revokeObjectURL(image);
-  form.images.splice(index,1);
-  form.image=form.images[0] || "";
-}
-async function save() {
-  error.value=""; message.value="";
-  const validationError=validate();
-  if(validationError){error.value=validationError;return;}
-  saving.value=true;
-  try {
-    const uploadedImages = await uploadProductImages(form.images);
-    await updateProduct(route.params.id, {
-      ...form, product_name:form.product_name.trim(), description:form.description.trim(),
-      image:uploadedImages[0] || "", images:uploadedImages
-    });
-    message.value="Product updated successfully.";
-    setTimeout(()=>router.push("/products"),500);
-  } catch(err) { error.value=err.message || "Unable to update the product."; }
-  finally { saving.value=false; }
-}
+const route=useRoute();const router=useRouter();const {products,updateProduct,uploadProductImages}=useSupplierData();const product=computed(()=>products.value.find(i=>i.product_id===Number(route.params.id))||null);
+const form=reactive({product_name:"",category_name:"",sku:"",description:"",price:null,comparePrice:null,quantity:0,low_stock_threshold:10,image:"",images:[]});const message=ref("");const error=ref("");const saving=ref(false);
+watch(product,v=>{if(!v)return;Object.assign(form,{product_name:v.product_name||"",category_name:v.category_name||"",sku:v.sku||"",description:v.description||"",price:v.price,comparePrice:v.compare_price,quantity:v.quantity,low_stock_threshold:v.low_stock_threshold,image:v.image||"",images:v.images?.length?[...v.images]:(v.image?[v.image]:[])})},{immediate:true});
+function validate(){if(form.product_name.trim().length<3)return"Product name must be at least 3 characters.";if(!form.category_name)return"Select a product category.";if(!Number.isFinite(Number(form.price))||Number(form.price)<=0)return"Price must be greater than zero.";if(form.comparePrice!==null&&form.comparePrice!==""&&Number(form.comparePrice)<Number(form.price))return"Compare at price must be greater than or equal to the selling price.";if(!Number.isInteger(Number(form.quantity))||Number(form.quantity)<0)return"Quantity must be a non-negative whole number.";if(!Number.isInteger(Number(form.low_stock_threshold))||Number(form.low_stock_threshold)<0)return"Low-stock threshold must be a non-negative whole number.";if(form.sku&&!/^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/.test(form.sku))return"SKU must be 3–40 characters and use only letters, numbers, dots, underscores or hyphens.";return"";}
+function selectImages(e){for(const file of [...(e.target.files||[])])if(["image/png","image/jpeg"].includes(file.type)&&file.size<=10*1024*1024)form.images.push(URL.createObjectURL(file));form.image=form.images[0]||"";e.target.value="";}
+function removeImage(i){const image=form.images[i];if(image?.startsWith("blob:"))URL.revokeObjectURL(image);form.images.splice(i,1);form.image=form.images[0]||"";}
+async function save(){error.value="";const validation=validate();if(validation){error.value=validation;return;}saving.value=true;try{const images=await uploadProductImages(form.images);await updateProduct(route.params.id,{...form,product_name:form.product_name.trim(),description:form.description.trim(),image:images[0]||"",images});message.value="Product updated successfully.";setTimeout(()=>router.push("/products"),500);}catch(e){error.value=e.message||"Unable to update the product.";}finally{saving.value=false;}}
 </script>
 <style scoped>
 .supplier_edit_product_edit-page {
