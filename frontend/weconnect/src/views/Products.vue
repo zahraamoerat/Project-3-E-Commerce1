@@ -59,7 +59,7 @@
   <label>Max stock<input v-model="maxStock" type="number" min="0" step="1" placeholder="No limit" /></label>
   <button type="button" class="supplier_products_clear-filters" @click="clearAdvancedFilters">Reset advanced</button>
 </div>
-<div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div>
+<div class="supplier_products_catalog-filter"><label>Catalog <select v-model="selectedCatalog"><option value="Active">Active</option><option value="Archived">Archived</option><option value="All">All</option></select></label></div>\n<div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div>
 <div v-if="selectedProductIds.length" class="supplier_products_bulk-bar">
   <strong>{{ selectedProductIds.length }} selected</strong>
   <button type="button" @click="bulkStock">Adjust stock</button>
@@ -80,7 +80,7 @@
               <tr>
                 <th class="supplier_products_checkbox-cell"><input type="checkbox" :checked="allVisibleSelected" @change="toggleSelectAll" aria-label="Select all visible products" /></th>
                 <th><button type="button" class="supplier_products_sort-heading" @click="toggleSort('name')">Product <span>↕</span></button></th>
-                <th>SKU</th>
+                <th>SKU</th><th>Catalog</th>
                 <th>Category</th>
                 <th><button type="button" class="supplier_products_sort-heading" @click="toggleSort('price')">Price <span>↕</span></button></th>
                 <th><button type="button" class="supplier_products_sort-heading" @click="toggleSort('stock')">Stock <span>↕</span></button></th>
@@ -96,7 +96,7 @@
                   <strong>{{ product.product_name }}</strong>
                 </td>
                 <td class="supplier_products_sku">{{ product.sku || "—" }}</td>
-                <td>{{ product.category_name }}</td>
+                <td>{{ product.category_name }}</td><td><span :class="[`catalog-badge`, product.catalog_status === \"Archived\" ? \"catalog-badge--archived\" : \"catalog-badge--active\"]">{{ product.catalog_status || "Active" }}</span></td>
                 <td>{{ formatPrice(product.price) }}</td>
                 <td>{{ Number(product.quantity).toLocaleString() }} units</td>
                 <td>
@@ -122,7 +122,7 @@
                 </td>
               </tr>
               <tr v-if="filteredProducts.length === 0">
-                <td colspan="7" class="supplier_products_no-results"><strong>{{ searchQuery || selectedStatus !== "All" ? "No products match your filters" : "Your catalog is empty" }}</strong><br /><span>{{ searchQuery || selectedStatus !== "All" ? "Try clearing your search or stock filter." : "Add your first product to start building your catalog." }}</span></td>
+                <td colspan="9" class="supplier_products_no-results"><strong>{{ searchQuery || selectedStatus !== "All" ? "No products match your filters" : "Your catalog is empty" }}</strong><br /><span>{{ searchQuery || selectedStatus !== "All" ? "Try clearing your search or stock filter." : "Add your first product to start building your catalog." }}</span></td>
               </tr>
             </tbody>
           </table>
@@ -191,6 +191,7 @@ const pageSize = 10;
 const sortBy = ref("name");
 const sortDirection = ref("asc");
 const selectedStatus = ref("All");
+const selectedCatalog = ref("Active");
 const viewMode = ref("list");
 const deletingProductId = ref(null);
 const duplicatingProductId = ref(null);
@@ -216,6 +217,7 @@ const filteredProducts = computed(() => {
       .filter(Boolean).map(String).join(" ").toLowerCase();
     return (!query || searchable.includes(query)) &&
       (selectedStatus.value === "All" || product.stockStatus === selectedStatus.value) &&
+      (selectedCatalog.value === "All" || (product.catalog_status || "Active") === selectedCatalog.value) &&
       (categoryFilter.value === "All" || product.category_name === categoryFilter.value) &&
       (minPrice.value === "" || Number(product.price) >= Number(minPrice.value)) &&
       (maxPrice.value === "" || Number(product.price) <= Number(maxPrice.value)) &&
@@ -269,7 +271,7 @@ async function bulkArchive() {
 function goToPage(page) {
   currentPage.value = Math.min(Math.max(1, page), totalPages.value);
 }
-watch([searchQuery, selectedStatus, sortBy, sortDirection, categoryFilter, minPrice, maxPrice, minStock, maxStock], () => { currentPage.value = 1; });
+watch([searchQuery, selectedStatus, selectedCatalog, sortBy, sortDirection, categoryFilter, minPrice, maxPrice, minStock, maxStock], () => { currentPage.value = 1; });
 
 function toggleSort(field) {
   if (sortBy.value === field) sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
@@ -282,7 +284,7 @@ function exportCsv() { const rows = filteredProducts.value.map((product) => [pro
 function formatPrice(price) {
   return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(Number(price || 0));
 }
-async function deleteProduct(product) {
+async function restoreProduct(product) {\n  error.value = "";\n  try { await fetch(`/api/products/${product.product_id}/restore`, { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("weconnect_token")}` } }); await import("@/data/supplierData").then(m => m.loadSupplierData(true)); } catch (err) { error.value = err.message || "Unable to restore product."; }\n}\n\nasync function deleteProduct(product) {
   const result = await Swal.fire({
     title: "Delete product?",
     text: `Are you sure you want to delete "${product.product_name}"?`,
@@ -866,3 +868,4 @@ tbody tr:hover {
   }
 }
 </style>
+\n<style scoped> .catalog-badge{display:inline-block;padding:4px 8px;border-radius:12px;background:#e8f4e8;color:#3f7d4d;font-size:10px;font-weight:700}.catalog-badge--archived{background:#eee9e6;color:#786860}.supplier_products_catalog-filter{padding:0 20px 12px}.supplier_products_catalog-filter label{font-size:11px;font-weight:700;color:#897870}.supplier_products_catalog-filter select{margin-left:8px;border:1px solid #e4ded9;border-radius:7px;padding:6px 9px;background:#fff}</style>\n
