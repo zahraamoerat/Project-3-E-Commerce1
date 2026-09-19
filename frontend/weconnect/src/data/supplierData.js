@@ -33,8 +33,8 @@ function refreshStatus(product) {
   product.stockStatus = quantity === 0 ? "Out of stock" : quantity <= threshold ? "Low stock" : "In stock";
 }
 
-export async function loadSupplierData() {
-  if (loaded) return;
+export async function loadSupplierData(force = false) {
+  if (loaded && !force) return;
   loading.value = true;
   try {
     const data = await request("/supplier/overview");
@@ -112,8 +112,22 @@ async function updateProfile(changes) {
   return updated;
 }
 
+async function uploadProductImages(imageSources) {
+  const blobs = imageSources.filter((source) => String(source).startsWith("blob:"));
+  if (!blobs.length) return imageSources;
+  const formData = new FormData();
+  for (let index = 0; index < blobs.length; index += 1) {
+    const blob = await (await fetch(blobs[index])).blob();
+    formData.append("images", blob, `product-${Date.now()}-${index}.${blob.type === "image/png" ? "png" : "jpg"}`);
+  }
+  const response = await fetch(`${API_URL}/uploads/products`, { method: "POST", body: formData });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.message || "Unable to upload product images.");
+  return [...imageSources.filter((source) => !String(source).startsWith("blob:")), ...(body.urls || [])];
+}
+
 export function useSupplierData() {
-  return { products, orders, deliveries, reviews, profile, loading, error, imagePlaceholders, refreshStatus, loadSupplierData, addProduct, updateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
+  return { products, orders, deliveries, reviews, profile, loading, error, imagePlaceholders, refreshStatus, loadSupplierData, uploadProductImages, addProduct, updateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
 }
 
 export const supplierStats = {
