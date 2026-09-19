@@ -2,6 +2,10 @@ import { computed, ref } from "vue";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
+const categories = ref([]);
+const categoriesLoading = ref(false);
+const categoriesError = ref("");
+
 const imagePlaceholders = {
   packaging: "https://placehold.co/800x800?text=Product",
   coffee: "https://placehold.co/800x800?text=Product",
@@ -38,6 +42,20 @@ function refreshStatus(product) {
   product.stockStatus = quantity === 0 ? "Out of stock" : quantity <= threshold ? "Low stock" : "In stock";
 }
 
+export async function loadCategories(force = false) {
+  if (categories.value.length && !force) return categories.value;
+  categoriesLoading.value = true;
+  try {
+    categories.value = await request("/categories");
+    categoriesError.value = "";
+  } catch (requestError) {
+    categoriesError.value = requestError.message;
+  } finally {
+    categoriesLoading.value = false;
+  }
+  return categories.value;
+}
+
 export async function loadSupplierData(force = false) {
   if (loaded && !force) return;
   loading.value = true;
@@ -58,6 +76,7 @@ export async function loadSupplierData(force = false) {
   }
 }
 
+loadCategories();
 loadSupplierData();
 
 async function addProduct(product) {
@@ -132,7 +151,7 @@ async function uploadProductImages(imageSources) {
 }
 
 export function useSupplierData() {
-  return { products, orders, deliveries, reviews, profile, loading, error, imagePlaceholders, refreshStatus, loadSupplierData, uploadProductImages, addProduct, updateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
+  return { products, orders, deliveries, reviews, profile, categories, categoriesLoading, categoriesError, loading, error, imagePlaceholders, refreshStatus, loadCategories, loadSupplierData, uploadProductImages, addProduct, updateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
 }
 
 export const supplierStats = {
