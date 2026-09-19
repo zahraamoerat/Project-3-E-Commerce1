@@ -110,7 +110,7 @@
         </div>
 
         <div v-else class="supplier_products_product-grid">
-          <article v-for="product in filteredProducts" :key="product.product_id" class="supplier_products_product-tile">
+          <article v-for="product in paginatedProducts" :key="product.product_id" class="supplier_products_product-tile">
             <div class="supplier_products_tile-image">
               <img :src="product.image" :alt="product.product_name" />
               <span class="supplier_products_status-badge" :class="product.stockStatus.toLowerCase().replace(' ', '-')">
