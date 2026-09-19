@@ -46,9 +46,9 @@ export async function createProduct(data) {
     const [result] = await connection.execute(
       `INSERT INTO products (supplier_id, category_id, product_name, subcategory, description, price, compare_price, unit, selling_type, weight_kg, length_in, breadth_in, width_in, sku, product_image)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [data.supplier_id, data.category_id, data.product_name, data.subcategory || null, data.description || null, data.price, data.compare_price || null, data.unit || "unit", data.selling_type || "online-only", data.weight_kg || null, data.length_in || null, data.breadth_in || null, data.width_in || null, data.sku || null, data.product_image || null],
+      [data.supplier_id, data.category_id, data.product_name, data.subcategory || null, data.description || null, data.price, data.compare_price ?? null, data.unit || "unit", data.selling_type || "online-only", data.weight_kg ?? null, data.length_in ?? null, data.breadth_in ?? null, data.width_in ?? null, data.sku ?? null, data.product_image ?? null],
     );
-    await connection.execute("INSERT INTO inventory (product_id, quantity, low_stock_threshold) VALUES (?, ?, ?)", [result.insertId, data.quantity || 0, data.low_stock_threshold || 10]);
+    await connection.execute("INSERT INTO inventory (product_id, quantity, low_stock_threshold) VALUES (?, ?, ?)", [result.insertId, data.quantity ?? 0, data.low_stock_threshold ?? 10]);
     if (data.images?.length) {
       await connection.query("INSERT INTO product_media (product_id, media_url, media_type, is_primary, sort_order) VALUES ?", [data.images.map((url, index) => [result.insertId, url, "image", index === 0, index + 1])]);
     }
@@ -68,9 +68,9 @@ export async function updateProduct(productId, data) {
     await connection.beginTransaction();
     const [result] = await connection.execute(
       `UPDATE products SET product_name = ?, category_id = ?, subcategory = ?, description = ?, price = ?, compare_price = ?, unit = ?, selling_type = ?, weight_kg = ?, length_in = ?, breadth_in = ?, width_in = ?, sku = ?, product_image = ? WHERE product_id = ?`,
-      [data.product_name, data.category_id, data.subcategory || null, data.description || null, data.price, data.compare_price || null, data.unit || "unit", data.selling_type || "online-only", data.weight_kg || null, data.length_in || null, data.breadth_in || null, data.width_in || null, data.sku || null, data.product_image || null, productId],
+      [data.product_name, data.category_id, data.subcategory || null, data.description || null, data.price, data.compare_price ?? null, data.unit || "unit", data.selling_type || "online-only", data.weight_kg ?? null, data.length_in ?? null, data.breadth_in ?? null, data.width_in ?? null, data.sku ?? null, data.product_image ?? null, productId],
     );
-    await connection.execute("UPDATE inventory SET quantity = ?, low_stock_threshold = ? WHERE product_id = ?", [data.quantity || 0, data.low_stock_threshold || 10, productId]);
+    await connection.execute("UPDATE inventory SET quantity = ?, low_stock_threshold = ? WHERE product_id = ?", [data.quantity ?? 0, data.low_stock_threshold ?? 10, productId]);
     if (data.images) {
       await connection.execute("DELETE FROM product_media WHERE product_id = ?", [productId]);
       if (data.images.length) await connection.query("INSERT INTO product_media (product_id, media_url, media_type, is_primary, sort_order) VALUES ?", [data.images.map((url, index) => [productId, url, "image", index === 0, index + 1])]);
