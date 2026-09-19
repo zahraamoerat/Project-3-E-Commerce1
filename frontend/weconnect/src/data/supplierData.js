@@ -144,6 +144,7 @@ async function updateProfile(changes) {
 }
 
 async function uploadProductImages(imageSources) {
+  if (imageSources.length > 8) throw new Error("A product can have a maximum of 8 images.");
   const blobs = imageSources.filter((source) => String(source).startsWith("blob:"));
   if (!blobs.length) return imageSources;
   const formData = new FormData();
@@ -152,8 +153,10 @@ async function uploadProductImages(imageSources) {
     formData.append("images", blob, `product-${Date.now()}-${index}.${blob.type === "image/png" ? "png" : "jpg"}`);
   }
   const response = await fetch(`${API_URL}/uploads/products`, { method: "POST", body: formData });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.message || "Unable to upload product images.");
+  const rawBody = await response.text();
+  let body = {};
+  try { body = rawBody ? JSON.parse(rawBody) : {}; } catch { body = {}; }
+  if (!response.ok) throw new Error(body.message || rawBody?.trim() || "Unable to upload product images.");
   return [...imageSources.filter((source) => !String(source).startsWith("blob:")), ...(body.urls || [])];
 }
 
