@@ -47,16 +47,16 @@
           </div>
         </div>
 
-        <div v-if="error" class="supplier_products_message supplier_products_error">{{ error }}</div>
+        <div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div><div v-if="error" class="supplier_products_message supplier_products_error">{{ error }}</div><div v-if="loading" class="supplier_products_message">Loading products…</div>
 
         <div v-if="viewMode === 'list'" class="supplier_products_table-container">
           <table>
             <thead>
               <tr>
-                <th>Product <span>▲</span></th>
-                <th>Category <span>▲</span></th>
-                <th>Price <span>▲</span></th>
-                <th>Stock <span>▲</span></th>
+                <th><button type="button" class="supplier_products_sort-heading" @click="toggleSort('name')">Product <span>↕</span></button></th>
+                <th>Category</th>
+                <th><button type="button" class="supplier_products_sort-heading" @click="toggleSort('price')">Price <span>↕</span></button></th>
+                <th><button type="button" class="supplier_products_sort-heading" @click="toggleSort('stock')">Stock <span>↕</span></button></th>
                 <th>Status <span>▲</span></th>
                 <th><span class="supplier_products_sr-only">Actions</span></th>
               </tr>
@@ -150,20 +150,15 @@ import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { useSupplierData } from "@/data/supplierData";
 import {
-  faCube,
-  faList,
-  faMagnifyingGlass,
-  faPen,
-  faPlus,
-  faTableCells,
-  faTrashCan,
-  faEye
+  faCube, faList, faMagnifyingGlass, faPen, faPlus,
+  faTableCells, faTrashCan, faEye
 } from "@fortawesome/free-solid-svg-icons";
 
-const { products, removeProduct } = useSupplierData();
-
+const { products, removeProduct, loading, error: dataError } = useSupplierData();
 const searchQuery = ref("");
 const selectedStatus = ref("All");
+const sortBy = ref("name");
+const sortDirection = ref("asc");
 const viewMode = ref("list");
 const deletingProductId = ref(null);
 const error = ref("");
@@ -177,55 +172,54 @@ const statusFilters = [
 
 const filteredProducts = computed(() => {
   const query = searchQuery.value.toLowerCase().trim();
-
-  return products.value.filter((product) => {
-    const matchesSearch = !query || [product.product_name, product.category_name]
-      .some((value) => value.toLowerCase().includes(query));
-    const matchesStatus = selectedStatus.value === "All" || product.stockStatus === selectedStatus.value;
-    return matchesSearch && matchesStatus;
+  const list = products.value.filter((product) => {
+    const searchable = [product.product_name, product.category_name, product.sku]
+      .filter(Boolean).map(String).join(" ").toLowerCase();
+    return (!query || searchable.includes(query)) &&
+      (selectedStatus.value === "All" || product.stockStatus === selectedStatus.value);
+  });
+  return [...list].sort((a, b) => {
+    let left, right;
+    if (sortBy.value === "price") {
+      left = Number(a.price || 0); right = Number(b.price || 0);
+    } else if (sortBy.value === "stock") {
+      left = Number(a.quantity || 0); right = Number(b.quantity || 0);
+    } else {
+      left = String(a.product_name || "").toLowerCase();
+      right = String(b.product_name || "").toLowerCase();
+    }
+    const result = left < right ? -1 : left > right ? 1 : 0;
+    return sortDirection.value === "asc" ? result : -result;
   });
 });
 
-function formatPrice(price) {
-  return new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency: "ZAR",
-    maximumFractionDigits: 0
-  }).format(price);
+function toggleSort(field) {
+  if (sortBy.value === field) sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc";
+  else { sortBy.value = field; sortDirection.value = "asc"; }
 }
-
+function formatPrice(price) {
+  return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(Number(price || 0));
+}
 async function deleteProduct(product) {
   const result = await Swal.fire({
     title: "Delete product?",
     text: `Are you sure you want to delete "${product.product_name}"?`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Delete product",
-    cancelButtonText: "Keep product",
-    confirmButtonColor: "#b75347",
-    cancelButtonColor: "#684b41",
-    reverseButtons: true,
+    icon: "warning", showCancelButton: true,
+    confirmButtonText: "Delete product", cancelButtonText: "Keep product",
+    reverseButtons: true
   });
-
-  if (!result.isConfirmed) {
-    return;
-  }
-
+  if (!result.isConfirmed) return;
   deletingProductId.value = product.product_id;
-  removeProduct(product.product_id);
-  deletingProductId.value = null;
-
-  await Swal.fire({
-    title: "Product deleted",
-    text: `${product.product_name} was removed from your catalog.`,
-    icon: "success",
-    toast: true,
-    position: "top-end",
-    timer: 2600,
-    showConfirmButton: false,
-    timerProgressBar: true,
-    confirmButtonColor: "#4d8a5c",
-  });
+  error.value = "";
+  try {
+    await removeProduct(product.product_id);
+    await Swal.fire({ title: "Product deleted", text: `${product.product_name} was removed from your catalog.`, icon: "success", toast: true, position: "top-end", timer: 2200, showConfirmButton: false });
+  } catch (err) {
+    error.value = err.message || "Unable to delete the product.";
+    await Swal.fire({ title: "Delete failed", text: error.value, icon: "error" });
+  } finally {
+    deletingProductId.value = null;
+  }
 }
 </script>
 
