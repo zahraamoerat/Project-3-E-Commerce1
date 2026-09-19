@@ -33,8 +33,9 @@
             </button>
           </div>
 
-          <span class="supplier_products_result-count">{{ filteredProducts.length }} result<span
+          <span v-if="searchQuery || selectedStatus !== 'All'" class="supplier_products_result-count">{{ filteredProducts.length }} result<span
               v-if="filteredProducts.length !== 1">s</span></span>
+          <button v-if="searchQuery || selectedStatus !== 'All'" type="button" class="supplier_products_clear-filters" @click="searchQuery = ''; selectedStatus = 'All'">Clear filters</button>
 
           <div class="supplier_products_view-toggle" aria-label="Product view">
             <button type="button" class="supplier_products_view-button" :class="{ 'view-button--active': viewMode === 'list' }"
@@ -126,7 +127,7 @@
               </span>
             </div>
             <div class="supplier_products_tile-content">
-              <span class="supplier_products_tile-category">{{ product.category_name }}</span>
+              <span class="supplier_products_tile-category">{{ product.category_name }} · {{ product.sku || "No SKU" }}</span>
               <h3>{{ product.product_name }}</h3>
               <div class="supplier_products_tile-details">
                 <span><small>Price</small><strong>{{ formatPrice(product.price) }}</strong></span>
