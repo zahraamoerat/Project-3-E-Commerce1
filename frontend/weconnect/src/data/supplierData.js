@@ -22,8 +22,13 @@ async function request(path, options = {}) {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options,
   });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.message || "The server request failed.");
+  const rawBody = await response.text();
+  let body = {};
+  try { body = rawBody ? JSON.parse(rawBody) : {}; } catch { body = {}; }
+  if (!response.ok) {
+    const detail = body.message || rawBody?.trim();
+    throw new Error(detail ? `Request failed (${response.status}): ${detail}` : `Request failed (${response.status}): ${response.statusText || "The server request failed."}`);
+  }
   return body;
 }
 
