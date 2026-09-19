@@ -47,7 +47,7 @@
           </div>
         </div>
 
-        <div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div><div v-if="error" class="supplier_products_message supplier_products_error">{{ error }}</div><div v-if="loading" class="supplier_products_message">Loading products…</div>
+        <div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div><div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div><div v-if="error" class="supplier_products_message supplier_products_error">{{ error }}</div><div v-if="loading" class="supplier_products_message">Loading products…</div><div v-if="loading" class="supplier_products_message">Loading products…</div>
 
         <div v-if="viewMode === 'list'" class="supplier_products_table-container">
           <table>
@@ -156,12 +156,15 @@ import {
 
 const { products, removeProduct, loading, error: dataError } = useSupplierData();
 const searchQuery = ref("");
+const sortBy = ref("name");
+const sortDirection = ref("asc");
 const selectedStatus = ref("All");
 const sortBy = ref("name");
 const sortDirection = ref("asc");
 const viewMode = ref("list");
 const deletingProductId = ref(null);
 const error = ref("");
+function toggleSort(field) { if (sortBy.value === field) sortDirection.value = sortDirection.value === "asc" ? "desc" : "asc"; else { sortBy.value = field; sortDirection.value = "asc"; } }
 
 const statusFilters = [
   { label: "All products", value: "All" },
