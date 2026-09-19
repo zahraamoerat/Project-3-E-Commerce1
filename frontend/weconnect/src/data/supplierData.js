@@ -60,17 +60,25 @@ export async function loadSupplierData(force = false) {
   if (loaded && !force) return;
   loading.value = true;
   try {
-    const data = await request("/supplier/overview");
-    products.value = data.products || [];
-    orders.value = data.orders || [];
-    deliveries.value = data.deliveries || [];
-    reviews.value = data.reviews || [];
-    if (data.profile) Object.assign(profile.value, data.profile);
-    loaded = true;
+    const productData = await request("/products");
+    products.value = productData || [];
     error.value = "";
+
+    try {
+      const data = await request("/supplier/overview");
+      orders.value = data.orders || [];
+      deliveries.value = data.deliveries || [];
+      reviews.value = data.reviews || [];
+      if (data.profile) Object.assign(profile.value, data.profile);
+    } catch (overviewError) {
+      console.error("Supplier overview could not be loaded:", overviewError);
+      error.value = overviewError.message;
+    }
+
+    loaded = true;
   } catch (requestError) {
     error.value = requestError.message;
-    console.error("Unable to load supplier data:", requestError);
+    console.error("Unable to load products:", requestError);
   } finally {
     loading.value = false;
   }
