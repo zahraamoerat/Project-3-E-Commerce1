@@ -59,7 +59,8 @@
   <label>Max stock<input v-model="maxStock" type="number" min="0" step="1" placeholder="No limit" /></label>
   <button type="button" class="supplier_products_clear-filters" @click="clearAdvancedFilters">Reset advanced</button>
 </div>
-<div class="supplier_products_catalog-filter"><label>Catalog <select v-model="selectedCatalog"><option value="Active">Active</option><option value="Archived">Archived</option><option value="All">All</option></select></label></div>\n<div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div>
+<div class="supplier_products_catalog-filter"><label>Catalog <select v-model="selectedCatalog"><option value="Active">Active</option><option value="Archived">Archived</option><option value="All">All</option></select></label></div>
+<div v-if="dataError" class="supplier_products_message supplier_products_error">{{ dataError }}</div>
 <div v-if="selectedProductIds.length" class="supplier_products_bulk-bar">
   <strong>{{ selectedProductIds.length }} selected</strong>
   <button type="button" @click="bulkStock">Adjust stock</button>
@@ -96,7 +97,7 @@
                   <strong>{{ product.product_name }}</strong>
                 </td>
                 <td class="supplier_products_sku">{{ product.sku || "—" }}</td>
-                <td>{{ product.category_name }}</td><td><span :class="[`catalog-badge`, product.catalog_status === \"Archived\" ? \"catalog-badge--archived\" : \"catalog-badge--active\"]">{{ product.catalog_status || "Active" }}</span></td>
+                <td>{{ product.category_name }}</td><td><span :class="[`catalog-badge`, product.catalog_status === "Archived" ? "catalog-badge--archived" : "catalog-badge--active"]">{{ product.catalog_status || "Active" }}</span></td>
                 <td>{{ formatPrice(product.price) }}</td>
                 <td>{{ Number(product.quantity).toLocaleString() }} units</td>
                 <td>
@@ -280,11 +281,17 @@ function toggleSort(field) {
 function clearAdvancedFilters() { categoryFilter.value = "All"; minPrice.value = ""; maxPrice.value = ""; minStock.value = ""; maxStock.value = ""; }
 async function duplicate(product) { duplicatingProductId.value = product.product_id; error.value = ""; try { const created = await duplicateProduct(product.product_id); await Swal.fire({ title: "Product duplicated", text: `${created.product_name} was added to your catalog.`, icon: "success", toast: true, position: "top-end", timer: 2200, showConfirmButton: false }); } catch (err) { error.value = err.message || "Unable to duplicate product."; } finally { duplicatingProductId.value = null; } }
 function csvEscape(value) { const text = value === null || value === undefined ? "" : String(value); return `"${text.replace(/"/g, '""')}"`; }
-function exportCsv() { const rows = filteredProducts.value.map((product) => [product.product_id, product.product_name, product.sku || "", product.category_name || "", product.price, product.quantity, product.stockStatus]); const csv = [["Product ID","Product Name","SKU","Category","Price","Stock","Status"], ...rows].map((row) => row.map(csvEscape).join(",")).join("\n"); const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "products-export.csv"; link.click(); URL.revokeObjectURL(url); }
+function exportCsv() { const rows = filteredProducts.value.map((product) => [product.product_id, product.product_name, product.sku || "", product.category_name || "", product.price, product.quantity, product.stockStatus]); const csv = [["Product ID","Product Name","SKU","Category","Price","Stock","Status"], ...rows].map((row) => row.map(csvEscape).join(",")).join("
+"); const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "products-export.csv"; link.click(); URL.revokeObjectURL(url); }
 function formatPrice(price) {
   return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(Number(price || 0));
 }
-async function restoreProduct(product) {\n  error.value = "";\n  try { await fetch(`/api/products/${product.product_id}/restore`, { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("weconnect_token")}` } }); await import("@/data/supplierData").then(m => m.loadSupplierData(true)); } catch (err) { error.value = err.message || "Unable to restore product."; }\n}\n\nasync function deleteProduct(product) {
+async function restoreProduct(product) {
+  error.value = "";
+  try { await fetch(`/api/products/${product.product_id}/restore`, { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("weconnect_token")}` } }); await import("@/data/supplierData").then(m => m.loadSupplierData(true)); } catch (err) { error.value = err.message || "Unable to restore product."; }
+}
+
+async function deleteProduct(product) {
   const result = await Swal.fire({
     title: "Delete product?",
     text: `Are you sure you want to delete "${product.product_name}"?`,
@@ -868,4 +875,5 @@ tbody tr:hover {
   }
 }
 </style>
-\n<style scoped> .catalog-badge{display:inline-block;padding:4px 8px;border-radius:12px;background:#e8f4e8;color:#3f7d4d;font-size:10px;font-weight:700}.catalog-badge--archived{background:#eee9e6;color:#786860}.supplier_products_catalog-filter{padding:0 20px 12px}.supplier_products_catalog-filter label{font-size:11px;font-weight:700;color:#897870}.supplier_products_catalog-filter select{margin-left:8px;border:1px solid #e4ded9;border-radius:7px;padding:6px 9px;background:#fff}</style>\n
+
+<style scoped> .catalog-badge{display:inline-block;padding:4px 8px;border-radius:12px;background:#e8f4e8;color:#3f7d4d;font-size:10px;font-weight:700}.catalog-badge--archived{background:#eee9e6;color:#786860}.supplier_products_catalog-filter{padding:0 20px 12px}.supplier_products_catalog-filter label{font-size:11px;font-weight:700;color:#897870}.supplier_products_catalog-filter select{margin-left:8px;border:1px solid #e4ded9;border-radius:7px;padding:6px 9px;background:#fff}</style>
