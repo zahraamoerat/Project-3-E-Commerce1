@@ -281,8 +281,28 @@ function toggleSort(field) {
 function clearAdvancedFilters() { categoryFilter.value = "All"; minPrice.value = ""; maxPrice.value = ""; minStock.value = ""; maxStock.value = ""; }
 async function duplicate(product) { duplicatingProductId.value = product.product_id; error.value = ""; try { const created = await duplicateProduct(product.product_id); await Swal.fire({ title: "Product duplicated", text: `${created.product_name} was added to your catalog.`, icon: "success", toast: true, position: "top-end", timer: 2200, showConfirmButton: false }); } catch (err) { error.value = err.message || "Unable to duplicate product."; } finally { duplicatingProductId.value = null; } }
 function csvEscape(value) { const text = value === null || value === undefined ? "" : String(value); return `"${text.replace(/"/g, '""')}"`; }
-function exportCsv() { const rows = filteredProducts.value.map((product) => [product.product_id, product.product_name, product.sku || "", product.category_name || "", product.price, product.quantity, product.stockStatus]); const csv = [["Product ID","Product Name","SKU","Category","Price","Stock","Status"], ...rows].map((row) => row.map(csvEscape).join(",")).join("
-"); const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "products-export.csv"; link.click(); URL.revokeObjectURL(url); }
+function exportCsv() {
+  const rows = filteredProducts.value.map((product) => [
+    product.product_id,
+    product.product_name,
+    product.sku || "",
+    product.category_name || "",
+    product.price,
+    product.quantity,
+    product.stockStatus
+  ]);
+  const csv = [
+    ["Product ID", "Product Name", "SKU", "Category", "Price", "Stock", "Status"],
+    ...rows
+  ].map((row) => row.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "products-export.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
 function formatPrice(price) {
   return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(Number(price || 0));
 }
