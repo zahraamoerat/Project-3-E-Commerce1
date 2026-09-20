@@ -151,7 +151,17 @@ async function updateProfile(changes) {
   return updated;
 }
 
-async function uploadProductImages(imageSources) {
+async function cleanupProductImages(urls) {
+  const safeUrls = Array.isArray(urls) ? urls.filter((url) => typeof url === "string" && url.startsWith(`${window.location.origin}/uploads/products/`)) : [];
+  if (!safeUrls.length) return;
+  try {
+    await request("/uploads/products", { method: "DELETE", body: JSON.stringify({ urls: safeUrls }) });
+  } catch (cleanupError) {
+    console.warn("Product image cleanup could not be completed:", cleanupError);
+  }
+}
+
+async function uploadProductImages(imageSources, onUploaded = null) {
   if (!Array.isArray(imageSources) || imageSources.length > 8) {
     throw new Error("A product can have a maximum of 8 images.");
   }
@@ -194,6 +204,8 @@ async function uploadProductImages(imageSources) {
     throw new Error("The server did not return all uploaded image URLs.");
   }
 
+  if (onUploaded) onUploaded(uploadedUrls);
+
   // Replace each temporary blob URL in its original position. This preserves
   // the user's image order and therefore preserves which image is primary.
   blobs.forEach(({ index }, uploadIndex) => {
@@ -204,7 +216,7 @@ async function uploadProductImages(imageSources) {
 }
 
 export function useSupplierData() {
-  return { products, orders, deliveries, reviews, profile, categories, categoriesLoading, categoriesError, loading, error, imagePlaceholders, refreshStatus, loadCategories, loadSupplierData, uploadProductImages, addProduct, updateProduct, duplicateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
+  return { products, orders, deliveries, reviews, profile, categories, categoriesLoading, categoriesError, loading, error, imagePlaceholders, refreshStatus, loadCategories, loadSupplierData, uploadProductImages, cleanupProductImages, addProduct, updateProduct, duplicateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
 }
 
 export const supplierStats = {
