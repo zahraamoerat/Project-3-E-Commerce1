@@ -101,9 +101,9 @@
                 <td>{{ formatPrice(product.price) }}</td>
                 <td>{{ Number(product.quantity).toLocaleString() }} units</td>
                 <td>
-                  <span class="supplier_products_status-badge" :class="(product.stockStatus || (Number(product.quantity) === 0 ? \"Out of stock\" : Number(product.quantity) <= Number(product.low_stock_threshold || 0) ? \"Low stock\" : \"In stock\")).toLowerCase().replaceAll(\" \", \"-\")">
+                  <span class="supplier_products_status-badge" :class="stockStatus(product).toLowerCase().replaceAll(' ', '-')">
                     <span class="supplier_products_status-dot"></span>
-                    {{ product.stockStatus }}
+                    {{ stockStatus(product) }}
                   </span>
                 </td>
                 <td class="supplier_products_actions">
@@ -133,7 +133,7 @@
           <article v-for="product in paginatedProducts" :key="product.product_id" class="supplier_products_product-tile">
             <div class="supplier_products_tile-image">
               <img v-if="product.image" :src="product.image" :alt="product.product_name" @error="handleImageError" /><FontAwesomeIcon v-else :icon="faCube" />
-              <span class="supplier_products_status-badge" :class="product.stockStatus.toLowerCase().replace(' ', '-')">
+              <span class="supplier_products_status-badge" :class="stockStatus(product).toLowerCase().replaceAll(' ', '-')">
                 <span class="supplier_products_status-dot"></span>
                 {{ product.stockStatus }}
               </span>
