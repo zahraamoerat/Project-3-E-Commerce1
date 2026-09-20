@@ -10,7 +10,7 @@
       <article><span>Low stock</span><strong class="amber">{{ lowStock }}</strong><small>Needs attention</small></article>
       <article><span>Out of stock</span><strong class="red">{{ outOfStock }}</strong><small>Restock immediately</small></article>
     </section>
-    <div v-if="alerts.length" class="alert-banner"><div><strong>{{ alerts.length }} product{{ alerts.length === 1 ? "" : "s" }} need attention</strong><span>Out-of-stock and low-stock inventory is ready for review.</span></div><button type="button" @click="statusFilter = alerts.some(a => a.alert_status === "Out of stock") ? "Out of stock" : "Low stock"">View alerts</button></div><div v-if="message" class="notice success">{{ message }}</div><div v-if="error" class="notice error">{{ error }}</div><section class="inventory-card">
+    <div v-if="alerts.length" class="alert-banner"><div><strong>{{ alerts.length }} product{{ alerts.length === 1 ? "" : "s" }} need attention</strong><span>Out-of-stock and low-stock inventory is ready for review.</span></div><button type="button" @click="viewAlerts">View alerts</button></div><div v-if="message" class="notice success">{{ message }}</div><div v-if="error" class="notice error">{{ error }}</div><section class="inventory-card">
       <div class="toolbar">
         <div><h2>Inventory</h2><p>{{ filteredProducts.length }} of {{ products.length }} products</p></div>
         <div class="toolbar-controls"><select v-model="categoryFilter" aria-label="Filter by category"><option value="All">All categories</option><option v-for="category in categories" :key="category" :value="category">{{ category }}</option></select><select v-model="sortOrder" aria-label="Sort inventory"><option value="stock">Lowest stock first</option><option value="name">Product name</option><option value="updated">Recently updated</option></select></div>
@@ -43,6 +43,7 @@ const lowStock = computed(() => products.value.filter(p => p.stockStatus === "Lo
 const outOfStock = computed(() => products.value.filter(p => p.stockStatus === "Out of stock").length);
 function money(value){return new Intl.NumberFormat("en-ZA",{style:"currency",currency:"ZAR",maximumFractionDigits:0}).format(Number(value)||0)}
 function statusClass(status){return String(status||"").toLowerCase().replaceAll(" ","-")}
+function viewAlerts(){statusFilter.value = alerts.value.some((item) => String(item.alert_status || item.stockStatus || "").toLowerCase() === "out of stock") ? "Out of stock" : "Low stock"}
 function restock(product){router.push({name:"RestockPage",params:{id:String(product.product_id)}})}
 function startEdit(product){message.value="";error.value="";editing.value=product;editQuantity.value=Number(product.quantity)||0;editReason.value="Manual adjustment"}
 function cancelEdit(){editing.value=null}
