@@ -53,13 +53,33 @@ export async function getSupplierOverview(req, res, next) {
 }
 
 export async function updateOrder(req, res, next) {
+  const connection = await db.getConnection();
   try {
-    const allowed = ["Pending", "Processing", "Shipped", "Out for delivery", "Delivered", "Cancelled"];
+    const allowed = ["Pending", "Confirmed", "Processing", "Dispatched", "Out for delivery", "Shipped", "Delivered", "Cancelled"];
     if (!allowed.includes(req.body.status)) return res.status(400).json({ message: "Invalid order status." });
-    const [result] = await db.execute("UPDATE orders SET status = ? WHERE order_number = ? AND supplier_id = ?", [req.body.status, req.params.id, supplierId()]);
-    if (!result.affectedRows) return res.status(404).json({ message: "Order not found." });
-    res.json({ message: "Order updated." });
-  } catch (error) { next(error); }
+    const id = supplierId();
+    await connection.beginTransaction();
+    const [[order]] = await connection.execute("SELECT order_id, order_status FROM orders WHERE order_number = ? AND supplier_id = ? FOR UPDATE", [req.params.id, id]);
+    if (!order) { await connection.rollback(); return res.status(404).json({ message: "Order not found." }); }
+    const wasProcessing = order.order_status === "Processing";
+    const willProcess = req.body.status === "Processing";
+    if (!wasProcessing && willProcess) {
+      const [items] = await connection.execute("SELECT product_id, quantity FROM order_items WHERE order_id = ?", [order.order_id]);
+      for (const item of items) {
+        const [[stock]] = await connection.execute("SELECT i.quantity FROM inventory i JOIN products p ON p.product_id=i.product_id WHERE i.product_id=? AND p.supplier_id=? FOR UPDATE", [item.product_id, id]);
+        if (!stock || Number(stock.quantity) < Number(item.quantity)) {
+          await connection.rollback();
+          return res.status(409).json({ message: "Order cannot be moved to Processing because one or more products do not have enough stock." });
+        }
+        const previous = Number(stock.quantity), next = previous - Number(item.quantity);
+        await connection.execute("UPDATE inventory SET quantity=? WHERE product_id=?", [next, item.product_id]);
+        await connection.execute("INSERT INTO stock_history(product_id,supplier_id,previous_quantity,new_quantity,change_quantity,reason) VALUES(?,?,?,?,?,?)", [item.product_id,id,previous,next,-Number(item.quantity),"Order fulfilled"]);
+      }
+    }
+    await connection.execute("UPDATE orders SET order_status = ? WHERE order_id = ?", [req.body.status, order.order_id]);
+    await connection.commit();
+    res.json({ message: willProcess && !wasProcessing ? "Order updated and stock deducted." : "Order updated." });
+  } catch (error) { try { await connection.rollback(); } catch {} next(error); } finally { connection.release(); }
 }
 
 export async function updateDelivery(req, res, next) {
