@@ -1,13 +1,13 @@
 import db from "../config/db.js";
 import { getProducts } from "../models/productModel.js";
 
-const supplierId = (req) => Number(req.user?.supplier_id || 0);
+const supplierId = () => Number(process.env.SUPPLIER_ID || 1);
 const validEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
 
 export async function getSupplierOverview(req, res, next) {
   try {
     const id = supplierId(req);
-    const products = await getProducts();
+    const products = await getProducts(id);
     const [orders] = await db.execute(`
       SELECT o.order_number AS id, b.business_name AS buyer,
         DATE_FORMAT(o.ordered_at, '%d %b %Y') AS date,
