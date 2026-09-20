@@ -110,8 +110,8 @@ async function duplicateProduct(id) {
   return created;
 }
 
-async function updateProductStock(id, quantity) {
-  await request(`/products/${id}/stock`, { method: "PATCH", body: JSON.stringify({ quantity }) });
+async function updateProductStock(id, quantity, reason = "Manual adjustment") {
+  await request(`/products/${id}/stock`, { method: "PATCH", body: JSON.stringify({ quantity, reason }) });
   const updated = await request(`/products/${id}`);
   const index = products.value.findIndex((item) => item.product_id === Number(id));
   if (index !== -1) products.value[index] = updated;
