@@ -1,5 +1,5 @@
 import db from "../config/db.js";
-import { createProduct as insertProduct, getProducts, getProductById, updateProduct as saveProduct, updateProductStock as saveStock, deleteProduct as archiveProduct } from "../models/productModel.js";
+import { createProduct as insertProduct, getProducts, getProductById, updateProduct as saveProduct, updateProductStock as saveStock, deleteProduct as archiveProduct, bulkUpdateStock, getStockAnalytics } from "../models/productModel.js";
 
 const currentSupplierId = () => Number(process.env.SUPPLIER_ID || 1);
 const validId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
