@@ -1,9 +1,11 @@
 import express from "express";
-import {publishProduct,fetchProducts,fetchProductById,editProduct,removeProduct,patchProductStock,duplicateProduct,restoreProduct,fetchStockHistory,fetchInventoryAlerts,fetchProductAnalytics} from "../controllers/productController.js";
+import {publishProduct,fetchProducts,fetchProductById,editProduct,removeProduct,patchProductStock,duplicateProduct,restoreProduct,fetchStockHistory,fetchInventoryAlerts,fetchProductAnalytics,bulkPatchStock,fetchStockAnalytics} from "../controllers/productController.js";
 const router=express.Router();
 router.get("/",fetchProducts);
 router.get("/stock/history",fetchStockHistory);
 router.get("/stock/alerts",fetchInventoryAlerts);
+router.get("/stock/analytics",fetchStockAnalytics);
+router.patch("/stock/bulk",bulkPatchStock);
 router.get("/:id/analytics",fetchProductAnalytics);
 router.post("/:id/duplicate",duplicateProduct);
 router.post("/:id/restore",restoreProduct);
