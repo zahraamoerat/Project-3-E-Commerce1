@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import db from "../config/db.js";
 
 const router = express.Router();
 const uploadDirectory = path.resolve("uploads/products");
@@ -37,8 +38,12 @@ router.delete("/products", express.json(), async (req, res, next) => {
       return res.status(400).json({ message: "Provide between 1 and 8 image URLs to clean up." });
     }
 
+    const requestOrigin = `${req.protocol}://${req.get("host")}`;
     const safeFiles = urls.map((value) => {
       const parsed = new URL(String(value));
+      if (parsed.origin !== requestOrigin) {
+        throw Object.assign(new Error("Only images uploaded by this application can be removed."), { status: 400 });
+      }
       const filename = path.basename(parsed.pathname);
       if (!parsed.pathname.startsWith("/uploads/products/") || !filename || filename !== path.basename(parsed.pathname)) {
         throw Object.assign(new Error("Only product upload URLs can be removed."), { status: 400 });
@@ -49,12 +54,9 @@ router.delete("/products", express.json(), async (req, res, next) => {
       return filename;
     });
 
-    const db = (await import("../config/db.js")).default;
     const placeholders = safeFiles.map(() => "?").join(",");
-    const [referenced] = await db.execute(
-      `SELECT media_url FROM product_media WHERE media_url IN (${placeholders}) OR media_url LIKE CONCAT('%/uploads/products/', ?, '')`,
-      [...safeFiles.map((file) => `${req.protocol}://${req.get("host")}/uploads/products/${file}`), ""]
-    );
+    const publicUrls = safeFiles.map((file) => `${requestOrigin}/uploads/products/${file}`);
+    const [referenced] = await db.execute(`SELECT media_url FROM product_media WHERE media_url IN (${placeholders})`, publicUrls);
 
     const referencedUrls = new Set((referenced || []).map((row) => String(row.media_url)));
     const deleted = [];
