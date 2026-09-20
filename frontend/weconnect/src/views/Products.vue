@@ -101,7 +101,7 @@
                 <td>{{ formatPrice(product.price) }}</td>
                 <td>{{ Number(product.quantity).toLocaleString() }} units</td>
                 <td>
-                  <span class="supplier_products_status-badge" :class="product.stockStatus.toLowerCase().replace(' ', '-')">
+                  <span class="supplier_products_status-badge" :class="(product.stockStatus || (Number(product.quantity) === 0 ? \"Out of stock\" : Number(product.quantity) <= Number(product.low_stock_threshold || 0) ? \"Low stock\" : \"In stock\")).toLowerCase().replaceAll(\" \", \"-\")">
                     <span class="supplier_products_status-dot"></span>
                     {{ product.stockStatus }}
                   </span>
@@ -132,7 +132,7 @@
         <div v-else class="supplier_products_product-grid">
           <article v-for="product in paginatedProducts" :key="product.product_id" class="supplier_products_product-tile">
             <div class="supplier_products_tile-image">
-              <img :src="product.image" :alt="product.product_name" />
+              <img v-if="product.image" :src="product.image" :alt="product.product_name" @error="handleImageError" /><FontAwesomeIcon v-else :icon="faCube" />
               <span class="supplier_products_status-badge" :class="product.stockStatus.toLowerCase().replace(' ', '-')">
                 <span class="supplier_products_status-dot"></span>
                 {{ product.stockStatus }}
@@ -217,7 +217,7 @@ const filteredProducts = computed(() => {
     const searchable = [product.product_name, product.category_name, product.sku]
       .filter(Boolean).map(String).join(" ").toLowerCase();
     return (!query || searchable.includes(query)) &&
-      (selectedStatus.value === "All" || product.stockStatus === selectedStatus.value) &&
+      (selectedStatus.value === "All" || stockStatus(product) === selectedStatus.value) &&
       (selectedCatalog.value === "All" || (product.catalog_status || "Active") === selectedCatalog.value) &&
       (categoryFilter.value === "All" || product.category_name === categoryFilter.value) &&
       (minPrice.value === "" || Number(product.price) >= Number(minPrice.value)) &&
@@ -303,6 +303,7 @@ function exportCsv() {
   link.click();
   URL.revokeObjectURL(url);
 }
+function stockStatus(product) { const quantity=Number(product.quantity||0); const threshold=Number(product.low_stock_threshold||0); return quantity===0 ? "Out of stock" : quantity<=threshold ? "Low stock" : "In stock"; }
 function formatPrice(price) {
   return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(Number(price || 0));
 }
