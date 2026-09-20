@@ -77,8 +77,7 @@
 
       <section class="supplier_restock_page_inventory-shell">
         <div class="supplier_restock_page_table-header">
-          <span class="supplier_restock_page_checkbox-cell"><input type="checkbox"
-              aria-label="Select all products" /></span>
+          <span class="supplier_restock_page_checkbox-cell"><input type="checkbox" :checked="allVisibleSelected" :indeterminate="someVisibleSelected" aria-label="Select all visible products" @change="toggleAllVisible($event.target.checked)" /></span>
           <span>Product</span>
           <span>Status</span>
           <span>Stock level</span>
@@ -96,7 +95,7 @@
                 :aria-label="selectedId === product.product_id ? 'Collapse details' : 'Expand details'"
                 @click.stop="selectProduct(product.product_id)">{{ selectedId === product.product_id ? '⌄' : '›'
                 }}</button>
-              <input type="checkbox" :aria-label="`Select ${product.product_name}`" @click.stop />
+              <input type="checkbox" :checked="!!selectedProducts[product.product_id]" :aria-label="`Select ${product.product_name}`" @click.stop @change="toggleProduct(product.product_id, $event.target.checked)" />
             </div>
             <div class="supplier_restock_page_product-cell">
               <img :src="product.image" :alt="product.product_name" />
@@ -158,17 +157,14 @@
           </div>
         </template>
 
-        <div v-if="!filteredProducts.length" class="supplier_restock_page_empty-state">No products match this view.
-        </div>
+        <div v-if="!filteredProducts.length" class="supplier_restock_page_empty-state">No products match this view.</div>
       </section>
 
-      <div class="supplier_restock_page_save-bar" v-if="selectedProduct">
+      <div v-if="stockError" class="supplier_restock_page_stock-message supplier_restock_page_stock-message--error">{{ stockError }}</div><div v-if="stockSuccess" class="supplier_restock_page_stock-message supplier_restock_page_stock-message--success">{{ stockSuccess }}</div><div class="supplier_restock_page_save-bar" v-if="selectedCount">
         <div>
-          <strong>{{ selectedProduct.product_name }}</strong>
-          <span>{{ selectedProduct.sku }} · {{ selectedProduct.stockStatus }}</span>
+          <div><strong>{{ selectedCount }} product{{ selectedCount === 1 ? "" : "s" }} selected</strong><span>{{ selectedUnitTotal }} units will be applied</span></div>
         </div>
-        <button type="button" class="supplier_restock_page_primary-button" @click="applySelectedStock">Apply stock
-          update</button>
+        <button type="button" class="supplier_restock_page_primary-button" @click="applySelectedStock" :disabled="savingStock">{{ savingStock ? "Saving..." : `Apply stock update${selectedCount > 1 ? "s" : ""}` }}</button>
       </div>
     </div>
 
@@ -269,12 +265,12 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
 
 const route = useRoute();
-const { products, updateProduct } = useSupplierData();
+const { products, updateProductStock } = useSupplierData();
 
 const tabs = [
   { id: "all", label: "All items" },
@@ -289,7 +285,11 @@ const supplierFilter = ref("All suppliers");
 const sortOrder = ref("urgent");
 const selectedId = ref(Number(route.params.id) || products.value[0]?.product_id || null);
 const qtyMap = ref({});
+const selectedProducts = ref({});
 const autoRestock = ref({});
+const savingStock = ref(false);
+const stockError = ref("");
+const stockSuccess = ref("");
 const restockFlowOpen = ref(false);
 const restockStep = ref(1);
 const restockQuery = ref("");
@@ -354,9 +354,12 @@ function advanceRestockFlow() {
   restockStep.value += 1;
 }
 
-const selectedProduct = computed(() =>
-  products.value.find((product) => product.product_id === selectedId.value) || null,
-);
+const selectedProduct = computed(() => products.value.find((product) => product.product_id === selectedId.value) || null);
+const visibleIds = computed(() => filteredProducts.value.map((product) => product.product_id));
+const selectedCount = computed(() => Object.values(selectedProducts.value).filter(Boolean).length);
+const selectedUnitTotal = computed(() => Object.entries(selectedProducts.value).reduce((sum, [id, selected]) => selected ? sum + Number(qtyValue(Number(id)) || 0) : sum, 0));
+const allVisibleSelected = computed(() => visibleIds.value.length > 0 && visibleIds.value.every((id) => !!selectedProducts.value[id]));
+const someVisibleSelected = computed(() => visibleIds.value.some((id) => !!selectedProducts.value[id]) && !allVisibleSelected.value);
 
 const filteredProducts = computed(() => {
   const term = query.value.trim().toLowerCase();
@@ -472,20 +475,42 @@ function adjustQty(productId, delta) {
 }
 
 function updateQty(productId, rawValue) {
+  if (rawValue === "") { qtyMap.value[productId] = 0; return; }
   const numeric = Number(rawValue);
-  qtyMap.value[productId] = Number.isFinite(numeric) ? Math.max(0, numeric) : 0;
+  qtyMap.value[productId] = Number.isFinite(numeric) ? Math.max(0, Math.floor(numeric)) : 0;
 }
 
 function selectProduct(productId) {
   selectedId.value = productId;
 }
 
-function applySelectedStock() {
-  if (!selectedProduct.value) return;
-  const nextQty = Number(qtyMap.value[selectedProduct.value.product_id] ?? selectedProduct.value.quantity ?? 0);
-  updateProduct(selectedProduct.value.product_id, { quantity: nextQty });
-  selectedProduct.value.quantity = nextQty;
+function toggleProduct(productId, checked) {
+  selectedProducts.value = { ...selectedProducts.value, [productId]: checked };
+  if (checked) qtyValue(productId);
 }
+
+function toggleAllVisible(checked) {
+  const next = { ...selectedProducts.value };
+  visibleIds.value.forEach((id) => { next[id] = checked; if (checked) qtyValue(id); });
+  selectedProducts.value = next;
+}
+
+function applySelectedStock() {
+  const selectedIds = Object.entries(selectedProducts.value).filter(([, selected]) => selected).map(([id]) => Number(id));
+  if (!selectedIds.length || savingStock.value) return;
+  const invalid = selectedIds.find((id) => !Number.isInteger(Number(qtyValue(id))) || Number(qtyValue(id)) < 0);
+  if (invalid) { stockError.value = "Restock quantities must be whole numbers of 0 or more."; stockSuccess.value = ""; return; }
+  savingStock.value = true;
+  stockError.value = ""; stockSuccess.value = "";
+  Promise.all(selectedIds.map((id) => updateProductStock(id, Number(qtyValue(id)))))
+    .then(() => { stockSuccess.value = `${selectedIds.length} product${selectedIds.length === 1 ? "" : "s"} updated successfully.`; selectedProducts.value = {}; })
+    .catch((error) => { stockError.value = error.message || "Unable to apply the stock update."; })
+    .finally(() => { savingStock.value = false; });
+}
+
+watch(products, (items) => {
+  if (!selectedId.value && items.length) selectedId.value = items[0].product_id;
+}, { immediate: true });
 
 function money(value) {
   return new Intl.NumberFormat("en-ZA", {
@@ -585,6 +610,22 @@ button {
   background: #e17b3d;
   color: #fff;
 }
+
+.supplier_restock_page_primary-button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.supplier_restock_page_stock-message {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.supplier_restock_page_stock-message--error { background: #fae4e0; color: #b75347; }
+.supplier_restock_page_stock-message--success { background: #ebf5eb; color: #4d8a5c; }
 
 .supplier_restock_page_metrics-grid {
   display: grid;
@@ -987,6 +1028,9 @@ button {
 }
 
 .supplier_restock_page_save-bar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 10;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1026,6 +1070,7 @@ button {
 }
 
 @media (max-width: 760px) {
+  .supplier_restock_page_restock-page__shell { padding: 14px 12px 90px; }
   .supplier_restock_page_restock-header {
     flex-direction: column;
     align-items: flex-start;
@@ -1048,14 +1093,21 @@ button {
   }
 
   .supplier_restock_page_inventory-row {
-    grid-template-columns: 34px 1fr;
-    gap: 10px;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 10px 12px;
     padding: 14px;
   }
 
-  .supplier_restock_page_inventory-row> :not(.supplier_restock_page_checkbox-cell):not(.supplier_restock_page_product-cell) {
-    grid-column: 2;
-  }
+  .supplier_restock_page_inventory-row > .supplier_restock_page_checkbox-cell { grid-column: 1; grid-row: 1; align-self: start; }
+  .supplier_restock_page_inventory-row > .supplier_restock_page_product-cell { grid-column: 2; grid-row: 1; min-width: 0; }
+  .supplier_restock_page_inventory-row > .supplier_restock_page_gauge-cell,
+  .supplier_restock_page_inventory-row > .supplier_restock_page_status-pill,
+  .supplier_restock_page_inventory-row > .supplier_restock_page_sparkline-wrap,
+  .supplier_restock_page_inventory-row > .supplier_restock_page_urgency-block,
+  .supplier_restock_page_inventory-row > .supplier_restock_page_qty-actions { grid-column: 2; width: 100%; }
+  .supplier_restock_page_inventory-row > .supplier_restock_page_sparkline-wrap { justify-content: flex-start; }
+  .supplier_restock_page_qty-actions { justify-content: flex-start; }
+  .supplier_restock_page_qty-actions input { width: 64px; }
 
   .supplier_restock_page_detail-row {
     grid-template-columns: 1fr;
@@ -1064,11 +1116,20 @@ button {
 
   .supplier_restock_page_save-bar {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    padding: 14px;
   }
+  .supplier_restock_page_save-bar .supplier_restock_page_primary-button { width: 100%; }
 }
 
 @media (max-width: 520px) {
+  .supplier_restock_page_restock-header { margin: 0 4px 16px; }
+  .supplier_restock_page_restock-header__actions > * { width: 100%; }
+  .supplier_restock_page_toolbar { padding: 0 4px; }
+  .supplier_restock_page_tab-list { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 3px; }
+  .supplier_restock_page_tab-button { flex: 0 0 auto; }
+  .supplier_restock_page_inventory-shell { border-radius: 10px; }
+
   .supplier_restock_page_metrics-grid {
     grid-template-columns: 1fr;
   }
@@ -1078,9 +1139,10 @@ button {
   }
 
   .supplier_restock_page_search-box,
-  .supplier_restock_page_select-box {
-    width: 100%;
-  }
+  .supplier_restock_page_select-box { width: 100%; box-sizing: border-box; }
+  .supplier_restock_page_product-cell img { width: 40px; height: 40px; }
+  .supplier_restock_page_product-cell strong { font-size: 12.5px; }
+  .supplier_restock_page_product-cell small { font-size: 10px; }
 }
 
 .supplier_restock_page_modal-backdrop {
