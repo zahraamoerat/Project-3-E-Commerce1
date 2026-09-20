@@ -215,6 +215,7 @@ const {
   products,
   updateProduct,
   uploadProductImages,
+  cleanupProductImages,
   categories,
   categoriesLoading,
   categoriesError,
@@ -430,9 +431,10 @@ async function save() {
   }
 
   saving.value = true;
+  let uploadedUrls = [];
   try {
-    const images = await uploadProductImages(form.images);
-    await updateProduct(productId.value, {
+    const images = await uploadProductImages(form.images, (urls) => { uploadedUrls = urls; });
+    const result = await updateProduct(productId.value, {
       ...form,
       product_name: form.product_name.trim(),
       category_name: form.category_name,
@@ -441,11 +443,13 @@ async function save() {
       image: images[0] || "",
       images,
     });
+    await cleanupProductImages(result.removedMediaUrls || []);
     message.value = "Product updated successfully.";
     original.value = snapshot(form);
     Object.assign(form, { images: [...images], image: images[0] || "" });
     setTimeout(() => router.push("/products"), 650);
   } catch (e) {
+    if (uploadedUrls.length) await cleanupProductImages(uploadedUrls);
     error.value = e.message || "Unable to update the product.";
   } finally {
     saving.value = false;
