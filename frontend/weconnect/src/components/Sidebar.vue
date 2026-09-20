@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar" :class="{ "sidebar--collapsed": collapsed }"> <!-- ========================= LOGO / BRAND ========================== -->
+  <aside class="sidebar" :class="{ 'sidebar--collapsed': collapsed }"> <!-- ========================= LOGO / BRAND ========================== -->
     <div class="sidebar_brand">
       <button class="sidebar_toggle" type="button" @click="toggleSidebar" :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'" :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"><span>{{ collapsed ? "›" : "‹" }}</span></button>
       <div class="sidebar_brand-icon"> <img :src="logo" alt="WeConnect logo" class="sidebar_brand-logo" /> </div>
