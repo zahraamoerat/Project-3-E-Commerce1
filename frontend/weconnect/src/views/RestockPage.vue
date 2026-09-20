@@ -502,7 +502,7 @@ function applySelectedStock() {
   if (invalid) { stockError.value = "Restock quantities must be whole numbers of 0 or more."; stockSuccess.value = ""; return; }
   savingStock.value = true;
   stockError.value = ""; stockSuccess.value = "";
-  Promise.all(selectedIds.map((id) => updateProductStock(id, Number(qtyValue(id)))))
+  Promise.all(selectedIds.map((id) => updateProductStock(id, Number(qtyValue(id)), "Delivery received")))
     .then(() => { stockSuccess.value = `${selectedIds.length} product${selectedIds.length === 1 ? "" : "s"} updated successfully.`; selectedProducts.value = {}; })
     .catch((error) => { stockError.value = error.message || "Unable to apply the stock update."; })
     .finally(() => { savingStock.value = false; });
