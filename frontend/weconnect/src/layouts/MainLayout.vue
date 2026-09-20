@@ -90,7 +90,7 @@ onUnmounted(() => window.removeEventListener("keydown", handleShortcut));
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  background: #f7f5f2;
+  background: #f6f3ef;
 }
 
 .sidebar_main-content {
@@ -105,7 +105,7 @@ onUnmounted(() => window.removeEventListener("keydown", handleShortcut));
 .quick-bar {
   display: flex;
   justify-content: flex-end;
-  padding: 10px 24px 0;
+  padding: 14px 30px 0;
   background: #f7f5f2;
 }
 
@@ -151,7 +151,7 @@ kbd {
   border: 1px solid #e2d8d0;
   border-radius: 14px;
   background: #fff;
-  box-shadow: 0 22px 70px rgba(59, 37, 27, 0.22);
+  box-shadow: 0 28px 80px rgba(59,37,27,.25);
   overflow: hidden;
 }
 
