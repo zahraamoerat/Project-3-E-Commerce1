@@ -9,7 +9,7 @@
         </div>
 
         <div class="supplier_restock_page_restock-header__actions">
-          <button type="button" class="supplier_restock_page_ghost-button">Export</button>
+          <button type="button" class="supplier_restock_page_ghost-button" @click="exportInventory">Export</button>
           <button type="button" class="supplier_restock_page_primary-button" @click="openRestockFlow">+ New restock
             order</button>
         </div>
@@ -59,8 +59,8 @@
           </label>
           <label class="supplier_restock_page_select-box">
             <span>☷</span>
-            <select v-model="supplierFilter">
-              <option value="All suppliers">All suppliers</option>
+            <select v-model="supplierFilter" aria-label="Filter by category">
+              <option value="All suppliers">All categories</option>
               <option v-for="option in supplierOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </label>
@@ -152,7 +152,7 @@
             </div>
             <div class="supplier_restock_page_detail-group">
               <span class="supplier_restock_page_detail-label">LAST RESTOCKED</span>
-              <span class="supplier_restock_page_detail-value">Jul 30</span>
+              <span class="supplier_restock_page_detail-value">{{ formatDate(product.last_restocked) }}</span>
             </div>
           </div>
         </template>
@@ -511,6 +511,9 @@ function applySelectedStock() {
 watch(products, (items) => {
   if (!selectedId.value && items.length) selectedId.value = items[0].product_id;
 }, { immediate: true });
+
+function formatDate(value) { if (!value) return "Not recorded"; return new Intl.DateTimeFormat("en-ZA",{dateStyle:"medium"}).format(new Date(value)); }
+function exportInventory() { const headers=["Product","SKU","Category","Stock","Threshold","Status","Restock quantity","Last restocked"]; const rows=products.value.map(p=>[p.product_name,p.sku||"",p.category_name||"",p.quantity,p.low_stock_threshold,stockStatus(p),qtyValue(p.product_id),formatDate(p.last_restocked)]); const csv=[headers,...rows].map(row=>row.map(value=>`"${String(value??"").replaceAll('"','""')}"`).join(",")).join("\n"); const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}); const url=URL.createObjectURL(blob); const link=document.createElement("a"); link.href=url; link.download="weconnect-inventory.csv"; link.click(); URL.revokeObjectURL(url); }
 
 function money(value) {
   return new Intl.NumberFormat("en-ZA", {
