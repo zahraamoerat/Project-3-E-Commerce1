@@ -76,12 +76,12 @@ function logout() {
 </script>
 <style scoped>
 .sidebar {
-  --sidebar-bg: #fbf9ff;
-  --sidebar-text: #514b60;
-  --sidebar-muted: #9891a5;
-  --sidebar-active: #8067ed;
-  --sidebar-active-soft: #eee9ff;
-  --sidebar-border: #e9e5f2;
+  --sidebar-bg: #3f2c25;
+  --sidebar-text: #f4e9e2;
+  --sidebar-muted: #cdbbb0;
+  --sidebar-active: #d58a5a;
+  --sidebar-active-soft: #5a4034;
+  --sidebar-border: #5a4034;
   position: sticky;
   top: 0;
   width: 248px;
@@ -97,7 +97,7 @@ function logout() {
   color: var(--sidebar-text);
   background: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
-  box-shadow: 6px 0 24px rgba(84, 70, 120, .05);
+  box-shadow: 6px 0 24px rgba(40, 25, 18, .14);
   transition: width .25s ease, padding .25s ease, box-shadow .25s ease;
 }
 
@@ -108,7 +108,7 @@ function logout() {
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(180deg, #9b85f5 0%, #8067ed 50%, #b7a6ff 100%);
+  background: linear-gradient(180deg, #d89a70 0%, #a9633f 50%, #e1b08d 100%);
   opacity: .8;
 }
 
@@ -129,9 +129,9 @@ function logout() {
   display: grid;
   place-items: center;
   border-radius: 13px;
-  background: #f0ecff;
-  border: 1px solid #e4defa;
-  box-shadow: 0 5px 14px rgba(100, 81, 170, .08);
+  background: #4b342b;
+  border: 1px solid #65493d;
+  box-shadow: 0 5px 14px rgba(20, 12, 8, .16);
   overflow: hidden;
 }
 
@@ -152,7 +152,7 @@ function logout() {
 
 .sidebar_brand-text h2 {
   margin: 0;
-  color: #302b3d;
+  color: #fff8f2;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 16px;
   font-weight: 750;
@@ -162,7 +162,7 @@ function logout() {
 
 .sidebar_brand-text span {
   margin-top: 4px;
-  color: #9a92a9;
+  color: #cdbbb0;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 8px;
   font-weight: 700;
@@ -178,11 +178,11 @@ function logout() {
   z-index: 5;
   display: grid;
   place-items: center;
-  border: 1px solid #e4deef;
+  border: 1px solid #694b3d;
   border-radius: 50%;
-  background: #fff;
-  color: #71677f;
-  box-shadow: 0 4px 13px rgba(65, 53, 95, .14);
+  background: #fffaf7;
+  color: #d9c4b7;
+  box-shadow: 0 4px 13px rgba(30, 18, 12, .22);
   font-size: 17px;
   font-weight: 700;
   line-height: 1;
@@ -192,8 +192,8 @@ function logout() {
 
 .sidebar_toggle:hover {
   transform: scale(1.08);
-  color: var(--sidebar-active);
-  box-shadow: 0 6px 18px rgba(86, 68, 145, .18);
+  color: #e0a078;
+  box-shadow: 0 6px 18px rgba(55, 32, 22, .24);
 }
 
 .sidebar_navigation {
@@ -223,20 +223,20 @@ function logout() {
 }
 
 .sidebar_nav-item:hover {
-  color: #5d536d;
-  background: #f4f1fa;
+  color: #fff0e7;
+  background: #523a30;
   transform: translateX(2px);
 }
 
 .sidebar_nav-item--active {
   color: #fff;
-  background: linear-gradient(135deg, #8871ee 0%, #7b61e7 100%);
-  box-shadow: 0 7px 16px rgba(114, 91, 205, .19);
+  background: linear-gradient(135deg, #b86f47 0%, #925237 100%);
+  box-shadow: 0 7px 16px rgba(45, 25, 16, .25);
 }
 
 .sidebar_nav-item--active:hover {
   color: #fff;
-  background: linear-gradient(135deg, #8871ee 0%, #7b61e7 100%);
+  background: linear-gradient(135deg, #b86f47 0%, #925237 100%);
   transform: none;
 }
 
@@ -246,7 +246,7 @@ function logout() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #837a91;
+  color: #c9b4a8;
   font-size: 15px;
   transition: color .18s ease;
 }
@@ -262,7 +262,7 @@ function logout() {
   margin-left: auto;
   flex: 0 0 6px;
   border-radius: 50%;
-  background: #fff;
+  background: #fffaf7;
 }
 
 .sidebar_nav-item--active .sidebar_notification-dot {
@@ -289,8 +289,8 @@ function logout() {
 }
 
 .sidebar_logout:hover {
-  color: #5d536d;
-  background: #f4f1fa;
+  color: #fff0e7;
+  background: #523a30;
 }
 
 .sidebar_logout-icon {
