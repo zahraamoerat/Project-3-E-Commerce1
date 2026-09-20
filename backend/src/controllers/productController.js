@@ -1,7 +1,7 @@
 import db from "../config/db.js";
 import { createProduct as insertProduct, getProducts, getProductById, updateProduct as saveProduct, updateProductStock as saveStock, deleteProduct as archiveProduct } from "../models/productModel.js";
 
-const currentSupplierId = (req) => Number(req.user?.supplier_id || 0);
+const currentSupplierId = () => Number(process.env.SUPPLIER_ID || 1);
 const validId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
 const fail = (message,status=400) => Object.assign(new Error(message),{status});
 
