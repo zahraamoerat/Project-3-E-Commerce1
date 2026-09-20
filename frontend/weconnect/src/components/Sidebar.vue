@@ -47,7 +47,8 @@
 </template>
 <script setup>
 import logo from "../assets/link-icon-white.png"
-import { ref } from "vue"\nimport { useRouter } from "vue-router"
+import { ref } from "vue"
+import { useRouter } from "vue-router"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import { faChartLine } from "@fortawesome/free-solid-svg-icons"
 import { faShoppingBag } from "@fortawesome/free-solid-svg-icons"
