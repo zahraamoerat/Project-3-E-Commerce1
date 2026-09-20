@@ -1,6 +1,7 @@
 <template>
-  <aside class="sidebar"> <!-- ========================= LOGO / BRAND ========================== -->
+  <aside class="sidebar" :class="{ "sidebar--collapsed": collapsed }"> <!-- ========================= LOGO / BRAND ========================== -->
     <div class="sidebar_brand">
+      <button class="sidebar_toggle" type="button" @click="toggleSidebar" :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'" :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"><span>{{ collapsed ? "›" : "‹" }}</span></button>
       <div class="sidebar_brand-icon"> <img :src="logo" alt="WeConnect logo" class="sidebar_brand-logo" /> </div>
       <div class="sidebar_brand-text">
         <h2>WeConnect</h2> <span>SUPPLIER NETWORK</span>
@@ -10,43 +11,43 @@
       <RouterLink to="/dashboard" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faChartLine" />
-        </span> <span>Dashboard</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Products -->
+        </span> <span class="sidebar_nav-label">Dashboard</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Products -->
       <RouterLink to="/products" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faShoppingBag" />
-        </span> <span>Products</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Orders -->
+        </span> <span class="sidebar_nav-label">Products</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Orders -->
       <RouterLink to="/orders" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faList" />
-        </span> <span>Orders</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+        </span> <span class="sidebar_nav-label">Orders</span> <span class="sidebar_notification-dot"></span> </RouterLink>
       <!-- Stock Management -->
       <RouterLink to="/stockmanagement" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faWarehouse" />
-        </span> <span>Stock Management</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+        </span> <span class="sidebar_nav-label">Stock Management</span> <span class="sidebar_notification-dot"></span> </RouterLink>
       <!-- Deliveries -->
       <RouterLink to="/deliveries" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faTruck" />
-        </span> <span>Deliveries</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Reviews -->
+        </span> <span class="sidebar_nav-label">Deliveries</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Reviews -->
       <RouterLink to="/reviews" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faStar" />
-        </span> <span>Reviews</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+        </span> <span class="sidebar_nav-label">Reviews</span> <span class="sidebar_notification-dot"></span> </RouterLink>
       <!-- Business Profile -->
       <RouterLink to="/profile" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
           class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faAddressCard" />
-        </span> <span>Business Profile</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+        </span> <span class="sidebar_nav-label">Business Profile</span> <span class="sidebar_notification-dot"></span> </RouterLink>
     </nav> <!-- ========================= LOGOUT ========================== --> <button class="sidebar_logout"
       @click="logout"> <span class="sidebar_logout-icon">
         <FontAwesomeIcon :icon="faUser" />
-      </span> <span>Log out</span> </button>
+      </span> <span class="sidebar_nav-label">Log out</span> </button>
   </aside>
 </template>
 <script setup>
 import logo from "../assets/link-icon-white.png"
-import { useRouter } from "vue-router"
+import { ref } from "vue"\nimport { useRouter } from "vue-router"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
 import { faChartLine } from "@fortawesome/free-solid-svg-icons"
 import { faShoppingBag } from "@fortawesome/free-solid-svg-icons"
@@ -58,6 +59,12 @@ import { faUser } from "@fortawesome/free-solid-svg-icons"
 import { faAddressCard } from "@fortawesome/free-solid-svg-icons"
 /* ========================= ROUTER ========================= */
 const router = useRouter()
+const collapsed = ref(localStorage.getItem("weconnect_sidebar_collapsed") === "true")
+
+function toggleSidebar() {
+  collapsed.value = !collapsed.value
+  localStorage.setItem("weconnect_sidebar_collapsed", String(collapsed.value))
+}
 /* ========================= LOGOUT ========================= */
 function logout() {
   localStorage.removeItem("token")
@@ -351,6 +358,146 @@ function logout() {
   .sidebar_nav-item {
     padding: 0 12px;
     min-height: 42px;
+  }
+}
+
+/* ========================================================= COLLAPSIBLE SIDEBAR ========================================================= */
+.sidebar {
+  width: 248px;
+  transition: width .25s ease, padding .25s ease, box-shadow .25s ease;
+}
+
+.sidebar_toggle {
+  position: absolute;
+  top: 24px;
+  right: -12px;
+  z-index: 2;
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 50%;
+  background: #fff;
+  color: #5b443c;
+  box-shadow: 0 4px 14px rgba(35,25,20,.18);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform .2s ease, background .2s ease, color .2s ease;
+}
+
+.sidebar_toggle:hover {
+  transform: scale(1.08);
+  background: #f8f3ef;
+  color: #d2763d;
+}
+
+.sidebar_brand {
+  position: relative;
+  min-height: 40px;
+}
+
+.sidebar_nav-label,
+.sidebar_brand-text {
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity .16s ease, width .25s ease, max-width .25s ease;
+}
+
+.sidebar_nav-label {
+  max-width: 180px;
+}
+
+.sidebar--collapsed {
+  width: 78px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.sidebar--collapsed .sidebar_brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar--collapsed .sidebar_brand-text,
+.sidebar--collapsed .sidebar_nav-label {
+  width: 0;
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar--collapsed .sidebar_brand {
+  gap: 0;
+}
+
+.sidebar--collapsed .sidebar_nav-item {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar--collapsed .sidebar_nav-icon {
+  width: 24px;
+  font-size: 17px;
+}
+
+.sidebar--collapsed .sidebar_notification-dot {
+  position: absolute;
+  top: 9px;
+  right: 12px;
+  margin: 0;
+}
+
+.sidebar--collapsed .sidebar_logout {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar--collapsed .sidebar_logout-icon {
+  width: 24px;
+}
+
+.sidebar--collapsed .sidebar_toggle {
+  right: -12px;
+}
+
+@media (max-width: 900px) and (min-width: 701px) {
+  .sidebar--collapsed {
+    width: 72px;
+  }
+}
+
+@media (max-width: 700px) {
+  .sidebar_toggle {
+    top: 18px;
+    right: 12px;
+  }
+
+  .sidebar--collapsed {
+    width: 100%;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .sidebar--collapsed .sidebar_brand-text {
+    width: 0;
+  }
+
+  .sidebar--collapsed .sidebar_navigation {
+    justify-content: flex-start;
+  }
+
+  .sidebar--collapsed .sidebar_nav-item {
+    width: 44px;
+    min-width: 44px;
+    justify-content: center;
+    padding: 0;
   }
 }
 </style>
