@@ -152,20 +152,55 @@ async function updateProfile(changes) {
 }
 
 async function uploadProductImages(imageSources) {
-  if (imageSources.length > 8) throw new Error("A product can have a maximum of 8 images.");
-  const blobs = imageSources.filter((source) => String(source).startsWith("blob:"));
-  if (!blobs.length) return imageSources;
-  const formData = new FormData();
-  for (let index = 0; index < blobs.length; index += 1) {
-    const blob = await (await fetch(blobs[index])).blob();
-    formData.append("images", blob, `product-${Date.now()}-${index}.${blob.type === "image/png" ? "png" : "jpg"}`);
+  if (!Array.isArray(imageSources) || imageSources.length > 8) {
+    throw new Error("A product can have a maximum of 8 images.");
   }
-  const response = await fetch(`${API_URL}/uploads/products`, { method: "POST", body: formData });
+
+  const result = [...imageSources];
+  const blobs = imageSources
+    .map((source, index) => ({ source: String(source), index }))
+    .filter(({ source }) => source.startsWith("blob:"));
+
+  if (!blobs.length) return result;
+
+  const formData = new FormData();
+
+  for (let index = 0; index < blobs.length; index += 1) {
+    const { source } = blobs[index];
+    const blob = await (await fetch(source)).blob();
+    const extension = blob.type === "image/png" ? "png" : "jpg";
+    formData.append("images", blob, `product-${Date.now()}-${index}.${extension}`);
+  }
+
+  const response = await fetch(`${API_URL}/uploads/products`, {
+    method: "POST",
+    body: formData,
+  });
+
   const rawBody = await response.text();
   let body = {};
-  try { body = rawBody ? JSON.parse(rawBody) : {}; } catch { body = {}; }
-  if (!response.ok) throw new Error(body.message || rawBody?.trim() || "Unable to upload product images.");
-  return [...imageSources.filter((source) => !String(source).startsWith("blob:")), ...(body.urls || [])];
+  try {
+    body = rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    body = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(body.message || rawBody?.trim() || "Unable to upload product images.");
+  }
+
+  const uploadedUrls = Array.isArray(body.urls) ? body.urls : [];
+  if (uploadedUrls.length !== blobs.length) {
+    throw new Error("The server did not return all uploaded image URLs.");
+  }
+
+  // Replace each temporary blob URL in its original position. This preserves
+  // the user's image order and therefore preserves which image is primary.
+  blobs.forEach(({ index }, uploadIndex) => {
+    result[index] = uploadedUrls[uploadIndex];
+  });
+
+  return result;
 }
 
 export function useSupplierData() {
