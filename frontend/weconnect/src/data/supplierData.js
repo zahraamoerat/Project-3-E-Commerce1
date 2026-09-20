@@ -152,7 +152,10 @@ async function updateProfile(changes) {
 }
 
 async function cleanupProductImages(urls) {
-  const safeUrls = Array.isArray(urls) ? urls.filter((url) => typeof url === "string" && url.startsWith(`${window.location.origin}/uploads/products/`)) : [];
+  const apiOrigin = new URL(API_URL, window.location.origin).origin;
+  const safeUrls = Array.isArray(urls) ? urls.filter((url) => {
+    try { const parsed = new URL(url); return parsed.origin === apiOrigin && parsed.pathname.startsWith("/uploads/products/"); } catch { return false; }
+  }) : [];
   if (!safeUrls.length) return;
   try {
     await request("/uploads/products", { method: "DELETE", body: JSON.stringify({ urls: safeUrls }) });
