@@ -74,9 +74,9 @@ function logout() {
   position: sticky;
   top: 0;
   left: 0;
-  background: #523a33;
+  background: linear-gradient(180deg,#4d3731 0%,#3e2d29 100%);
   color: #c9b7ae;
-  padding: 22px 16px 16px;
+  padding: 24px 14px 18px; box-shadow: 8px 0 30px rgba(63,43,35,.10);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -92,7 +92,7 @@ function logout() {
   align-items: center;
   gap: 13px;
   padding: 6px 10px;
-  margin-bottom: 30px;
+  margin-bottom: 34px;
   flex-shrink: 0;
 }
 
@@ -144,7 +144,7 @@ function logout() {
 
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 7px;
   flex: 1;
 }
 
@@ -155,10 +155,10 @@ function logout() {
   align-items: center;
   gap: 15px;
   width: 100%;
-  min-height: 45px;
+  min-height: 48px;
   padding: 0 15px;
   box-sizing: border-box;
-  border-radius: 9px;
+  border-radius: 12px;
   color: #c9b7ae;
   text-decoration: none;
   font-family: figtree;
@@ -177,9 +177,9 @@ function logout() {
 /* ========================================================= EXACT ACTIVE PAGE ========================================================= */
 /* IMPORTANT: We use the custom exact-active-class: sidebar_nav-item--active instead of router-link-active. This prevents a parent route such as: /products from remaining active when the user is on: /products/add /products/edit /products/details Only the exact route receives the active styling. */
 .sidebar_nav-item--active {
-  background: #684d45;
+  background: linear-gradient(135deg,#79594e,#684b42);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 22px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.06);
 }
 
 /* ========================================================= ACTIVE ICON ========================================================= */
