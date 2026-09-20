@@ -20,7 +20,7 @@
       <div v-for="product in pagedProducts" :key="product.product_id" class="inventory-row">
         <div class="product"><input type="checkbox" :checked="!!selected[product.product_id]" @change="toggleProduct(product.product_id,$event.target.checked)" :aria-label="`Select ${product.product_name}`" /><img :src="product.image" :alt="product.product_name" /><div><strong>{{ product.product_name }}</strong><span>{{ product.sku }} · {{ product.category_name || "Uncategorised" }}</span></div></div>
         <div class="quantity"><strong>{{ product.quantity }}</strong><span>units</span></div><div class="reorder"><strong>{{ recommendedQty(product) }}</strong><span>recommended · {{ product.lead_time_days || 1 }}d lead</span></div>
-        <span class="badge" :class="statusClass(product.stockStatus)">{{ product.stockStatus }}</span>
+        <span class="badge" :class="statusClass(stockStatus(product))">{{ stockStatus(product) }}</span>
         <strong class="price">{{ money(product.price) }}</strong>
         <div class="actions"><button class="secondary" type="button" @click="showProductHistory(product)">History</button><button class="edit-stock" type="button" @click="startEdit(product)">Edit</button><button class="restock" type="button" @click="openReceive(product)">Receive</button></div>
       </div>
@@ -35,7 +35,10 @@ const { products, updateProductStock, loading } = useSupplierData();
 const router = useRouter(), query = ref(""), statusFilter = ref("All"), categoryFilter = ref("All"), sortOrder = ref("stock"), page = ref(1);
 const editing = ref(null), adjustmentMode = ref("set"), editQuantity = ref(0), editReason = ref("Manual adjustment"), saving = ref(false), message = ref(""), error = ref("");
 const selected = ref({}), bulkMode = ref("receive"), bulkQuantity = ref(0), bulkSaving = ref(false);
-const selectedCount = computed(() => Object.values(selected.value).filter(Boolean).length), visibleIds = computed(() => pagedProducts.value.map(p => p.product_id)), allVisibleSelected = computed(() => visibleIds.value.length && visibleIds.value.every(id => selected.value[id])), someVisibleSelected = computed(() => visibleIds.value.some(id => selected.value[id]) && !allVisibleSelected.value));
+const selectedCount = computed(() => Object.values(selected.value).filter(Boolean).length);
+const visibleIds = computed(() => pagedProducts.value.map(p => p.product_id));
+const allVisibleSelected = computed(() => visibleIds.value.length > 0 && visibleIds.value.every(id => selected.value[id]));
+const someVisibleSelected = computed(() => visibleIds.value.some(id => selected.value[id]) && !allVisibleSelected.value);
 const history = ref([]), historyLoading = ref(false), alerts = ref([]), alertsLoading = ref(false), analytics = ref([]), analyticsLoading = ref(false), historyProduct = ref(null);
 const filters = ["All","In stock","Low stock","Out of stock"];
 const categories = computed(() => [...new Set(products.value.map(p => p.category_name).filter(Boolean))].sort());
