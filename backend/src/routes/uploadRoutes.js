@@ -30,4 +30,48 @@ router.post("/products", upload.array("images", 8), (req, res) => {
   res.status(201).json({ urls });
 });
 
+router.delete("/products", express.json(), async (req, res, next) => {
+  try {
+    const urls = Array.isArray(req.body?.urls) ? req.body.urls : [];
+    if (!urls.length || urls.length > 8) {
+      return res.status(400).json({ message: "Provide between 1 and 8 image URLs to clean up." });
+    }
+
+    const safeFiles = urls.map((value) => {
+      const parsed = new URL(String(value));
+      const filename = path.basename(parsed.pathname);
+      if (!parsed.pathname.startsWith("/uploads/products/") || !filename || filename !== path.basename(parsed.pathname)) {
+        throw Object.assign(new Error("Only product upload URLs can be removed."), { status: 400 });
+      }
+      if (!/^[a-zA-Z0-9._-]+$/.test(filename)) {
+        throw Object.assign(new Error("Invalid product image filename."), { status: 400 });
+      }
+      return filename;
+    });
+
+    const db = (await import("../config/db.js")).default;
+    const placeholders = safeFiles.map(() => "?").join(",");
+    const [referenced] = await db.execute(
+      `SELECT media_url FROM product_media WHERE media_url IN (${placeholders}) OR media_url LIKE CONCAT('%/uploads/products/', ?, '')`,
+      [...safeFiles.map((file) => `${req.protocol}://${req.get("host")}/uploads/products/${file}`), ""]
+    );
+
+    const referencedUrls = new Set((referenced || []).map((row) => String(row.media_url)));
+    const deleted = [];
+    for (const filename of safeFiles) {
+      const publicUrl = `${req.protocol}://${req.get("host")}/uploads/products/${filename}`;
+      if (referencedUrls.has(publicUrl)) continue;
+      const filePath = path.join(uploadDirectory, filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        deleted.push(filename);
+      }
+    }
+
+    res.json({ deleted });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
