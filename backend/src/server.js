@@ -12,7 +12,7 @@ import supplierProductRoutes from "./routes/s_productRoutes.js";
 import supplierRoutes from "./routes/supplierRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
-import supplierPaymentRoutes from "./routes/paymentRoutes.js";
+import supplierPaymentRoutes from "./routes/b_paymentRoutes.js";
 
 // ===============================
 // SMALL BUSINESS ROUTES
@@ -68,31 +68,28 @@ app.get("/", (_req, res) => {
 // SUPPLIER APIs
 // ===============================
 
-// Supplier products
 app.use(
   "/api/supplier/products",
   supplierProductRoutes
 );
 
-// Supplier profile/orders/deliveries/etc.
 app.use(
   "/api/supplier",
   supplierRoutes
 );
 
-// Product image uploads
 app.use(
   "/api/uploads",
   uploadRoutes
 );
 
-// Categories
 app.use(
   "/api/categories",
   categoryRoutes
 );
 
-// Supplier payments
+// Supplier payment endpoint is kept separate from
+// the Small Business payment endpoint.
 app.use(
   "/api/supplier/payments",
   supplierPaymentRoutes
@@ -102,37 +99,31 @@ app.use(
 // SMALL BUSINESS APIs
 // ===============================
 
-// Orders
 app.use(
   "/api/orders",
   orderRoutes
 );
 
-// Order items
 app.use(
   "/api/orders",
   orderItemRoutes
 );
 
-// Deliveries
 app.use(
   "/api/deliveries",
   deliveryRoutes
 );
 
-// Products
 app.use(
   "/api/products",
   productRoutes
 );
 
-// Cart
 app.use(
   "/api/cart",
   cartRoutes
 );
 
-// Payments
 app.use(
   "/api/payments",
   paymentRoutes
