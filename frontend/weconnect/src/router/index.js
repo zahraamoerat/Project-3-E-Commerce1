@@ -6,7 +6,7 @@ import StockManagement from "../views/StockManagement.vue";
 import AddProducts from "../views/AddProducts.vue";
 import EditProduct from "../views/EditProduct.vue";
 import ViewProduct from "../views/ViewProduct.vue";
-import Dashboard from "../views/S_Dashboard.vue/index.js";
+import Dashboard from "../views/S_Dashboard.vue";
 import Orders from "../views/Orders.vue";
 import Deliveries from "../views/Deliveries.vue";
 import Profile from "../views/Profile.vue";
