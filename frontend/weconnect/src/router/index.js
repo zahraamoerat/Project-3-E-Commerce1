@@ -7,7 +7,7 @@ import StockManagement from "../views/StockManagement.vue";
 import AddProducts from "../views/AddProducts.vue";
 import EditProduct from "../views/EditProduct.vue";
 import ViewProduct from "../views/ViewProduct.vue";
-import Dashboard from "../views/S_Dashboard.vue";
+import Dashboard from "../views/SupplierDashboard.vue";
 import Orders from "../views/Orders.vue";
 import Deliveries from "../views/Deliveries.vue";
 import Profile from "../views/Profile.vue";
@@ -20,7 +20,7 @@ const routes = [
     children: [
       { path: "", redirect: "/products" },
       { path: "products/add", name: "AddProducts", component: AddProducts },
-      { path: "dashboard", name: "S_Dashboard", component: Dashboard },
+      { path: "dashboard", name: "SupplierDashboard", component: Dashboard },
       { path: "products", name: "S_Products", component: Products },
       {
         path: "products/edit/:id",
