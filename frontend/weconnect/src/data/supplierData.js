@@ -152,9 +152,8 @@ async function updateProfile(changes) {
 }
 
 async function cleanupProductImages(urls) {
-  const apiOrigin = new URL(API_URL, window.location.origin).origin;
   const safeUrls = Array.isArray(urls) ? urls.filter((url) => {
-    try { const parsed = new URL(url); return parsed.origin === apiOrigin && parsed.pathname.startsWith("/uploads/products/"); } catch { return false; }
+    try { const parsed = new URL(url); return parsed.pathname.startsWith("/uploads/products/"); } catch { return false; }
   }) : [];
   if (!safeUrls.length) return;
   try {
