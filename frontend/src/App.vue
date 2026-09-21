@@ -2,7 +2,9 @@
   <div class="layout">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark">WE</div>
+        <div class="brand-mark">
+          <img src="./assets/logo.png" alt="WeConnect logo" class="brand-logo" />
+        </div>
         <div>
           <div class="brand-name">WeConnect</div>
           <div class="brand-sub">Small Business</div>
@@ -98,13 +100,17 @@ function logout() {
   height: 34px;
   border-radius: 50%;
   background: var(--color-accent);
-  color: white;
-  font-weight: 700;
-  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   flex-shrink: 0;
+}
+
+.brand-logo {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
 }
 
 .brand-name {
@@ -176,4 +182,4 @@ function logout() {
   border-color: #4A4552;
   background: rgba(255, 255, 255, 0.05);
 }
-</style> 
+</style>
