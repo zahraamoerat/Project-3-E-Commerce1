@@ -477,7 +477,7 @@ async function loadDelivery() {
 
     // Load the delivery and its related order information.
     const response = await fetch(
-      '/api/deliveries'
+      '/api/deliveries?buyerId=1'
     )
 
     if (!response.ok) {
