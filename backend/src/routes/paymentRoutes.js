@@ -1,6 +1,19 @@
-import express from "express";
-import { createPaymentIntent } from "../controllers/paymentController.js";
-import { requireAuth } from "../middleware/auth.js";
+import express from 'express';
+import {
+  fetchPayments,
+  fetchOrderPayments,
+  processPayment
+} from '../controllers/paymentController.js';
+
 const router = express.Router();
-router.post("/intent", requireAuth, createPaymentIntent);
+
+// GET /api/payments
+router.get('/', fetchPayments);
+
+// GET /api/payments/order/:orderId
+router.get('/order/:orderId', fetchOrderPayments);
+
+// POST /api/payments
+router.post('/', processPayment);
+
 export default router;
