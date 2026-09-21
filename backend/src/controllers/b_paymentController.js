@@ -2,7 +2,7 @@ import {
   getAllPayments,
   getPaymentsByOrder,
   createPayment
-} from '../models/paymentModel.js';
+} from '../models/b_paymentModel.js';
 
 // Return all payments to the frontend.
 export async function fetchPayments(req, res) {
