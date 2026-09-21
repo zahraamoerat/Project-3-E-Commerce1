@@ -3,6 +3,7 @@ import {
   getPaymentsByOrder,
   createPayment
 } from '../models/paymentModel.js';
+import db from "../config/db.js";
 
 // Return all payments to the frontend.
 export async function fetchPayments(req, res) {
@@ -75,3 +76,4 @@ export async function processPayment(req, res) {
     });
   }
 }
+export async function createPaymentIntent(req,res,next){try{const orderNumber=String(req.body.order_number||"").trim();const amount=Number(req.body.amount);if(!orderNumber||!Number.isFinite(amount)||amount<=0)return res.status(400).json({message:"A valid order number and payment amount are required."});const [rows]=await db.execute("SELECT order_id,total_amount,status FROM orders WHERE order_number=? LIMIT 1",[orderNumber]);if(!rows[0])return res.status(404).json({message:"Order not found."});if(Math.abs(Number(rows[0].total_amount)-amount)>0.01)return res.status(400).json({message:"Payment amount does not match the order total."});if(!process.env.PAYMENT_PROVIDER||!process.env.PAYMENT_SECRET_KEY)return res.status(503).json({message:"Online payment is not configured. Set PAYMENT_PROVIDER and PAYMENT_SECRET_KEY on the server."});return res.status(501).json({message:"Payment provider adapter is not enabled yet."});}catch(e){next(e);}}

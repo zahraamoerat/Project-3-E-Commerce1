@@ -1,0 +1,386 @@
+import db from "../config/db.js";
+import {
+  createProduct as insertProduct,
+  getProducts,
+  getProductById,
+  updateProduct as saveProduct,
+  updateProductStock as saveStock,
+  deleteProduct as archiveProduct,
+  bulkUpdateStock,
+  getStockAnalytics,
+} from "../models/s_productModel.js";
+
+const currentSupplierId = () => Number(process.env.SUPPLIER_ID || 1);
+const validId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
+const fail = (message, status = 400) =>
+  Object.assign(new Error(message), { status });
+
+async function categoryId(categoryName) {
+  const name = String(categoryName || "").trim();
+  if (!name) throw fail("Product category is required.");
+  const [rows] = await db.execute(
+    "SELECT category_id FROM categories WHERE category_name = ? LIMIT 1",
+    [name],
+  );
+  if (!rows[0]) throw fail(`Category "${name}" does not exist.`);
+  return rows[0].category_id;
+}
+async function skuAvailable(sku, supplierId, productId = null) {
+  if (!sku) return true;
+  const params = [sku, supplierId];
+  let sql = "SELECT product_id FROM products WHERE sku=? AND supplier_id=?";
+  if (productId) {
+    sql += " AND product_id<>?";
+    params.push(productId);
+  }
+  const [rows] = await db.execute(sql + " LIMIT 1", params);
+  return !rows[0];
+}
+async function ownedProduct(id, supplierId) {
+  const [rows] = await db.execute(
+    "SELECT p.product_id FROM products p WHERE p.product_id=? AND p.supplier_id=? LIMIT 1",
+    [id, supplierId],
+  );
+  return rows[0];
+}
+function productData(body, category_id, supplier_id) {
+  const name = String(body.product_name || "").trim(),
+    price = Number(body.price);
+  const raw = body.comparePrice ?? body.compare_price;
+  const compare_price = raw === "" || raw == null ? null : Number(raw);
+  const quantity = Number(body.quantity),
+    threshold = Number(body.low_stock_threshold ?? 10);
+  const sku = body.sku ? String(body.sku).trim() : null;
+  if (name.length < 3 || name.length > 150)
+    throw fail("Product name must be 3–150 characters.");
+  if (!Number.isFinite(price) || price <= 0)
+    throw fail("Price must be greater than zero.");
+  if (
+    compare_price !== null &&
+    (!Number.isFinite(compare_price) || compare_price < price)
+  )
+    throw fail(
+      "Compare at price must be greater than or equal to the selling price.",
+    );
+  if (!Number.isInteger(quantity) || quantity < 0)
+    throw fail("Quantity must be a non-negative whole number.");
+  if (!Number.isInteger(threshold) || threshold < 0)
+    throw fail("Low-stock threshold must be a non-negative whole number.");
+  if (sku && !/^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/.test(sku))
+    throw fail(
+      "SKU must be 3–40 characters and use only letters, numbers, dots, underscores or hyphens.",
+    );
+  for (const [label, value] of [
+    ["Weight", body.weight ?? body.weight_kg],
+    ["Length", body.length ?? body.length_in],
+    ["Breadth", body.breadth ?? body.breadth_in],
+    ["Width", body.width ?? body.width_in],
+  ]) {
+    if (
+      value !== null &&
+      value !== undefined &&
+      value !== "" &&
+      (!Number.isFinite(Number(value)) || Number(value) < 0)
+    )
+      throw fail(`${label} must be a non-negative number.`);
+  }
+  if (String(body.description || "").length > 2000)
+    throw fail("Description must be 2000 characters or fewer.");
+  const images = Array.isArray(body.images)
+    ? [...new Set(body.images.map((u) => String(u).trim()).filter(Boolean))]
+    : [];
+  if (images.length > 8)
+    throw fail("A product can have a maximum of 8 images.");
+  for (const url of images) {
+    if (url.length > 1000) throw fail("Product image URL is too long.");
+    try {
+      const parsed = new URL(url);
+      if (!["http:", "https:"].includes(parsed.protocol)) throw new Error();
+      if (
+        parsed.pathname.startsWith("/uploads/products/") &&
+        !/^[a-zA-Z0-9._-]+$/.test(parsed.pathname.split("/").pop() || "")
+      )
+        throw new Error();
+    } catch {
+      throw fail("Product images must use valid HTTP or HTTPS URLs.");
+    }
+  }
+  return {
+    supplier_id,
+    category_id,
+    product_name: name,
+    subcategory: body.subcategory ? String(body.subcategory).trim() : null,
+    description: body.description ? String(body.description).trim() : null,
+    price,
+    compare_price,
+    unit: body.unit ? String(body.unit).trim() : "unit",
+    selling_type:
+      body.sellingType === "online"
+        ? "in-store"
+        : body.sellingType === "online-only"
+          ? "online-only"
+          : body.sellingType === "both"
+            ? "both"
+            : body.selling_type || "online-only",
+    weight_kg: body.weight ?? body.weight_kg ?? null,
+    length_in: body.length ?? body.length_in ?? null,
+    breadth_in: body.breadth ?? body.breadth_in ?? null,
+    width_in: body.width ?? body.width_in ?? null,
+    sku,
+    product_image: body.product_image || body.image || null,
+    images,
+    quantity,
+    low_stock_threshold: threshold,
+  };
+}
+export async function fetchProducts(req, res, next) {
+  try {
+    res.json(
+      await getProducts(currentSupplierId(req), {
+        includeArchived: req.query.includeArchived === "true",
+      }),
+    );
+  } catch (e) {
+    next(e);
+  }
+}
+export async function fetchProductById(req, res, next) {
+  try {
+    if (!validId(req.params.id))
+      return res.status(400).json({ message: "Invalid product ID." });
+    const p = await getProductById(req.params.id, currentSupplierId(req));
+    if (!p) return res.status(404).json({ message: "Product not found." });
+    res.json(p);
+  } catch (e) {
+    next(e);
+  }
+}
+export async function publishProduct(req, res, next) {
+  try {
+    const supplierId = currentSupplierId(req);
+    if (!supplierId)
+      return res
+        .status(403)
+        .json({ message: "No supplier profile is linked to this account." });
+    const data = productData(
+      req.body,
+      await categoryId(req.body.category_name),
+      supplierId,
+    );
+    if (data.sku && !(await skuAvailable(data.sku, supplierId)))
+      throw fail("SKU is already in use by another product.", 409);
+    const product_id = await insertProduct(data);
+    res
+      .status(201)
+      .json({ message: "Product published successfully.", product_id });
+  } catch (e) {
+    next(e);
+  }
+}
+export async function editProduct(req, res, next) {
+  try {
+    const supplierId = currentSupplierId(req);
+    if (!validId(req.params.id))
+      return res.status(400).json({ message: "Invalid product ID." });
+    if (!(await ownedProduct(req.params.id, supplierId)))
+      return res.status(404).json({ message: "Product not found." });
+    const data = productData(
+      req.body,
+      await categoryId(req.body.category_name),
+      supplierId,
+    );
+    if (
+      data.sku &&
+      !(await skuAvailable(data.sku, supplierId, Number(req.params.id)))
+    )
+      throw fail("SKU is already in use by another product.", 409);
+    const result = await saveProduct(req.params.id, data);
+    res.json({
+      message: "Product updated successfully.",
+      affectedRows: result.affectedRows,
+      removedMediaUrls: result.removedMediaUrls || [],
+    });
+  } catch (e) {
+    next(e);
+  }
+}
+export async function patchProductStock(req, res, next) {
+  try {
+    const supplierId = currentSupplierId(req);
+    if (!validId(req.params.id))
+      return res.status(400).json({ message: "Invalid product ID." });
+    if (!(await ownedProduct(req.params.id, supplierId)))
+      return res.status(404).json({ message: "Product not found." });
+    const quantity = Number(req.body.quantity);
+    if (!Number.isInteger(quantity) || quantity < 0)
+      return res
+        .status(400)
+        .json({ message: "Quantity must be a non-negative whole number." });
+    const affectedRows = await saveStock(
+      req.params.id,
+      quantity,
+      supplierId,
+      req.body.reason || "Manual adjustment",
+    );
+    if (!affectedRows)
+      return res.status(404).json({ message: "Product not found." });
+    res.json({ message: "Stock updated successfully.", quantity });
+  } catch (e) {
+    next(e);
+  }
+}
+export async function bulkPatchStock(req, res, next) {
+  try {
+    const supplierId = currentSupplierId(req);
+    const reason = String(req.body.reason || "Manual adjustment");
+    const updates = req.body.updates;
+    if (!Array.isArray(updates) || !updates.length)
+      return res.status(400).json({ message: "Select at least one product." });
+    if (updates.length > 100)
+      return res
+        .status(400)
+        .json({ message: "You can update a maximum of 100 products at once." });
+    const count = await bulkUpdateStock(updates, supplierId, reason);
+    res.json({
+      message: `${count} stock records updated successfully.`,
+      updated: count,
+    });
+  } catch (e) {
+    next(e);
+  }
+}
+export async function fetchStockAnalytics(req, res, next) {
+  try {
+    res.json(await getStockAnalytics(currentSupplierId(req)));
+  } catch (e) {
+    next(e);
+  }
+}
+export async function removeProduct(req, res, next) {
+  try {
+    const supplierId = currentSupplierId(req);
+    if (!(await ownedProduct(req.params.id, supplierId)))
+      return res.status(404).json({ message: "Product not found." });
+    await archiveProduct(req.params.id, supplierId);
+    res.json({ message: "Product archived successfully." });
+  } catch (e) {
+    next(e);
+  }
+}
+export async function restoreProduct(req, res, next) {
+  try {
+    const supplierId = currentSupplierId(req);
+    const [r] = await db.execute(
+      "UPDATE products SET is_active=TRUE,catalog_status='Active' WHERE product_id=? AND supplier_id=?",
+      [req.params.id, supplierId],
+    );
+    if (!r.affectedRows)
+      return res.status(404).json({ message: "Product not found." });
+    res.json({ message: "Product restored successfully." });
+  } catch (e) {
+    next(e);
+  }
+}
+export async function duplicateProduct(req, res, next) {
+  try {
+    const supplierId = currentSupplierId(req);
+    const source = await getProductById(req.params.id, supplierId);
+    if (!source) return res.status(404).json({ message: "Product not found." });
+    const base =
+      (source.sku
+        ? String(source.sku)
+            .replace(/[^A-Za-z0-9._-]/g, "")
+            .slice(0, 32)
+        : "COPY") || "COPY";
+    let sku = `${base}-COPY`,
+      n = 1;
+    while (
+      (
+        await db.execute(
+          "SELECT product_id FROM products WHERE sku=? LIMIT 1",
+          [sku],
+        )
+      )[0][0]
+    ) {
+      sku = `${base}-C${n++}`;
+      if (n > 9999) throw fail("Unable to generate a unique SKU.", 409);
+    }
+    const data = {
+      supplier_id: supplierId,
+      category_id: await categoryId(source.category_name),
+      product_name: `Copy of ${source.product_name}`.slice(0, 150),
+      subcategory: source.subcategory,
+      description: source.description,
+      price: source.price,
+      compare_price: source.compare_price,
+      unit: source.unit || "unit",
+      selling_type: source.selling_type || "online-only",
+      weight_kg: source.weight_kg,
+      length_in: source.length_in,
+      breadth_in: source.breadth_in,
+      width_in: source.width_in,
+      sku,
+      product_image: source.product_image || source.image || null,
+      images: source.images || [],
+      quantity: 0,
+      low_stock_threshold: source.low_stock_threshold ?? 10,
+    };
+    const product_id = await insertProduct(data);
+    res
+      .status(201)
+      .json({ message: "Product duplicated successfully.", product_id });
+  } catch (e) {
+    next(e);
+  }
+}
+export async function fetchStockHistory(req, res, next) {
+  try {
+    const [rows] = await db.execute(
+      `SELECT h.stock_history_id,h.product_id,p.product_name,h.previous_quantity,h.new_quantity,h.change_quantity,h.reason,h.notes,h.created_at FROM stock_history h JOIN products p ON p.product_id=h.product_id WHERE h.supplier_id=? ORDER BY h.created_at DESC LIMIT 200`,
+      [currentSupplierId(req)],
+    );
+    res.json(rows);
+  } catch (e) {
+    next(e);
+  }
+}
+export async function fetchProductStockHistory(req, res, next) {
+  try {
+    const supplierId = currentSupplierId(req);
+    if (!validId(req.params.id))
+      return res.status(400).json({ message: "Invalid product ID." });
+    const [rows] = await db.execute(
+      `SELECT h.stock_history_id,h.product_id,p.product_name,h.previous_quantity,h.new_quantity,h.change_quantity,h.reason,h.notes,h.created_at FROM stock_history h JOIN products p ON p.product_id=h.product_id WHERE h.product_id=? AND h.supplier_id=? ORDER BY h.created_at DESC LIMIT 100`,
+      [req.params.id, supplierId],
+    );
+    res.json(rows);
+  } catch (e) {
+    next(e);
+  }
+}
+export async function fetchInventoryAlerts(req, res, next) {
+  try {
+    const [rows] = await db.execute(
+      `SELECT p.product_id,p.product_name,p.sku,i.quantity,i.low_stock_threshold,CASE WHEN i.quantity=0 THEN 'Out of stock' ELSE 'Low stock' END AS alert_status FROM products p JOIN inventory i ON i.product_id=p.product_id WHERE p.supplier_id=? AND p.catalog_status='Active' AND i.quantity<=i.low_stock_threshold ORDER BY i.quantity,p.product_name`,
+      [currentSupplierId(req)],
+    );
+    res.json(rows);
+  } catch (e) {
+    next(e);
+  }
+}
+export async function fetchProductAnalytics(req, res, next) {
+  try {
+    const id = req.params.id,
+      supplierId = currentSupplierId(req);
+    if (!(await ownedProduct(id, supplierId)))
+      return res.status(404).json({ message: "Product not found." });
+    const [[summary]] = await db.execute(
+      `SELECT p.product_id,p.product_name,p.price,COALESCE(i.quantity,0) stock_quantity,COUNT(DISTINCT oi.order_id) order_count,COALESCE(SUM(oi.quantity),0) units_sold,COALESCE(SUM(oi.quantity*oi.unit_price),0) sales_value,COALESCE(AVG(r.rating),0) average_rating,COUNT(DISTINCT r.review_id) review_count FROM products p LEFT JOIN inventory i ON i.product_id=p.product_id LEFT JOIN order_items oi ON oi.product_id=p.product_id LEFT JOIN reviews r ON r.product_id=p.product_id AND r.status='Published' WHERE p.product_id=? AND p.supplier_id=? GROUP BY p.product_id`,
+      [id, supplierId],
+    );
+    res.json(summary || {});
+  } catch (e) {
+    next(e);
+  }
+}
