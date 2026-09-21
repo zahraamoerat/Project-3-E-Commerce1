@@ -40,7 +40,7 @@ app.use("/api/supplier/products", supplierProductRoutes);
 app.use("/api/supplier", supplierRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/categories", categoryRoutes);
-app.use("/api/payments", supplierPaymentRoutes);
+app.use("/api/supplier/payments", supplierPaymentRoutes);
 
 // Small Business APIs
 app.use("/api/orders", orderRoutes);
