@@ -232,7 +232,7 @@ function mapDeliveryStatus(status) {
 async function loadDashboard() {
   try {
     const [orders, payments, deliveries] = await Promise.all([
-      fetchJson("/orders"),
+      fetchJson("/orders?buyerId=1"),
       fetchJson("/payments"),
       fetchJson("/deliveries"),
     ]);
@@ -273,7 +273,7 @@ async function loadDashboard() {
       orderList.slice(0, 4).map(async (order) => {
         let itemsSummary = "Order items";
         try {
-          const items = await fetchJson(`/orders/${order.order_id}/items`);
+          const items = await fetchJson(`/orders?buyerId=1/${order.order_id}/items`);
           if (Array.isArray(items) && items.length) {
             itemsSummary = items
               .map((item) => `${item.product_name || "Product"} ×${item.quantity}`)
