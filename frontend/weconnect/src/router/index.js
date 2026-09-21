@@ -17,9 +17,9 @@ const router = createRouter({
 
     // Shared dashboard page with the GPS preview.
     {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: () => import('../views/b_Dashboard.vue'),
+      path: '/small-business/dashboard',
+      name: 'small-business-dashboard',
+      component: () => import('../views/b_SmallBusinessDashboard.vue'),
     },
 
     // Add the Small Business Orders page
