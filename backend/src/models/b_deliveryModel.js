@@ -1,7 +1,7 @@
 import pool from '../database/b_connection.js';
 
 // Get all deliveries with the related order, buyer, supplier, and payment information.
-export async function getAllDeliveries() {
+export async function getAllDeliveries(buyerId = null) {
   const [rows] = await pool.query(`
     SELECT
       d.delivery_id,
