@@ -660,7 +660,7 @@
 
 
           <router-link
-            to="/tracking"
+            :to="`/tracking/${selectedDelivery.deliveryId}`"
             class="connect-sb-deliveries-open-tracking"
           >
             Open Tracking
