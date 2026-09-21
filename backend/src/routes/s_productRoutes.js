@@ -1,5 +1,5 @@
 import express from "express";
-import {publishProduct,fetchProducts,fetchProductById,editProduct,removeProduct,patchProductStock,duplicateProduct,restoreProduct,fetchStockHistory,fetchProductStockHistory,fetchInventoryAlerts,fetchProductAnalytics,bulkPatchStock,fetchStockAnalytics} from "../controllers/productController.js";
+import {publishProduct,fetchProducts,fetchProductById,editProduct,removeProduct,patchProductStock,duplicateProduct,restoreProduct,fetchStockHistory,fetchProductStockHistory,fetchInventoryAlerts,fetchProductAnalytics,bulkPatchStock,fetchStockAnalytics} from "../controllers/s_productController.js";
 const router=express.Router();
 router.get("/",fetchProducts);
 router.get("/stock/history",fetchStockHistory);
