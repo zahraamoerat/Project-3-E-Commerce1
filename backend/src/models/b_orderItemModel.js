@@ -1,4 +1,4 @@
-import pool from '../database/connection.js';
+import pool from '../database/b_connection.js';
 
 // Get all items belonging to one order.
 export async function getOrderItems(orderId) {
