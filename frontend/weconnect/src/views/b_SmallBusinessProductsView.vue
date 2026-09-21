@@ -168,7 +168,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faArrowLeft, faArrowRight, faBasketShopping, faCheck, faList, faMagnifyingGlass, faPlus, faTableCellsLarge } from '@fortawesome/free-solid-svg-icons'
 
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const apiUrl = import.meta.env.VITE_API_URL || '/api'
 const buyerId = 1
 const route = useRoute()
 const router = useRouter()
