@@ -702,7 +702,7 @@ const selectedDelivery = ref(null)
 // Load deliveries from the WeConnect backend.
 async function loadDeliveries() {
   try {
-    const response = await fetch('http://localhost:3000/api/deliveries')
+    const response = await fetch('/api/deliveries')
 
     if (!response.ok) {
       throw new Error('Failed to load deliveries')
