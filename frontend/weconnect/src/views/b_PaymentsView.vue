@@ -496,7 +496,7 @@ import Swal from 'sweetalert2'
 const route = useRoute()
 
 // Base URL used to reach the backend API.
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const apiUrl = import.meta.env.VITE_API_URL || '/api'
 
 // Store the order loaded from the backend.
 const order = ref(null)
