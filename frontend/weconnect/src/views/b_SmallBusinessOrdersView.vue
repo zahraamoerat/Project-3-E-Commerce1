@@ -651,7 +651,7 @@ async function loadOrders() {
     isLoading.value = true
     errorMessage.value = ''
 
-    const response = await fetch('/api/orders')
+    const response = await fetch('/api/orders?buyerId=1')
 
     if (!response.ok) {
       throw new Error('Failed to load orders')
