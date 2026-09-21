@@ -4,7 +4,7 @@ import {
   updateCartItem,
   removeCartItem,
   getCartCount
-} from '../models/cartModel.js';
+} from '../models/b_cartModel.js';
 
 export async function fetchCart(req, res) {
   try {
