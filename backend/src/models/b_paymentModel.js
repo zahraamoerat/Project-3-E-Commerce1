@@ -1,4 +1,4 @@
-import pool from '../database/connection.js';
+import pool from '../database/b_connection.js';
 
 // Get all payments with the related order and payment method.
 export async function getAllPayments() {

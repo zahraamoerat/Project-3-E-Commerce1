@@ -1,7 +1,7 @@
 import {
   getAllOrders,
   getOrderById
-} from '../models/orderModel.js';
+} from '../models/b_orderModel.js';
 
 // Return all orders to the frontend.
 export async function fetchOrders(req, res) {

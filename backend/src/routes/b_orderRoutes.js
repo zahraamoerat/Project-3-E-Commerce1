@@ -2,7 +2,7 @@ import express from 'express';
 import {
 	fetchOrders,
 	fetchOrderById
-} from '../controllers/orderController.js';
+} from '../controllers/b_orderController.js';
 
 const router = express.Router();
 

@@ -61,7 +61,7 @@ export async function loadSupplierData(force = false) {
   if (loaded && !force) return;
   loading.value = true;
   try {
-    const productData = await request("/products");
+    const productData = await request("/supplier/products");
     products.value = productData || [];
     error.value = "";
 
@@ -88,38 +88,38 @@ loadCategories();
 loadSupplierData();
 
 async function addProduct(product) {
-  const result = await request("/products", { method: "POST", body: JSON.stringify(product) });
-  const created = await request(`/products/${result.product_id}`);
+  const result = await request("/supplier/products", { method: "POST", body: JSON.stringify(product) });
+  const created = await request(`/supplier/products/${result.product_id}`);
   products.value.unshift(created);
   return created;
 }
 
 async function updateProduct(id, changes) {
   const payload = { ...changes, category_name: changes.category_name || products.value.find((item) => item.product_id === Number(id))?.category_name };
-  const result = await request(`/products/${id}`, { method: "PUT", body: JSON.stringify(payload) });
-  const updated = await request(`/products/${id}`);
+  const result = await request(`/supplier/products/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+  const updated = await request(`/supplier/products/${id}`);
   const index = products.value.findIndex((item) => item.product_id === Number(id));
   if (index !== -1) products.value[index] = updated;
   return result;
 }
 
 async function duplicateProduct(id) {
-  const result = await request(`/products/${id}/duplicate`, { method: "POST" });
-  const created = await request(`/products/${result.product_id}`);
+  const result = await request(`/supplier/products/${id}/duplicate`, { method: "POST" });
+  const created = await request(`/supplier/products/${result.product_id}`);
   products.value.unshift(created);
   return created;
 }
 
 async function updateProductStock(id, quantity, reason = "Manual adjustment") {
-  await request(`/products/${id}/stock`, { method: "PATCH", body: JSON.stringify({ quantity, reason }) });
-  const updated = await request(`/products/${id}`);
+  await request(`/supplier/products/${id}/stock`, { method: "PATCH", body: JSON.stringify({ quantity, reason }) });
+  const updated = await request(`/supplier/products/${id}`);
   const index = products.value.findIndex((item) => item.product_id === Number(id));
   if (index !== -1) products.value[index] = updated;
   return updated;
 }
 
 async function removeProduct(id) {
-  await request(`/products/${id}`, { method: "DELETE" });
+  await request(`/supplier/products/${id}`, { method: "DELETE" });
   products.value = products.value.filter((product) => product.product_id !== Number(id));
 }
 

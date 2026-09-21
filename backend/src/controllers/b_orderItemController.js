@@ -1,4 +1,4 @@
-import { getOrderItems } from '../models/orderItemModel.js';
+import { getOrderItems } from '../models/b_orderItemModel.js';
 
 // Return all items for one order.
 export async function fetchOrderItems(req, res) {

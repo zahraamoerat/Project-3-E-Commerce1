@@ -1,4 +1,4 @@
-import { getAllProducts } from '../models/productModel.js';
+import { getAllProducts } from '../models/b_productModel.js';
 
 export async function fetchProducts(req, res) {
   try {

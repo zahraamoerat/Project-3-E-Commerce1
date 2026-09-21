@@ -1,4 +1,4 @@
-import pool from '../database/connection.js';
+import pool from '../database/b_connection.js';
 
 export async function getCartItems(buyerId) {
   const [rows] = await pool.query(`

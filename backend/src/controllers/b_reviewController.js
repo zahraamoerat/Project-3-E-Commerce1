@@ -1,7 +1,7 @@
 import {
   getProductReviews,
   createProductReview
-} from '../models/reviewModel.js';
+} from '../models/b_reviewModel.js';
 
 export async function fetchProductReviews(req, res) {
   try {

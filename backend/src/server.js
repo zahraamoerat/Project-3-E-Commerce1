@@ -4,63 +4,144 @@ import dotenv from "dotenv";
 import path from "path";
 
 import { testDatabaseConnection } from "./config/db.js";
-import productRoutes from "./routes/s_productRoutes.js";
+
+// ===============================
+// SUPPLIER ROUTES
+// ===============================
+import supplierProductRoutes from "./routes/s_productRoutes.js";
 import supplierRoutes from "./routes/supplierRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
-import paymentRoutes from "./routes/paymentRoutes.js";
+import supplierPaymentRoutes from "./routes/paymentRoutes.js";
+
+// ===============================
+// SMALL BUSINESS ROUTES
+// ===============================
+import orderRoutes from "./routes/b_orderRoutes.js";
+import deliveryRoutes from "./routes/b_deliveryRoutes.js";
+import paymentRoutes from "./routes/b_paymentRoutes.js";
+import orderItemRoutes from "./routes/b_orderItemRoutes.js";
+import productRoutes from "./routes/b_productRoutes.js";
+import cartRoutes from "./routes/b_cartRoutes.js";
 
 dotenv.config();
 
 const app = express();
 
 const PORT = process.env.PORT || 5000;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL =
+  process.env.FRONTEND_URL || "http://localhost:5173";
 
-// Allow the Vue frontend to communicate with the backend.
+// ===============================
+// MIDDLEWARE
+// ===============================
+
 app.use(
   cors({
     origin: FRONTEND_URL,
-  }),
+  })
 );
 
-// Allows the API to receive JSON data from the frontend.
 app.use(express.json());
 
-// Serve uploaded product images.
+// Serve uploaded product images
 app.use("/uploads", express.static(path.resolve("uploads")));
 
-// Basic health check.
-app.get("/api/health", (req, res) => {
+// ===============================
+// BASIC ROUTES
+// ===============================
+
+app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
     message: "WeConnect backend is running",
   });
 });
 
-// Basic test route.
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.json({
     message: "WeConnect backend is running",
   });
 });
 
-// Product API.
-app.use("/api/products", productRoutes);
+// ===============================
+// SUPPLIER APIs
+// ===============================
 
-// Supplier API.
-app.use("/api/supplier", supplierRoutes);
+// Supplier products
+app.use(
+  "/api/supplier/products",
+  supplierProductRoutes
+);
 
-// Product image upload API.
-app.use("/api/uploads", uploadRoutes);
+// Supplier profile/orders/deliveries/etc.
+app.use(
+  "/api/supplier",
+  supplierRoutes
+);
 
-// Category API.
-app.use("/api/categories", categoryRoutes);
+// Product image uploads
+app.use(
+  "/api/uploads",
+  uploadRoutes
+);
 
-// Payment API.
-app.use("/api/payments", paymentRoutes);
+// Categories
+app.use(
+  "/api/categories",
+  categoryRoutes
+);
 
-// Test the MySQL connection.
+// Supplier payments
+app.use(
+  "/api/supplier/payments",
+  supplierPaymentRoutes
+);
+
+// ===============================
+// SMALL BUSINESS APIs
+// ===============================
+
+// Orders
+app.use(
+  "/api/orders",
+  orderRoutes
+);
+
+// Order items
+app.use(
+  "/api/orders",
+  orderItemRoutes
+);
+
+// Deliveries
+app.use(
+  "/api/deliveries",
+  deliveryRoutes
+);
+
+// Products
+app.use(
+  "/api/products",
+  productRoutes
+);
+
+// Cart
+app.use(
+  "/api/cart",
+  cartRoutes
+);
+
+// Payments
+app.use(
+  "/api/payments",
+  paymentRoutes
+);
+
+// ===============================
+// DATABASE TEST
+// ===============================
+
 app.get("/api/test-db", async (_req, res) => {
   try {
     await testDatabaseConnection();
@@ -70,7 +151,10 @@ app.get("/api/test-db", async (_req, res) => {
       database: true,
     });
   } catch (error) {
-    console.error("MySQL connection failed:", error.message);
+    console.error(
+      "MySQL connection failed:",
+      error.message
+    );
 
     res.status(500).json({
       message: "Database connection failed",
@@ -79,16 +163,25 @@ app.get("/api/test-db", async (_req, res) => {
   }
 });
 
-// Global error handler.
+// ===============================
+// GLOBAL ERROR HANDLER
+// ===============================
+
 app.use((err, _req, res, _next) => {
   console.error(err);
 
   res.status(err.status || 500).json({
-    message: err.message || "Internal server error",
+    message:
+      err.message || "Internal server error",
   });
 });
 
-// Start the backend.
+// ===============================
+// START SERVER
+// ===============================
+
 app.listen(PORT, () => {
-  console.log(`WeConnect backend running on http://localhost:${PORT}`);
+  console.log(
+    `WeConnect backend running on http://localhost:${PORT}`
+  );
 });

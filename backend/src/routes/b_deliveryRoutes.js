@@ -2,7 +2,7 @@ import express from 'express';
 import {
   fetchDeliveries,
   fetchLatestDeliveryLocation
-} from '../controllers/deliveryController.js';
+} from '../controllers/b_deliveryController.js';
 
 const router = express.Router();
 

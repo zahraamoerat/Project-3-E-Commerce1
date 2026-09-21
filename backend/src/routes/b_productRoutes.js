@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { fetchProducts } from '../controllers/productController.js';
+import { fetchProducts } from '../controllers/b_productController.js';
 import {
   fetchProductReviews,
   submitProductReview
-} from '../controllers/reviewController.js';
+} from '../controllers/b_reviewController.js';
 
 const router = Router();
 
