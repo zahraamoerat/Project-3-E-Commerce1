@@ -6,7 +6,7 @@ import {
 // Return all deliveries to the frontend.
 export async function fetchDeliveries(req, res) {
   try {
-    const buyerId = req.query.buyerId ? Number(req.query.buyerId) : null;\n    const deliveries = await getAllDeliveries(buyerId);
+    const buyerId = req.query.buyerId ? Number(req.query.buyerId) : null;    const deliveries = await getAllDeliveries(buyerId);
 
     res.json(deliveries);
   } catch (error) {
