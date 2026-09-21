@@ -3,7 +3,7 @@ import {
   fetchPayments,
   fetchOrderPayments,
   processPayment
-} from '../controllers/paymentController.js';
+} from '../controllers/b_paymentController.js';
 
 const router = express.Router();
 
