@@ -1,5 +1,5 @@
 import express from 'express';
-import { fetchOrderItems } from '../controllers/orderItemController.js';
+import { fetchOrderItems } from '../controllers/b_orderItemController.js';
 
 const router = express.Router();
 
