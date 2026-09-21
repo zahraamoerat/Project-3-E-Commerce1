@@ -234,7 +234,7 @@ async function loadDashboard() {
     const [orders, payments, deliveries] = await Promise.all([
       fetchJson("/orders?buyerId=1"),
       fetchJson("/payments?buyerId=1"),
-      fetchJson("/deliveries"),
+      fetchJson("/deliveries?buyerId=1"),
     ]);
 
     const orderList = Array.isArray(orders) ? orders : [];
@@ -317,7 +317,7 @@ async function loadDashboard() {
 
       try {
         trackedOrder.value.gpsLocation = await fetchJson(
-          `/deliveries/${trackedDelivery.delivery_id}/location`
+          `/deliveries?buyerId=1/${trackedDelivery.delivery_id}/location`
         );
       } catch {
         trackedOrder.value.gpsLocation = null;
