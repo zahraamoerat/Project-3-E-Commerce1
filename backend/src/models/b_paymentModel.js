@@ -1,7 +1,7 @@
 import pool from '../database/b_connection.js';
 
 // Get all payments with the related order and payment method.
-export async function getAllPayments() {
+export async function getAllPayments(buyerId = null) {
   const [rows] = await pool.query(`
     SELECT
       p.payment_id,
@@ -25,7 +25,7 @@ export async function getAllPayments() {
 }
 
 // Get payments for one specific order.
-export async function getPaymentsByOrder(orderId) {
+export async function getPaymentsByOrder(orderId, buyerId = null) {
   const [rows] = await pool.query(`
     SELECT
       p.payment_id,
@@ -40,7 +40,7 @@ export async function getPaymentsByOrder(orderId) {
       pm.method_name
     FROM payments p
     LEFT JOIN payment_methods pm ON p.method_id = pm.method_id
-    WHERE p.order_id = ?
+    WHERE p.order_id = ?\n      AND (? IS NULL OR o.buyer_id = ?)
     ORDER BY p.created_at DESC
   `, [orderId]);
 
