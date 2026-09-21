@@ -1,13 +1,13 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import pool from './database/connection.js';
-import orderRoutes from './routes/orderRoutes.js';
-import deliveryRoutes from './routes/deliveryRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
-import orderItemRoutes from './routes/orderItemRoutes.js';
-import productRoutes from './routes/productRoutes.js';
-import cartRoutes from './routes/cartRoutes.js';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import pool from "./database/connection.js";
+import orderRoutes from "./routes/orderRoutes.js";
+import deliveryRoutes from "./routes/deliveryRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import orderItemRoutes from "./routes/orderItemRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
 
 dotenv.config();
 
@@ -21,33 +21,33 @@ app.use(cors());
 app.use(express.json());
 
 // Basic test route to confirm the server is running.
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.json({
-    message: 'WeConnect backend is running'
+    message: "WeConnect backend is running",
   });
 });
 
 // Orders API route.
-app.use('/api/orders', orderRoutes);
-app.use('/api/deliveries', deliveryRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/orders', orderItemRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/cart', cartRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/deliveries", deliveryRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/orders", orderItemRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/cart", cartRoutes);
 // Test the MySQL connection.
-app.get('/api/test-db', async (req, res) => {
+app.get("/api/test-db", async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT 1 AS connected');
+    const [rows] = await pool.query("SELECT 1 AS connected");
 
     res.json({
-      message: 'Database connected successfully',
-      database: rows[0].connected === 1
+      message: "Database connected successfully",
+      database: rows[0].connected === 1,
     });
   } catch (error) {
-    console.error('Database connection error:', error.message);
+    console.error("Database connection error:", error.message);
 
     res.status(500).json({
-      message: 'Database connection failed'
+      message: "Database connection failed",
     });
   }
 });
@@ -61,8 +61,6 @@ import supplierRoutes from "./routes/supplierRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 dotenv.config();
-const app = express();
-const PORT = process.env.PORT || 5000;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", FRONTEND_URL);
