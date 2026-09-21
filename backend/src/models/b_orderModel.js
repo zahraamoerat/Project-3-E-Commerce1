@@ -1,7 +1,7 @@
 import pool from '../database/b_connection.js';
 
 // Get all orders with buyer, supplier, and delivery information.
-export async function getAllOrders() {
+export async function getAllOrders(buyerId = null) {
   const [rows] = await pool.query(`
     SELECT
       o.order_id,
@@ -32,14 +32,14 @@ export async function getAllOrders() {
     LEFT JOIN deliveries d
       ON d.order_id = o.order_id
 
-    ORDER BY o.ordered_at DESC
+    WHERE (? IS NULL OR o.buyer_id = ?)\n    ORDER BY o.ordered_at DESC
   `);
 
   return rows;
 }
 
 // Get one order with its buyer, supplier, and delivery information.
-export async function getOrderById(orderId) {
+export async function getOrderById(orderId, buyerId = null) {
   const [rows] = await pool.query(`
     SELECT
       o.order_id,
@@ -70,9 +70,9 @@ export async function getOrderById(orderId) {
     LEFT JOIN deliveries d
       ON d.order_id = o.order_id
 
-    WHERE o.order_id = ?
+    WHERE o.order_id = ?\n      AND (? IS NULL OR o.buyer_id = ?)
     LIMIT 1
-  `, [orderId]);
+  `, [orderId, buyerId, buyerId]);
 
   return rows[0] || null;
 }
