@@ -1,7 +1,7 @@
 import {
   getAllDeliveries,
   getLatestDeliveryLocation
-} from '../models/deliveryModel.js';
+} from '../models/b_deliveryModel.js';
 
 // Return all deliveries to the frontend.
 export async function fetchDeliveries(req, res) {
