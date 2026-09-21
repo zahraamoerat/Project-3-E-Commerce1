@@ -585,7 +585,7 @@ function viewOrder(order) {
 async function loadOrderPayment(orderId) {
   try {
     const response = await fetch(
-      `/api/payments/order/${orderId}`
+      `/api/payments/order/${orderId}?buyerId=1`
     )
 
     if (!response.ok) {
