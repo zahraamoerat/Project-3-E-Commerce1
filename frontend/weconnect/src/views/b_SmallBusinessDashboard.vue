@@ -199,7 +199,7 @@ function initials(name) {
   return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
-const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const apiUrl = import.meta.env.VITE_API_URL || "/api";
 
 async function fetchJson(path) {
   const response = await fetch(`${apiUrl}${path}`);
