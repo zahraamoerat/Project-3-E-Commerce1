@@ -1,13 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import pool from './database/connection.js';
-import orderRoutes from './routes/orderRoutes.js';
-import deliveryRoutes from './routes/deliveryRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
-import orderItemRoutes from './routes/orderItemRoutes.js';
-import productRoutes from './routes/productRoutes.js';
-import cartRoutes from './routes/cartRoutes.js';
+import pool from './database/b_connection.js';
+import orderRoutes from './routes/b_orderRoutes.js';
+import deliveryRoutes from './routes/b_deliveryRoutes.js';
+import paymentRoutes from './routes/b_paymentRoutes.js';
+import orderItemRoutes from './routes/b_orderItemRoutes.js';
+import productRoutes from './routes/b_productRoutes.js';
+import cartRoutes from './routes/b_cartRoutes.js';
 
 dotenv.config();
 
