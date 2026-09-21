@@ -12,7 +12,6 @@ import supplierProductRoutes from "./routes/s_productRoutes.js";
 import supplierRoutes from "./routes/supplierRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
-import supplierPaymentRoutes from "./routes/b_paymentRoutes.js";
 
 // ===============================
 // SMALL BUSINESS ROUTES
@@ -86,13 +85,6 @@ app.use(
 app.use(
   "/api/categories",
   categoryRoutes
-);
-
-// Supplier payment endpoint is kept separate from
-// the Small Business payment endpoint.
-app.use(
-  "/api/supplier/payments",
-  supplierPaymentRoutes
 );
 
 // ===============================
