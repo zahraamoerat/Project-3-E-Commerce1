@@ -585,7 +585,7 @@ function viewOrder(order) {
 async function loadOrderPayment(orderId) {
   try {
     const response = await fetch(
-      `http://localhost:3000/api/payments/order/${orderId}`
+      `/api/payments/order/${orderId}`
     )
 
     if (!response.ok) {
@@ -622,7 +622,7 @@ async function loadOrderPayment(orderId) {
 async function loadOrderItems(orderId) {
   try {
     const response = await fetch(
-      `http://localhost:3000/api/orders/${orderId}/items`
+      `/api/orders/${orderId}/items`
     )
 
     if (!response.ok) {
@@ -651,7 +651,7 @@ async function loadOrders() {
     isLoading.value = true
     errorMessage.value = ''
 
-    const response = await fetch('http://localhost:3000/api/orders')
+    const response = await fetch('/api/orders')
 
     if (!response.ok) {
       throw new Error('Failed to load orders')
