@@ -477,7 +477,7 @@ async function loadDelivery() {
 
     // Load the delivery and its related order information.
     const response = await fetch(
-      'http://localhost:3000/api/deliveries'
+      '/api/deliveries'
     )
 
     if (!response.ok) {
@@ -523,7 +523,7 @@ async function loadDelivery() {
 async function loadLatestLocation(deliveryId) {
   try {
     const response = await fetch(
-      `http://localhost:3000/api/deliveries/${deliveryId}/location`
+      `/api/deliveries/${deliveryId}/location`
     )
 
     if (response.status === 404) {
