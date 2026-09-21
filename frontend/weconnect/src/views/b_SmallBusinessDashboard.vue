@@ -233,7 +233,7 @@ async function loadDashboard() {
   try {
     const [orders, payments, deliveries] = await Promise.all([
       fetchJson("/orders?buyerId=1"),
-      fetchJson("/payments"),
+      fetchJson("/payments?buyerId=1"),
       fetchJson("/deliveries"),
     ]);
 
