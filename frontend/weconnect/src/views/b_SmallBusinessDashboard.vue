@@ -4,7 +4,7 @@
     <section class="hero-card">
       <div class="hero-copy">
         <span class="eyebrow">Small Business Hub</span>
-        <h1>Welcome back, {{ business.name }}</h1>
+        <h1>Welcome back, {{ business.name || "your business" }}</h1>
         <p>Everything you need to keep orders, suppliers and deliveries moving in one place.</p>
         <div class="hero-actions">
           <button class="primary-btn" type="button" @click="scrollToOrders">View recent orders</button>
@@ -63,22 +63,22 @@
       <article class="metric-card">
         <div class="metric-top"><span class="metric-icon green">↗</span><span class="metric-caption">Orders</span></div>
         <strong>{{ stats.activeOrders }}</strong>
-        <p><span class="positive">+2</span> active this week</p>
+        <p><span class="positive">{{ stats.activeOrders }}</span> active orders</p>
       </article>
       <article class="metric-card featured">
         <div class="metric-top"><span class="metric-icon cream">R</span><span class="metric-caption">Pending payment</span></div>
         <strong>R{{ formatMoney(stats.pendingPayment) }}</strong>
-        <p><span class="warning">{{ stats.pendingInvoices }}</span> invoice due</p>
+        <p><span class="warning">{{ stats.pendingInvoices }}</span> invoice{{ stats.pendingInvoices === 1 ? "" : "s" }} due</p>
       </article>
       <article class="metric-card">
         <div class="metric-top"><span class="metric-icon green">↗</span><span class="metric-caption">In transit</span></div>
         <strong>{{ stats.inTransit }}</strong>
-        <p><span class="positive">On schedule</span></p>
+        <p><span class="positive">{{ stats.inTransit }}</span> delivery{{ stats.inTransit === 1 ? "" : "ies" }} in transit</p>
       </article>
       <article class="metric-card">
         <div class="metric-top"><span class="metric-icon cream">R</span><span class="metric-caption">Monthly spend</span></div>
         <strong>R{{ formatMoney(stats.totalSpend) }}</strong>
-        <p><span class="positive">+{{ stats.spendChangePercent }}%</span> vs last month</p>
+        <p><span class="positive">{{ stats.spendChangePercent }}%</span> vs last month</p>
       </article>
     </section>
 
@@ -180,48 +180,35 @@ import SmallBusinessNavbar from '../components/SmallBusinessNavbar.vue'
 import { computed, onMounted, ref } from "vue";
 import TrackingMap from "../components/tracking/TrackingMap.vue";
 
-const business = ref({ name: "Ndlovu Farm Supplies" });
+const business = ref({ name: "" });
 const searchQuery = ref("");
-const isLoading = ref(false);
+const isLoading = ref(true);
 const errorMessage = ref("");
 const lastUpdated = ref("");
 
 const stats = ref({
-  activeOrders: 6,
-  pendingPayment: 2140,
-  pendingInvoices: 1,
-  inTransit: 2,
-  totalSpend: 18760,
-  spendChangePercent: 11,
+  activeOrders: 0,
+  pendingPayment: 0,
+  pendingInvoices: 0,
+  inTransit: 0,
+  totalSpend: 0,
+  spendChangePercent: 0,
 });
 
-const recentOrders = ref([
-  { orderId: "SB-1042", supplierName: "Highveld Seed Co.", itemsSummary: "Maize seed (10kg bags)", status: "out_for_delivery", eta: "24 min" },
-  { orderId: "SB-1041", supplierName: "Karoo Fertiliser Traders", itemsSummary: "NPK fertiliser (50kg)", status: "dispatched", eta: "Tomorrow 9–11am" },
-  { orderId: "SB-1038", supplierName: "CropGuard Distribution", itemsSummary: "Crop protection spray", status: "delivered", eta: "—" },
-  { orderId: "SB-1035", supplierName: "FarmTech Equipment Parts", itemsSummary: "Irrigation pipe fittings", status: "processing", eta: "Awaiting confirmation" },
-]);
+const recentOrders = ref([]);
 
-const suggestedSuppliers = ref([
-  { supplierId: 1, companyName: "Highveld Seed Co.", description: "Certified maize, wheat & soya seed supplier" },
-  { supplierId: 2, companyName: "Karoo Fertiliser Traders", description: "Bulk NPK, lime, and soil conditioner supply" },
-  { supplierId: 3, companyName: "FarmTech Equipment Parts", description: "Tractor and irrigation equipment spares" },
-]);
+const suggestedSuppliers = ref([]);
 
 const trackedOrder = ref({
-  orderId: "SB-1042",
-  status: "in_transit",
-  etaMinutes: 24,
-  destinationCity: "Bloemfontein",
+  orderId: "—",
+  status: "",
+  etaMinutes: null,
+  destinationCity: "",
   deliveryId: null,
   gpsLocation: null,
 });
 
-const notifications = ref([
-  { notificationId: 1, type: "order_update", message: "Karoo Fertiliser Traders has accepted your NPK fertiliser order", isRead: false },
-  { notificationId: 2, type: "payment_reminder", message: "Invoice for #SB-1035 is due in 2 days (R1,450)", isRead: false },
-  { notificationId: 3, type: "rating_request", message: "Share your feedback for FarmTech Equipment Parts' delivery", isRead: true },
-]);
+const notifications = ref([]);
 
 const trackingSteps = [
   { key: "placed", label: "Placed" },
@@ -414,8 +401,10 @@ async function loadDashboard() {
     }
     lastUpdated.value = new Date().toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" });
   } catch (error) {
-    console.warn("Dashboard API unavailable:", error.message);
-    errorMessage.value = "The dashboard is showing the latest available information. Check that the backend is running, then refresh.";
+    console.error("Dashboard API unavailable:", error);
+    errorMessage.value =
+      error?.message || "Unable to load live dashboard data. Check that the backend is running, then refresh.";
+    // Do not restore sample/mock values here. Keep the dashboard truthful to the API state.
   } finally {
     isLoading.value = false;
   }
