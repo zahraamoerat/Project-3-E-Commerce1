@@ -2,7 +2,7 @@
   <div class="marketplace-page">
     <header class="marketplace-header">
       <div class="brand">
-        <img src="../assets/website-logo.png" alt="WeConnect" />
+        <img src="../../assets/website-logo.png" alt="WeConnect" />
         <div><strong>WeConnect</strong><span>B2B Marketplace</span></div>
       </div>
       <div class="header-actions">

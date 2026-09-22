@@ -1,17 +1,11 @@
 <template>
   <div class="connect-tracking-page">
-
     <!-- Page header -->
     <header class="connect-tracking-header">
-
       <div>
-        <div class="connect-tracking-eyebrow">
-          SHIPMENT TRACKING
-        </div>
+        <div class="connect-tracking-eyebrow">SHIPMENT TRACKING</div>
 
-        <h1 class="connect-tracking-title">
-          Delivery Tracking
-        </h1>
+        <h1 class="connect-tracking-title">Delivery Tracking</h1>
 
         <p class="connect-tracking-description">
           Follow the shared journey from supplier warehouse to business.
@@ -20,26 +14,25 @@
 
       <!-- Order reference -->
       <div class="connect-tracking-order-card">
-        <div class="connect-tracking-order-label">
-          ORDER REFERENCE
-        </div>
+        <div class="connect-tracking-order-label">ORDER REFERENCE</div>
 
         <div class="connect-tracking-order-value">
-          {{ delivery?.order_number || 'Order' }}
+          {{ delivery?.order_number || "Order" }}
         </div>
 
         <div class="connect-tracking-order-status">
           <span class="connect-tracking-status-dot"></span>
-          {{ isCancelled() ? 'Cancelled' : (delivery?.current_status || trackingStatus) }}
+          {{
+            isCancelled()
+              ? "Cancelled"
+              : delivery?.current_status || trackingStatus
+          }}
         </div>
       </div>
-
     </header>
-
 
     <!-- Shared journey strip -->
     <section class="connect-tracking-journey-strip">
-
       <div class="connect-tracking-party">
         <div class="connect-tracking-party-icon">
           <font-awesome-icon :icon="faWarehouse" />
@@ -47,11 +40,10 @@
 
         <div>
           <span>DISPATCHED FROM</span>
-          <strong>{{ delivery?.supplier_name || 'Supplier' }}</strong>
-          <small>{{ delivery?.supplier_city || 'Location unavailable' }}</small>
+          <strong>{{ delivery?.supplier_name || "Supplier" }}</strong>
+          <small>{{ delivery?.supplier_city || "Location unavailable" }}</small>
         </div>
       </div>
-
 
       <div class="connect-tracking-journey-line">
         <div class="connect-tracking-journey-progress"></div>
@@ -61,7 +53,6 @@
         </div>
       </div>
 
-
       <div class="connect-tracking-party connect-tracking-party-destination">
         <div class="connect-tracking-party-icon">
           <font-awesome-icon :icon="faLocationDot" />
@@ -69,33 +60,25 @@
 
         <div>
           <span>DELIVERING TO</span>
-          <strong>{{ delivery?.buyer_name || 'Small Business' }}</strong>
-          <small>{{ delivery?.buyer_city || 'Location unavailable' }}</small>
+          <strong>{{ delivery?.buyer_name || "Small Business" }}</strong>
+          <small>{{ delivery?.buyer_city || "Location unavailable" }}</small>
         </div>
       </div>
-
     </section>
-
 
     <!-- Main tracking workspace -->
     <section class="connect-tracking-workspace">
-
       <!-- Map section -->
       <div class="connect-tracking-map-panel">
-
         <div class="connect-tracking-map-header">
-
           <div>
-            <div class="connect-tracking-section-eyebrow">
-              LIVE LOCATION
-            </div>
+            <div class="connect-tracking-section-eyebrow">LIVE LOCATION</div>
 
-            <h2>
-              Delivery vehicle
-            </h2>
+            <h2>Delivery vehicle</h2>
 
             <p>
-              The vehicle location updates automatically while the shipment is in transit.
+              The vehicle location updates automatically while the shipment is
+              in transit.
             </p>
           </div>
 
@@ -104,13 +87,10 @@
             <span></span>
             LIVE
           </div>
-
         </div>
-
 
         <!-- Map wrapper -->
         <div class="connect-tracking-map-wrapper">
-
           <TrackingMap
             :gps-location="latestLocation"
             @tracking-update="handleTrackingUpdate"
@@ -118,9 +98,7 @@
 
           <!-- Current delivery overlay -->
           <div class="connect-tracking-map-overlay">
-
             <div class="connect-tracking-overlay-top">
-
               <div class="connect-tracking-overlay-icon">
                 <font-awesome-icon :icon="faTruckFast" />
               </div>
@@ -129,12 +107,9 @@
                 <strong>{{ trackingStatus }}</strong>
                 <span>Delivery vehicle</span>
               </div>
-
             </div>
 
-
             <div class="connect-tracking-overlay-progress">
-
               <div class="connect-tracking-progress-header">
                 <span>Journey progress</span>
                 <strong>{{ trackingProgress }}%</strong>
@@ -146,40 +121,30 @@
                   :style="{ width: `${trackingProgress}%` }"
                 ></div>
               </div>
-
             </div>
-
           </div>
-
         </div>
-
 
         <!-- Map footer -->
         <div class="connect-tracking-map-footer">
-
           <div class="connect-tracking-location-update">
             <font-awesome-icon :icon="faLocationCrosshairs" />
 
-            <span>
-              Last updated {{ lastUpdated }}
-            </span>
+            <span> Last updated {{ lastUpdated }} </span>
           </div>
 
           <div class="connect-tracking-map-note">
-            {{ latestLocation?.location_description || 'GPS location updating' }}
+            {{
+              latestLocation?.location_description || "GPS location updating"
+            }}
           </div>
-
         </div>
-
       </div>
-
 
       <!-- Delivery information panel -->
       <aside class="connect-tracking-side-panel">
-
         <!-- ETA -->
         <div class="connect-tracking-eta-card">
-
           <div class="connect-tracking-eta-top">
             <span>ESTIMATED ARRIVAL</span>
 
@@ -190,28 +155,22 @@
             {{ estimatedArrival }}
           </strong>
 
-          <p>
-            Based on the vehicle's current simulated location.
-          </p>
-
+          <p>Based on the vehicle's current simulated location.</p>
         </div>
-
 
         <!-- Delivery status -->
         <div class="connect-tracking-info-card">
-
           <div class="connect-tracking-card-heading">
             <span>DELIVERY STATUS</span>
             <font-awesome-icon :icon="faRoute" />
           </div>
 
           <div class="connect-tracking-status-list">
-
             <div
               class="connect-tracking-status-row"
               :class="{
                 active: isCurrentStatus('Confirmed'),
-                completed: isStatusReached('Confirmed')
+                completed: isStatusReached('Confirmed'),
               }"
             >
               <div class="connect-tracking-status-marker">
@@ -224,12 +183,11 @@
               </div>
             </div>
 
-
             <div
               class="connect-tracking-status-row"
               :class="{
                 active: isCurrentStatus('Dispatched'),
-                completed: isStatusReached('Dispatched')
+                completed: isStatusReached('Dispatched'),
               }"
             >
               <div class="connect-tracking-status-marker">
@@ -242,7 +200,6 @@
               </div>
             </div>
 
-
             <div
               class="connect-tracking-status-row"
               :class="{
@@ -251,7 +208,7 @@
                   isCurrentStatus('Shipped'),
                 completed:
                   isStatusReached('Out for delivery') ||
-                  isStatusReached('Shipped')
+                  isStatusReached('Shipped'),
               }"
             >
               <div class="connect-tracking-status-marker">
@@ -264,12 +221,11 @@
               </div>
             </div>
 
-
             <div
               class="connect-tracking-status-row"
               :class="{
                 active: isCurrentStatus('Delivered'),
-                completed: isStatusReached('Delivered')
+                completed: isStatusReached('Delivered'),
               }"
             >
               <div class="connect-tracking-status-marker">
@@ -281,52 +237,46 @@
                 <span>Awaiting arrival</span>
               </div>
             </div>
-
           </div>
-
         </div>
-
 
         <!-- Shipment details -->
         <div class="connect-tracking-info-card">
-
           <div class="connect-tracking-card-heading">
             <span>SHIPMENT DETAILS</span>
             <font-awesome-icon :icon="faBoxOpen" />
           </div>
 
-
           <div class="connect-tracking-detail-row">
             <span>Order</span>
-            <strong>{{ delivery?.order_number || 'Order' }}</strong>
+            <strong>{{ delivery?.order_number || "Order" }}</strong>
           </div>
 
           <div class="connect-tracking-detail-row">
             <span>Delivery</span>
-            <strong>{{ delivery?.delivery_id || 'Not assigned' }}</strong>
+            <strong>{{ delivery?.delivery_id || "Not assigned" }}</strong>
           </div>
 
           <div class="connect-tracking-detail-row">
             <span>Tracking reference</span>
-            <strong>{{ delivery?.tracking_reference || 'Not assigned' }}</strong>
+            <strong>{{
+              delivery?.tracking_reference || "Not assigned"
+            }}</strong>
           </div>
 
           <div class="connect-tracking-detail-row">
             <span>From</span>
-            <strong>{{ delivery?.supplier_name || 'Supplier' }}</strong>
+            <strong>{{ delivery?.supplier_name || "Supplier" }}</strong>
           </div>
 
           <div class="connect-tracking-detail-row">
             <span>To</span>
-            <strong>{{ delivery?.buyer_name || 'Small Business' }}</strong>
+            <strong>{{ delivery?.buyer_name || "Small Business" }}</strong>
           </div>
-
         </div>
-
 
         <!-- Shared tracking notice -->
         <div class="connect-tracking-shared-card">
-
           <div class="connect-tracking-shared-icon">
             <font-awesome-icon :icon="faLink" />
           </div>
@@ -335,59 +285,47 @@
             <strong>Shared delivery tracking</strong>
 
             <p>
-              This shipment can be viewed by both the supplier and the receiving business.
+              This shipment can be viewed by both the supplier and the receiving
+              business.
             </p>
           </div>
-
         </div>
-
       </aside>
-
     </section>
-
 
     <!-- Bottom route summary -->
     <section class="connect-tracking-bottom-card">
-
       <div class="connect-tracking-bottom-heading">
-
         <div>
-          <div class="connect-tracking-section-eyebrow">
-            DELIVERY JOURNEY
-          </div>
+          <div class="connect-tracking-section-eyebrow">DELIVERY JOURNEY</div>
 
-          <h2>
-            Supplier to business
-          </h2>
+          <h2>Supplier to business</h2>
         </div>
 
         <div class="connect-tracking-bottom-status">
           <span></span>
           {{ trackingStatus }}
         </div>
-
       </div>
 
-
       <div class="connect-tracking-route">
-
-        <div class="connect-tracking-route-point connect-tracking-route-complete">
-
+        <div
+          class="connect-tracking-route-point connect-tracking-route-complete"
+        >
           <div class="connect-tracking-route-icon">
             <font-awesome-icon :icon="faWarehouse" />
           </div>
 
           <div>
             <span>ORIGIN</span>
-            <strong>{{ delivery?.supplier_name || 'Supplier' }}</strong>
-            <small>{{ delivery?.supplier_city || 'Location unavailable' }}</small>
+            <strong>{{ delivery?.supplier_name || "Supplier" }}</strong>
+            <small>{{
+              delivery?.supplier_city || "Location unavailable"
+            }}</small>
           </div>
-
         </div>
 
-
         <div class="connect-tracking-route-middle">
-
           <div class="connect-tracking-route-line">
             <div
               class="connect-tracking-route-line-fill"
@@ -398,39 +336,31 @@
           <div class="connect-tracking-route-truck">
             <font-awesome-icon :icon="faTruckFast" />
           </div>
-
         </div>
 
-
         <div class="connect-tracking-route-point">
-
           <div class="connect-tracking-route-icon destination">
             <font-awesome-icon :icon="faLocationDot" />
           </div>
 
           <div>
             <span>DESTINATION</span>
-            <strong>{{ delivery?.buyer_name || 'Small Business' }}</strong>
-            <small>{{ delivery?.buyer_city || 'Location unavailable' }}</small>
+            <strong>{{ delivery?.buyer_name || "Small Business" }}</strong>
+            <small>{{ delivery?.buyer_city || "Location unavailable" }}</small>
           </div>
-
         </div>
-
       </div>
-
     </section>
-
   </div>
 </template>
 
-
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
 
-import TrackingMap from '../components/tracking/TrackingMap.vue'
+import TrackingMap from "../../components/tracking/TrackingMap.vue";
 
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 import {
   faBoxOpen,
@@ -441,215 +371,204 @@ import {
   faLocationDot,
   faRoute,
   faTruckFast,
-  faWarehouse
-} from '@fortawesome/free-solid-svg-icons'
+  faWarehouse,
+} from "@fortawesome/free-solid-svg-icons";
 
 // Read the delivery ID from the tracking URL.
-const route = useRoute()
+const route = useRoute();
 
 // Store the delivery information returned by the backend.
-const delivery = ref(null)
+const delivery = ref(null);
 
 // Store the latest GPS location for this delivery.
-const latestLocation = ref(null)
+const latestLocation = ref(null);
 
 // Store loading and error states.
-const isLoading = ref(true)
-const errorMessage = ref('')
+const isLoading = ref(true);
+const errorMessage = ref("");
 
 // Refresh the GPS position while this tracking page is open.
-let locationTimer = null
+let locationTimer = null;
 
 // Tracking values shown by the page.
-const trackingProgress = ref(0)
-const trackingStatus = ref('Loading')
-const estimatedArrival = ref('Not available')
-const lastUpdated = ref('Waiting for GPS update')
+const trackingProgress = ref(0);
+const trackingStatus = ref("Loading");
+const estimatedArrival = ref("Not available");
+const lastUpdated = ref("Waiting for GPS update");
 
 // Load the delivery connected to the current tracking page.
 async function loadDelivery() {
   try {
-    const deliveryId = Number(route.params.deliveryId)
+    const deliveryId = Number(route.params.deliveryId);
 
     if (!deliveryId) {
-      throw new Error('Invalid delivery ID')
+      throw new Error("Invalid delivery ID");
     }
 
     // Load the delivery and its related order information.
-    const response = await fetch(
-      '/api/deliveries?buyerId=1'
-    )
+    const response = await fetch("/api/deliveries?buyerId=1");
 
     if (!response.ok) {
-      throw new Error('Failed to load delivery')
+      throw new Error("Failed to load delivery");
     }
 
-    const deliveries = await response.json()
+    const deliveries = await response.json();
 
     const selectedDelivery = deliveries.find(
-      item => Number(item.delivery_id) === deliveryId
-    )
+      (item) => Number(item.delivery_id) === deliveryId,
+    );
 
     if (!selectedDelivery) {
-      throw new Error('Delivery not found')
+      throw new Error("Delivery not found");
     }
 
-    delivery.value = selectedDelivery
+    delivery.value = selectedDelivery;
 
     // Use the real delivery status from the database.
-    trackingStatus.value =
-      selectedDelivery.current_status || 'Pending'
+    trackingStatus.value = selectedDelivery.current_status || "Pending";
 
     // Use the real estimated arrival when available.
     estimatedArrival.value =
-      selectedDelivery.estimated_arrival || 'Not available'
+      selectedDelivery.estimated_arrival || "Not available";
 
     // Load the latest GPS location for this delivery.
-    await loadLatestLocation(deliveryId)
+    await loadLatestLocation(deliveryId);
 
     // Continue checking for new GPS positions.
-    startLocationPolling(deliveryId)
+    startLocationPolling(deliveryId);
   } catch (error) {
-    console.error('Error loading delivery:', error)
+    console.error("Error loading delivery:", error);
 
-    errorMessage.value =
-      'Unable to load the selected delivery.'
+    errorMessage.value = "Unable to load the selected delivery.";
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 // Load the latest GPS coordinate for the delivery.
 async function loadLatestLocation(deliveryId) {
   try {
-    const response = await fetch(
-      `/api/deliveries/${deliveryId}/location`
-    )
+    const response = await fetch(`/api/deliveries/${deliveryId}/location`);
 
     if (response.status === 404) {
       // A delivery can exist before its first GPS update.
-      latestLocation.value = null
-      lastUpdated.value = 'No GPS update yet'
-      return
+      latestLocation.value = null;
+      lastUpdated.value = "No GPS update yet";
+      return;
     }
 
     if (!response.ok) {
-      throw new Error('Failed to load GPS location')
+      throw new Error("Failed to load GPS location");
     }
 
-    const location = await response.json()
+    const location = await response.json();
 
-    latestLocation.value = location
+    latestLocation.value = location;
 
     // Show when the GPS position was recorded.
     if (location.recorded_at) {
-      lastUpdated.value = new Date(
-        location.recorded_at
-      ).toLocaleString('en-ZA')
+      lastUpdated.value = new Date(location.recorded_at).toLocaleString(
+        "en-ZA",
+      );
     }
   } catch (error) {
-    console.error('Error loading GPS location:', error)
+    console.error("Error loading GPS location:", error);
 
-    latestLocation.value = null
-    lastUpdated.value = 'GPS unavailable'
+    latestLocation.value = null;
+    lastUpdated.value = "GPS unavailable";
   }
 }
 
 // Keep checking for GPS while the delivery is still active.
 function startLocationPolling(deliveryId) {
   locationTimer = setInterval(() => {
-    const status = delivery.value?.current_status
+    const status = delivery.value?.current_status;
 
-    if (
-      status === 'Delivered' ||
-      status === 'Cancelled'
-    ) {
-      clearInterval(locationTimer)
-      locationTimer = null
-      return
+    if (status === "Delivered" || status === "Cancelled") {
+      clearInterval(locationTimer);
+      locationTimer = null;
+      return;
     }
 
-    loadLatestLocation(deliveryId)
-  }, 5000)
+    loadLatestLocation(deliveryId);
+  }, 5000);
 }
 
 // Check whether a delivery has reached a particular stage.
 function isStatusReached(status) {
-  const currentStatus = delivery.value?.current_status
+  const currentStatus = delivery.value?.current_status;
 
   const statusOrder = [
-    'Pending',
-    'Confirmed',
-    'Processing',
-    'Dispatched',
-    'Out for delivery',
-    'Shipped',
-    'Delivered'
-  ]
+    "Pending",
+    "Confirmed",
+    "Processing",
+    "Dispatched",
+    "Out for delivery",
+    "Shipped",
+    "Delivered",
+  ];
 
-  const currentIndex = statusOrder.indexOf(currentStatus)
-  const statusIndex = statusOrder.indexOf(status)
+  const currentIndex = statusOrder.indexOf(currentStatus);
+  const statusIndex = statusOrder.indexOf(status);
 
   if (currentIndex === -1 || statusIndex === -1) {
-    return false
+    return false;
   }
 
-  return currentIndex >= statusIndex
+  return currentIndex >= statusIndex;
 }
 
 // Check whether the delivery has been cancelled.
 function isCancelled() {
-  return delivery.value?.current_status === 'Cancelled'
+  return delivery.value?.current_status === "Cancelled";
 }
 
 // Check whether this is the current delivery stage.
 function isCurrentStatus(status) {
-  return delivery.value?.current_status === status
+  return delivery.value?.current_status === status;
 }
 
 // Receive tracking information from TrackingMap.vue.
 function handleTrackingUpdate(data) {
-  trackingProgress.value = data.progress
+  trackingProgress.value = data.progress;
 
   // Keep the real delivery status from the backend.
   if (delivery.value?.current_status) {
-    trackingStatus.value = delivery.value.current_status
+    trackingStatus.value = delivery.value.current_status;
   }
 
-  if (data.eta && data.eta !== 'Not available') {
-    estimatedArrival.value = data.eta
+  if (data.eta && data.eta !== "Not available") {
+    estimatedArrival.value = data.eta;
   }
 
   if (!latestLocation.value?.recorded_at) {
-    lastUpdated.value = 'just now'
+    lastUpdated.value = "just now";
   }
 }
 
 // Load the delivery when the tracking page opens.
 onMounted(() => {
-  loadDelivery()
-})
+  loadDelivery();
+});
 
 // Stop GPS polling when the user leaves the page.
 onBeforeUnmount(() => {
   if (locationTimer) {
-    clearInterval(locationTimer)
-    locationTimer = null
+    clearInterval(locationTimer);
+    locationTimer = null;
   }
-})
+});
 </script>
 
 <style scoped>
-
 /* Main page */
 .connect-tracking-page {
   min-height: 100vh;
   padding: 34px;
   box-sizing: border-box;
-  background: #E8E2DD;
-  color: #5C3D24;
+  background: #e8e2dd;
+  color: #5c3d24;
 }
-
 
 /* Header */
 .connect-tracking-header {
@@ -663,7 +582,7 @@ onBeforeUnmount(() => {
 
 .connect-tracking-eyebrow,
 .connect-tracking-section-eyebrow {
-  color: #D17A4A;
+  color: #d17a4a;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -671,8 +590,8 @@ onBeforeUnmount(() => {
 
 .connect-tracking-title {
   margin: 7px 0 0;
-  color: #4E342E;
-  font-family: Georgia, 'Times New Roman', serif;
+  color: #4e342e;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 42px;
   line-height: 1.05;
   font-weight: 600;
@@ -680,7 +599,7 @@ onBeforeUnmount(() => {
 
 .connect-tracking-description {
   margin: 10px 0 0;
-  color: #7A6A61;
+  color: #7a6a61;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -688,14 +607,14 @@ onBeforeUnmount(() => {
 .connect-tracking-order-card {
   min-width: 190px;
   padding: 14px 16px;
-  background: #FFFEFC;
+  background: #fffefc;
   border: 1px solid rgba(92, 61, 36, 0.08);
   border-radius: 14px;
   box-shadow: 0 5px 18px rgba(78, 52, 46, 0.06);
 }
 
 .connect-tracking-order-label {
-  color: #9A8B82;
+  color: #9a8b82;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.5px;
@@ -703,7 +622,7 @@ onBeforeUnmount(() => {
 
 .connect-tracking-order-value {
   margin-top: 4px;
-  color: #4E342E;
+  color: #4e342e;
   font-size: 17px;
   font-weight: 800;
 }
@@ -713,7 +632,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 6px;
   margin-top: 7px;
-  color: #47704A;
+  color: #47704a;
   font-size: 11px;
   font-weight: 700;
 }
@@ -725,9 +644,8 @@ onBeforeUnmount(() => {
   height: 7px;
   display: inline-block;
   border-radius: 50%;
-  background: #5C8A60;
+  background: #5c8a60;
 }
-
 
 /* Shared journey */
 .connect-tracking-journey-strip {
@@ -760,15 +678,15 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #F3EAE4;
+  background: #f3eae4;
   border-radius: 11px;
-  color: #D17A4A;
+  color: #d17a4a;
 }
 
 .connect-tracking-party span,
 .connect-tracking-party small {
   display: block;
-  color: #9A8B82;
+  color: #9a8b82;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 1px;
@@ -777,20 +695,20 @@ onBeforeUnmount(() => {
 .connect-tracking-party strong {
   display: block;
   margin: 3px 0;
-  color: #4E342E;
+  color: #4e342e;
   font-size: 13px;
 }
 
 .connect-tracking-journey-line {
   position: relative;
   height: 2px;
-  background: #D8CEC7;
+  background: #d8cec7;
 }
 
 .connect-tracking-journey-progress {
   width: 68%;
   height: 100%;
-  background: #D17A4A;
+  background: #d17a4a;
 }
 
 .connect-tracking-truck-icon {
@@ -803,14 +721,13 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #FFFEFC;
-  border: 2px solid #D17A4A;
+  background: #fffefc;
+  border: 2px solid #d17a4a;
   border-radius: 50%;
-  color: #D17A4A;
+  color: #d17a4a;
   font-size: 12px;
   box-shadow: 0 4px 12px rgba(78, 52, 46, 0.14);
 }
-
 
 /* Main workspace */
 .connect-tracking-workspace {
@@ -823,7 +740,7 @@ onBeforeUnmount(() => {
 .connect-tracking-map-panel,
 .connect-tracking-info-card,
 .connect-tracking-bottom-card {
-  background: #FFFEFC;
+  background: #fffefc;
   border: 1px solid rgba(92, 61, 36, 0.08);
   box-shadow: 0 8px 28px rgba(78, 52, 46, 0.06);
 }
@@ -844,13 +761,13 @@ onBeforeUnmount(() => {
 
 .connect-tracking-map-header h2 {
   margin: 5px 0 0;
-  color: #4E342E;
+  color: #4e342e;
   font-size: 17px;
 }
 
 .connect-tracking-map-header p {
   margin: 4px 0 0;
-  color: #9A8B82;
+  color: #9a8b82;
   font-size: 12px;
 }
 
@@ -860,19 +777,18 @@ onBeforeUnmount(() => {
   gap: 7px;
   padding: 8px 12px;
   border-radius: 999px;
-  background: #F1F6F1;
-  color: #47704A;
+  background: #f1f6f1;
+  color: #47704a;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1px;
 }
 
-
 /* Map area */
 .connect-tracking-map-wrapper {
   position: relative;
   padding: 18px;
-  background: #E8E2DD;
+  background: #e8e2dd;
 }
 
 .connect-tracking-map-overlay {
@@ -903,8 +819,8 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: #D17A4A;
-  color: #FFFEFC;
+  background: #d17a4a;
+  color: #fffefc;
 }
 
 .connect-tracking-overlay-top strong,
@@ -913,13 +829,13 @@ onBeforeUnmount(() => {
 }
 
 .connect-tracking-overlay-top strong {
-  color: #4E342E;
+  color: #4e342e;
   font-size: 12px;
 }
 
 .connect-tracking-overlay-top span {
   margin-top: 2px;
-  color: #9A8B82;
+  color: #9a8b82;
   font-size: 10px;
 }
 
@@ -930,26 +846,26 @@ onBeforeUnmount(() => {
 .connect-tracking-progress-header {
   display: flex;
   justify-content: space-between;
-  color: #9A8B82;
+  color: #9a8b82;
   font-size: 10px;
   font-weight: 700;
 }
 
 .connect-tracking-progress-header strong {
-  color: #4E342E;
+  color: #4e342e;
 }
 
 .connect-tracking-progress-track {
   height: 5px;
   margin-top: 6px;
   overflow: hidden;
-  background: #E8E2DD;
+  background: #e8e2dd;
   border-radius: 999px;
 }
 
 .connect-tracking-progress-fill {
   height: 100%;
-  background: #D17A4A;
+  background: #d17a4a;
   border-radius: inherit;
   transition: width 0.7s ease;
 }
@@ -959,7 +875,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 12px;
   padding: 11px 18px;
-  color: #8D7D74;
+  color: #8d7d74;
   font-size: 10px;
 }
 
@@ -971,9 +887,8 @@ onBeforeUnmount(() => {
 }
 
 .connect-tracking-location-update svg {
-  color: #D17A4A;
+  color: #d17a4a;
 }
-
 
 /* Side panel */
 .connect-tracking-side-panel {
@@ -984,9 +899,9 @@ onBeforeUnmount(() => {
 
 .connect-tracking-eta-card {
   padding: 18px;
-  background: #4E342E;
+  background: #4e342e;
   border-radius: 16px;
-  color: #FFFEFC;
+  color: #fffefc;
   box-shadow: 0 8px 24px rgba(78, 52, 46, 0.14);
 }
 
@@ -1001,14 +916,14 @@ onBeforeUnmount(() => {
 }
 
 .connect-tracking-eta-top svg {
-  color: #D17A4A;
+  color: #d17a4a;
   font-size: 14px;
 }
 
 .connect-tracking-eta-card > strong {
   display: block;
   margin-top: 7px;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 30px;
   font-weight: 500;
 }
@@ -1019,7 +934,6 @@ onBeforeUnmount(() => {
   font-size: 10px;
   line-height: 1.5;
 }
-
 
 /* Information cards */
 .connect-tracking-info-card {
@@ -1032,14 +946,14 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
-  color: #9A8B82;
+  color: #9a8b82;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 1.4px;
 }
 
 .connect-tracking-card-heading svg {
-  color: #D17A4A;
+  color: #d17a4a;
   font-size: 13px;
 }
 
@@ -1067,33 +981,34 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #C9BCB5;
+  color: #c9bcb5;
   font-size: 13px;
 }
 
-.connect-tracking-status-row:not(:last-child) .connect-tracking-status-marker::after {
-  content: '';
+.connect-tracking-status-row:not(:last-child)
+  .connect-tracking-status-marker::after {
+  content: "";
   position: absolute;
   top: 21px;
   left: 10px;
   width: 1px;
   height: 25px;
-  background: #E1D8D2;
+  background: #e1d8d2;
 }
 
 .connect-tracking-status-complete .connect-tracking-status-marker {
-  color: #5C8A60;
+  color: #5c8a60;
 }
 
 .connect-tracking-status-active .connect-tracking-status-marker {
-  color: #D17A4A;
+  color: #d17a4a;
 }
 
 .connect-tracking-status-active .connect-tracking-status-marker span {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #D17A4A;
+  background: #d17a4a;
   box-shadow: 0 0 0 5px rgba(209, 122, 74, 0.13);
 }
 
@@ -1103,13 +1018,13 @@ onBeforeUnmount(() => {
 }
 
 .connect-tracking-status-row strong {
-  color: #4E342E;
+  color: #4e342e;
   font-size: 11px;
 }
 
 .connect-tracking-status-row > div:last-child span {
   margin-top: 3px;
-  color: #9A8B82;
+  color: #9a8b82;
   font-size: 9px;
   line-height: 1.4;
 }
@@ -1127,23 +1042,22 @@ onBeforeUnmount(() => {
 }
 
 .connect-tracking-detail-row span {
-  color: #9A8B82;
+  color: #9a8b82;
   font-size: 10px;
 }
 
 .connect-tracking-detail-row strong {
-  color: #4E342E;
+  color: #4e342e;
   font-size: 10px;
   text-align: right;
 }
-
 
 /* Shared tracking */
 .connect-tracking-shared-card {
   display: flex;
   gap: 10px;
   padding: 14px;
-  background: #F3EAE4;
+  background: #f3eae4;
   border-radius: 14px;
 }
 
@@ -1154,24 +1068,23 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #D17A4A;
+  background: #d17a4a;
   border-radius: 9px;
-  color: #FFFEFC;
+  color: #fffefc;
   font-size: 11px;
 }
 
 .connect-tracking-shared-card strong {
-  color: #4E342E;
+  color: #4e342e;
   font-size: 11px;
 }
 
 .connect-tracking-shared-card p {
   margin: 4px 0 0;
-  color: #806F65;
+  color: #806f65;
   font-size: 9px;
   line-height: 1.5;
 }
-
 
 /* Bottom route card */
 .connect-tracking-bottom-card {
@@ -1190,8 +1103,8 @@ onBeforeUnmount(() => {
 
 .connect-tracking-bottom-heading h2 {
   margin: 5px 0 0;
-  color: #4E342E;
-  font-family: Georgia, 'Times New Roman', serif;
+  color: #4e342e;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 20px;
   font-weight: 600;
 }
@@ -1200,7 +1113,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #47704A;
+  color: #47704a;
   font-size: 10px;
   font-weight: 800;
 }
@@ -1231,19 +1144,19 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border-radius: 11px;
-  background: #F3EAE4;
-  color: #D17A4A;
+  background: #f3eae4;
+  color: #d17a4a;
 }
 
 .connect-tracking-route-icon.destination {
-  background: #F1F6F1;
-  color: #5C8A60;
+  background: #f1f6f1;
+  color: #5c8a60;
 }
 
 .connect-tracking-route-point span,
 .connect-tracking-route-point small {
   display: block;
-  color: #9A8B82;
+  color: #9a8b82;
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 1px;
@@ -1252,7 +1165,7 @@ onBeforeUnmount(() => {
 .connect-tracking-route-point strong {
   display: block;
   margin: 3px 0;
-  color: #4E342E;
+  color: #4e342e;
   font-size: 11px;
 }
 
@@ -1262,12 +1175,12 @@ onBeforeUnmount(() => {
 
 .connect-tracking-route-line {
   height: 2px;
-  background: #DDD3CD;
+  background: #ddd3cd;
 }
 
 .connect-tracking-route-line-fill {
   height: 100%;
-  background: #D17A4A;
+  background: #d17a4a;
   transition: width 0.7s ease;
 }
 
@@ -1281,19 +1194,17 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #FFFEFC;
-  border: 2px solid #D17A4A;
+  background: #fffefc;
+  border: 2px solid #d17a4a;
   border-radius: 50%;
-  color: #D17A4A;
+  color: #d17a4a;
   font-size: 10px;
   box-shadow: 0 3px 10px rgba(78, 52, 46, 0.12);
   transition: left 0.7s ease;
 }
 
-
 /* Tablet */
 @media (max-width: 1100px) {
-
   .connect-tracking-workspace {
     grid-template-columns: 1fr;
   }
@@ -1312,10 +1223,8 @@ onBeforeUnmount(() => {
   }
 }
 
-
 /* Smaller tablet */
 @media (max-width: 760px) {
-
   .connect-tracking-page {
     padding: 22px 16px;
   }
@@ -1362,10 +1271,8 @@ onBeforeUnmount(() => {
   }
 }
 
-
 /* Mobile */
 @media (max-width: 560px) {
-
   .connect-tracking-page {
     padding: 18px 12px;
   }
@@ -1403,5 +1310,4 @@ onBeforeUnmount(() => {
     align-items: flex-start;
   }
 }
-
 </style>

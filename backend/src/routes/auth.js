@@ -101,8 +101,31 @@ router.post("/register-buyer", async (req, res) => {
       buyerInsertValues,
     );
 
+    const [buyers] = await connection.query(
+      "SELECT buyer_id FROM buyers WHERE user_id = ? LIMIT 1",
+      [userResult.insertId],
+    );
+
     await connection.commit();
-    res.status(201).json({ message: "Buyer account registered successfully." });
+    const token = jwt.sign(
+      {
+        userId: userResult.insertId,
+        role: "buyer",
+        buyerId: buyers[0].buyer_id,
+        supplierId: null,
+      },
+      process.env.JWT_SECRET || "your_jwt_secret_key_here",
+      { expiresIn: "24h" },
+    );
+
+    res.status(201).json({
+      message: "Buyer account registered successfully.",
+      token,
+      role: "buyer",
+      userId: userResult.insertId,
+      buyerId: buyers[0].buyer_id,
+      supplierId: null,
+    });
   } catch (error) {
     await connection.rollback();
     console.error("Register buyer error:", error);
@@ -164,12 +187,10 @@ router.post("/register-supplier", async (req, res) => {
     );
 
     await connection.commit();
-    res
-      .status(201)
-      .json({
-        message: "Supplier application submitted successfully.",
-        plan_id,
-      });
+    res.status(201).json({
+      message: "Supplier application submitted successfully.",
+      plan_id,
+    });
   } catch (error) {
     await connection.rollback();
     console.error("Register supplier error:", error);

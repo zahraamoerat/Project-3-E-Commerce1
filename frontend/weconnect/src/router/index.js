@@ -1,20 +1,20 @@
 import { createRouter, createWebHistory } from "vue-router";
-import LandingPage from "../views/LandingPage.vue";
-import LoginPage from "../views/LoginPage.vue";
-import SignUpPage from "../views/SignUpPage.vue";
-import CartView from "../views/CartView.vue";
-import MarketplaceView from "../views/MarketplaceView.vue";
-import SupplierDashboard from "../views/SupplierDashboard.vue";
-import SupplierProducts from "../views/S_Products.vue";
-import AddProducts from "../views/AddProducts.vue";
-import EditProduct from "../views/EditProduct.vue";
-import ViewProduct from "../views/ViewProduct.vue";
-import Reviews from "../views/Reviews.vue";
-import StockManagement from "../views/StockManagement.vue";
-import RestockPage from "../views/RestockPage.vue";
-import SupplierOrders from "../views/Orders.vue";
-import SupplierDeliveries from "../views/Deliveries.vue";
-import Profile from "../views/Profile.vue";
+import LandingPage from "../views/landingpage/LandingPage.vue";
+import LoginPage from "../views/loginpage/LoginPage.vue";
+import SignUpPage from "../views/signuppage/SignUpPage.vue";
+import CartView from "../views/buyersviews/CartView.vue";
+import MarketplaceView from "../views/buyersviews/MarketplaceView.vue";
+import SupplierDashboard from "../views/suppliersviews/SupplierDashboard.vue";
+import SupplierProducts from "../views/suppliersviews/S_Products.vue";
+import AddProducts from "../views/suppliersviews/AddProducts.vue";
+import EditProduct from "../views/suppliersviews/EditProduct.vue";
+import ViewProduct from "../views/buyersviews/ViewProduct.vue";
+import Reviews from "../views/suppliersviews/Reviews.vue";
+import StockManagement from "../views/suppliersviews/StockManagement.vue";
+import RestockPage from "../views/suppliersviews/RestockPage.vue";
+import SupplierOrders from "../views/suppliersviews/Orders.vue";
+import SupplierDeliveries from "../views/deliveries/Deliveries.vue";
+import Profile from "../views/suppliersviews/Profile.vue";
 
 // Public, buyer, and supplier pages used by the application.
 const routes = [
@@ -42,6 +42,7 @@ const routes = [
     path: "/marketplace",
     name: "Marketplace",
     component: MarketplaceView,
+    meta: { requiresAuth: true, role: "buyer" },
   },
   {
     path: "/cart",
@@ -118,37 +119,41 @@ const routes = [
   {
     path: "/tracking/:deliveryId",
     name: "Tracking",
-    component: () => import("../views/b_TrackingView.vue"),
+    component: () => import("../views/buyersviews/b_TrackingView.vue"),
     meta: { requiresAuth: true, role: "buyer" },
   },
   {
     path: "/small-business/dashboard",
     name: "SmallBusinessDashboard",
-    component: () => import("../views/b_SmallBusinessDashboard.vue"),
+    component: () =>
+      import("../views/buyersviews/b_SmallBusinessDashboard.vue"),
     meta: { requiresAuth: true, role: "buyer" },
   },
   {
     path: "/small-business/orders",
     name: "SmallBusinessOrders",
-    component: () => import("../views/b_SmallBusinessOrdersView.vue"),
+    component: () =>
+      import("../views/buyersviews/b_SmallBusinessOrdersView.vue"),
     meta: { requiresAuth: true, role: "buyer" },
   },
   {
     path: "/small-business/products",
     name: "SmallBusinessProducts",
-    component: () => import("../views/b_SmallBusinessProductsView.vue"),
+    component: () =>
+      import("../views/buyersviews/b_SmallBusinessProductsView.vue"),
     meta: { requiresAuth: true, role: "buyer" },
   },
   {
     path: "/small-business/deliveries",
     name: "SmallBusinessDeliveries",
-    component: () => import("../views/b_SmallBusinessDeliveriesView.vue"),
+    component: () =>
+      import("../views/buyersviews/b_SmallBusinessDeliveriesView.vue"),
     meta: { requiresAuth: true, role: "buyer" },
   },
   {
     path: "/payment/:orderId",
     name: "Payment",
-    component: () => import("../views/b_PaymentsView.vue"),
+    component: () => import("../views/buyersviews/b_PaymentsView.vue"),
     meta: { requiresAuth: true, role: "buyer" },
   },
   {

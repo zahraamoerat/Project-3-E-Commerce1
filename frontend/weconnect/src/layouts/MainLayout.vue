@@ -7,18 +7,33 @@ const router = useRouter();
 const paletteOpen = ref(false);
 const paletteQuery = ref("");
 const commands = [
-  { label: "Open dashboard", path: "/dashboard", hint: "Overview" },
-  { label: "Browse products", path: "/products", hint: "Catalog" },
-  { label: "Manage stock", path: "/stockmanagement", hint: "Inventory" },
-  { label: "Review orders", path: "/orders", hint: "Fulfilment" },
-  { label: "Track deliveries", path: "/deliveries", hint: "Logistics" },
-  { label: "Read reviews", path: "/reviews", hint: "Feedback" },
-  { label: "Edit business profile", path: "/profile", hint: "Settings" },
+  { label: "Open dashboard", path: "/supplier-dashboard", hint: "Overview" },
+  { label: "Browse products", path: "/supplier/products", hint: "Catalog" },
+  {
+    label: "Manage stock",
+    path: "/supplier/stockmanagement",
+    hint: "Inventory",
+  },
+  { label: "Review orders", path: "/supplier/orders", hint: "Fulfilment" },
+  {
+    label: "Track deliveries",
+    path: "/supplier/deliveries",
+    hint: "Logistics",
+  },
+  { label: "Read reviews", path: "/supplier/reviews", hint: "Feedback" },
+  {
+    label: "Edit business profile",
+    path: "/supplier/profile",
+    hint: "Settings",
+  },
 ];
 
-const visibleCommands = () => commands.filter((command) =>
-  `${command.label} ${command.hint}`.toLowerCase().includes(paletteQuery.value.toLowerCase().trim()),
-);
+const visibleCommands = () =>
+  commands.filter((command) =>
+    `${command.label} ${command.hint}`
+      .toLowerCase()
+      .includes(paletteQuery.value.toLowerCase().trim()),
+  );
 
 function openPalette() {
   paletteOpen.value = true;
@@ -60,15 +75,39 @@ onUnmounted(() => window.removeEventListener("keydown", handleShortcut));
     </main>
   </div>
   <div v-if="paletteOpen" class="palette-backdrop" @click.self="closePalette">
-    <section class="command-palette" role="dialog" aria-modal="true" aria-label="Quick navigation">
-      <div class="palette-search"><span>⌕</span><input v-model="paletteQuery" autofocus placeholder="Jump to a page..." /></div>
-      <div class="command-list">
-        <button v-for="command in visibleCommands()" :key="command.path" type="button" class="command-item" @click="runCommand(command)">
-          <span>{{ command.label }}</span><small>{{ command.hint }}</small>
-        </button>
-        <p v-if="!visibleCommands().length" class="command-empty">No matching page.</p>
+    <section
+      class="command-palette"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Quick navigation"
+    >
+      <div class="palette-search">
+        <span>⌕</span
+        ><input
+          v-model="paletteQuery"
+          autofocus
+          placeholder="Jump to a page..."
+        />
       </div>
-      <footer><span>Press <kbd>Esc</kbd> to close</span><span>Navigate anywhere in WeConnect</span></footer>
+      <div class="command-list">
+        <button
+          v-for="command in visibleCommands()"
+          :key="command.path"
+          type="button"
+          class="command-item"
+          @click="runCommand(command)"
+        >
+          <span>{{ command.label }}</span
+          ><small>{{ command.hint }}</small>
+        </button>
+        <p v-if="!visibleCommands().length" class="command-empty">
+          No matching page.
+        </p>
+      </div>
+      <footer>
+        <span>Press <kbd>Esc</kbd> to close</span
+        ><span>Navigate anywhere in WeConnect</span>
+      </footer>
     </section>
   </div>
 </template>
@@ -151,7 +190,7 @@ kbd {
   border: 1px solid #e2d8d0;
   border-radius: 14px;
   background: #fff;
-  box-shadow: 0 28px 80px rgba(59,37,27,.25);
+  box-shadow: 0 28px 80px rgba(59, 37, 27, 0.25);
   overflow: hidden;
 }
 

@@ -32,7 +32,7 @@ const backendDir = fileURLToPath(new URL("../../../backend/", import.meta.url));
 
 console.log("Starting WeConnect frontend and backend...");
 console.log("Frontend: http://localhost:5173");
-console.log("Backend:  http://localhost:5000");
+console.log("Backend:  http://localhost:28794");
 
 start("backend", ["run", "dev"], backendDir);
 start("frontend", ["run", "dev:frontend"], frontendDir);

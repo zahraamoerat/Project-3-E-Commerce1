@@ -3,7 +3,7 @@
     <header class="header-container">
       <router-link to="/" class="brand-group">
         <img
-          src="../assets/website-logo.png"
+          src="../../assets/website-logo.png"
           alt="WeConnect Logo"
           class="logo-icon"
         />

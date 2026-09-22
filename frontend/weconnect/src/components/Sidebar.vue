@@ -1,78 +1,152 @@
 <template>
-  <aside class="sidebar" :class="{ 'sidebar--collapsed': collapsed }"> <!-- ========================= LOGO / BRAND ========================== -->
+  <aside class="sidebar" :class="{ 'sidebar--collapsed': collapsed }">
+    <!-- ========================= LOGO / BRAND ========================== -->
     <div class="sidebar_brand">
-      <button class="sidebar_toggle" type="button" @click="toggleSidebar" :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'" :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"><span>{{ collapsed ? "›" : "‹" }}</span></button>
-      <div class="sidebar_brand-icon"> <img :src="logo" alt="WeConnect logo" class="sidebar_brand-logo" /> </div>
-      <div class="sidebar_brand-text">
-        <h2>WeConnect</h2> <span>SUPPLIER NETWORK</span>
+      <button
+        class="sidebar_toggle"
+        type="button"
+        @click="toggleSidebar"
+        :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+      >
+        <span>{{ collapsed ? "›" : "‹" }}</span>
+      </button>
+      <div class="sidebar_brand-icon">
+        <img :src="logo" alt="WeConnect logo" class="sidebar_brand-logo" />
       </div>
-    </div> <!-- ========================= NAVIGATION ========================== -->
-    <nav class="sidebar_navigation"> <!-- Dashboard -->
-      <RouterLink to="/dashboard" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
-          class="sidebar_nav-icon">
+      <div class="sidebar_brand-text">
+        <h2>WeConnect</h2>
+        <span>SUPPLIER NETWORK</span>
+      </div>
+    </div>
+    <!-- ========================= NAVIGATION ========================== -->
+    <nav class="sidebar_navigation">
+      <!-- Dashboard -->
+      <RouterLink
+        to="/supplier-dashboard"
+        class="sidebar_nav-item"
+        exact-active-class="sidebar_nav-item--active"
+      >
+        <span class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faChartLine" />
-        </span> <span class="sidebar_nav-label">Dashboard</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Products -->
-      <RouterLink to="/products" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
-          class="sidebar_nav-icon">
+        </span>
+        <span class="sidebar_nav-label">Dashboard</span>
+        <span class="sidebar_notification-dot"></span>
+      </RouterLink>
+      <!-- Products -->
+      <RouterLink
+        to="/supplier/products"
+        class="sidebar_nav-item"
+        exact-active-class="sidebar_nav-item--active"
+      >
+        <span class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faShoppingBag" />
-        </span> <span class="sidebar_nav-label">Products</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Orders -->
-      <RouterLink to="/orders" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
-          class="sidebar_nav-icon">
+        </span>
+        <span class="sidebar_nav-label">Products</span>
+        <span class="sidebar_notification-dot"></span>
+      </RouterLink>
+      <!-- Orders -->
+      <RouterLink
+        to="/supplier/orders"
+        class="sidebar_nav-item"
+        exact-active-class="sidebar_nav-item--active"
+      >
+        <span class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faList" />
-        </span> <span class="sidebar_nav-label">Orders</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+        </span>
+        <span class="sidebar_nav-label">Orders</span>
+        <span class="sidebar_notification-dot"></span>
+      </RouterLink>
       <!-- Stock Management -->
-      <RouterLink to="/stockmanagement" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
-          class="sidebar_nav-icon">
+      <RouterLink
+        to="/supplier/stockmanagement"
+        class="sidebar_nav-item"
+        exact-active-class="sidebar_nav-item--active"
+      >
+        <span class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faWarehouse" />
-        </span> <span class="sidebar_nav-label">Stock Management</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+        </span>
+        <span class="sidebar_nav-label">Stock Management</span>
+        <span class="sidebar_notification-dot"></span>
+      </RouterLink>
       <!-- Deliveries -->
-      <RouterLink to="/deliveries" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
-          class="sidebar_nav-icon">
+      <RouterLink
+        to="/supplier/deliveries"
+        class="sidebar_nav-item"
+        exact-active-class="sidebar_nav-item--active"
+      >
+        <span class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faTruck" />
-        </span> <span class="sidebar_nav-label">Deliveries</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Reviews -->
-      <RouterLink to="/reviews" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
-          class="sidebar_nav-icon">
+        </span>
+        <span class="sidebar_nav-label">Deliveries</span>
+        <span class="sidebar_notification-dot"></span>
+      </RouterLink>
+      <!-- Reviews -->
+      <RouterLink
+        to="/supplier/reviews"
+        class="sidebar_nav-item"
+        exact-active-class="sidebar_nav-item--active"
+      >
+        <span class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faStar" />
-        </span> <span class="sidebar_nav-label">Reviews</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+        </span>
+        <span class="sidebar_nav-label">Reviews</span>
+        <span class="sidebar_notification-dot"></span>
+      </RouterLink>
       <!-- Business Profile -->
-      <RouterLink to="/profile" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
-          class="sidebar_nav-icon">
+      <RouterLink
+        to="/supplier/profile"
+        class="sidebar_nav-item"
+        exact-active-class="sidebar_nav-item--active"
+      >
+        <span class="sidebar_nav-icon">
           <FontAwesomeIcon :icon="faAddressCard" />
-        </span> <span class="sidebar_nav-label">Business Profile</span> <span class="sidebar_notification-dot"></span> </RouterLink>
-    </nav> <!-- ========================= LOGOUT ========================== --> <button class="sidebar_logout"
-      @click="logout"> <span class="sidebar_logout-icon">
+        </span>
+        <span class="sidebar_nav-label">Business Profile</span>
+        <span class="sidebar_notification-dot"></span>
+      </RouterLink>
+    </nav>
+    <!-- ========================= LOGOUT ========================== -->
+    <button class="sidebar_logout" @click="logout">
+      <span class="sidebar_logout-icon">
         <FontAwesomeIcon :icon="faUser" />
-      </span> <span class="sidebar_nav-label">Log out</span> </button>
+      </span>
+      <span class="sidebar_nav-label">Log out</span>
+    </button>
   </aside>
 </template>
 <script setup>
-import logo from "../assets/link-icon-white.png"
-import { ref } from "vue"
-import { useRouter } from "vue-router"
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
-import { faChartLine } from "@fortawesome/free-solid-svg-icons"
-import { faShoppingBag } from "@fortawesome/free-solid-svg-icons"
-import { faList } from "@fortawesome/free-solid-svg-icons"
-import { faWarehouse } from "@fortawesome/free-solid-svg-icons"
-import { faTruck } from "@fortawesome/free-solid-svg-icons"
-import { faStar } from "@fortawesome/free-solid-svg-icons"
-import { faUser } from "@fortawesome/free-solid-svg-icons"
-import { faAddressCard } from "@fortawesome/free-solid-svg-icons"
+import logo from "../assets/link-icon-white.png";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { faChartLine } from "@fortawesome/free-solid-svg-icons";
+import { faShoppingBag } from "@fortawesome/free-solid-svg-icons";
+import { faList } from "@fortawesome/free-solid-svg-icons";
+import { faWarehouse } from "@fortawesome/free-solid-svg-icons";
+import { faTruck } from "@fortawesome/free-solid-svg-icons";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { faAddressCard } from "@fortawesome/free-solid-svg-icons";
 /* ========================= ROUTER ========================= */
-const router = useRouter()
-const collapsed = ref(localStorage.getItem("weconnect_sidebar_collapsed") === "true")
+const router = useRouter();
+const collapsed = ref(
+  localStorage.getItem("weconnect_sidebar_collapsed") === "true",
+);
 
 function toggleSidebar() {
-  collapsed.value = !collapsed.value
-  localStorage.setItem("weconnect_sidebar_collapsed", String(collapsed.value))
+  collapsed.value = !collapsed.value;
+  localStorage.setItem("weconnect_sidebar_collapsed", String(collapsed.value));
 }
 /* ========================= LOGOUT ========================= */
 function logout() {
-  localStorage.removeItem("token")
-  localStorage.removeItem("user")
-  router.push("/products")
+  localStorage.removeItem("weconnect_token");
+  localStorage.removeItem("weconnect_role");
+  localStorage.removeItem("weconnect_user_id");
+  localStorage.removeItem("weconnect_buyer_id");
+  localStorage.removeItem("weconnect_supplier_id");
+  router.push("/login");
 }
-
 </script>
 <style scoped>
 .sidebar {
@@ -97,8 +171,11 @@ function logout() {
   color: var(--sidebar-text);
   background: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
-  box-shadow: 6px 0 24px rgba(40, 25, 18, .14);
-  transition: width .25s ease, padding .25s ease, box-shadow .25s ease;
+  box-shadow: 6px 0 24px rgba(40, 25, 18, 0.14);
+  transition:
+    width 0.25s ease,
+    padding 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .sidebar::before {
@@ -109,7 +186,7 @@ function logout() {
   width: 4px;
   height: 100%;
   background: linear-gradient(180deg, #d89a70 0%, #a9633f 50%, #e1b08d 100%);
-  opacity: .8;
+  opacity: 0.8;
 }
 
 .sidebar_brand {
@@ -131,7 +208,7 @@ function logout() {
   border-radius: 13px;
   background: #4b342b;
   border: 1px solid #65493d;
-  box-shadow: 0 5px 14px rgba(20, 12, 8, .16);
+  box-shadow: 0 5px 14px rgba(20, 12, 8, 0.16);
   overflow: hidden;
 }
 
@@ -147,7 +224,9 @@ function logout() {
   flex-direction: column;
   overflow: hidden;
   white-space: nowrap;
-  transition: opacity .18s ease, width .25s ease;
+  transition:
+    opacity 0.18s ease,
+    width 0.25s ease;
 }
 
 .sidebar_brand-text h2 {
@@ -156,7 +235,7 @@ function logout() {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 16px;
   font-weight: 750;
-  letter-spacing: -.25px;
+  letter-spacing: -0.25px;
   line-height: 1.2;
 }
 
@@ -182,18 +261,21 @@ function logout() {
   border-radius: 50%;
   background: #fffaf7;
   color: #d9c4b7;
-  box-shadow: 0 4px 13px rgba(30, 18, 12, .22);
+  box-shadow: 0 4px 13px rgba(30, 18, 12, 0.22);
   font-size: 17px;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
-  transition: transform .2s ease, color .2s ease, box-shadow .2s ease;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .sidebar_toggle:hover {
   transform: scale(1.08);
   color: #e0a078;
-  box-shadow: 0 6px 18px rgba(55, 32, 22, .24);
+  box-shadow: 0 6px 18px rgba(55, 32, 22, 0.24);
 }
 
 .sidebar_navigation {
@@ -219,7 +301,10 @@ function logout() {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 12.5px;
   font-weight: 600;
-  transition: background .18s ease, color .18s ease, transform .18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
 }
 
 .sidebar_nav-item:hover {
@@ -231,7 +316,7 @@ function logout() {
 .sidebar_nav-item--active {
   color: #fff;
   background: linear-gradient(135deg, #b86f47 0%, #925237 100%);
-  box-shadow: 0 7px 16px rgba(45, 25, 16, .25);
+  box-shadow: 0 7px 16px rgba(45, 25, 16, 0.25);
 }
 
 .sidebar_nav-item--active:hover {
@@ -248,7 +333,7 @@ function logout() {
   justify-content: center;
   color: #c9b4a8;
   font-size: 15px;
-  transition: color .18s ease;
+  transition: color 0.18s ease;
 }
 
 .sidebar_nav-item--active .sidebar_nav-icon {
@@ -285,7 +370,9 @@ function logout() {
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: color .18s ease, background .18s ease;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease;
 }
 
 .sidebar_logout:hover {
@@ -306,7 +393,9 @@ function logout() {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
-  transition: opacity .16s ease, width .25s ease;
+  transition:
+    opacity 0.16s ease,
+    width 0.25s ease;
 }
 
 .sidebar--collapsed {

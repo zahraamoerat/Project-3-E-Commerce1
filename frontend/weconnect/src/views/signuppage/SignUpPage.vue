@@ -3,7 +3,7 @@
     <header class="header-container">
       <div class="brand-group" @click="$router.push('/')">
         <img
-          src="../assets/website-logo.png"
+          src="../../assets/website-logo.png"
           alt="WeConnect Logo"
           class="logo-icon"
         />

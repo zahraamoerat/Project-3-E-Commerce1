@@ -5,7 +5,7 @@
       <div class="logo-container">
         <!-- website-logo.png -->
         <img
-          src="../assets/website-logo.png"
+          src="../../assets/website-logo.png"
           alt="WeConnect Logo Icon"
           class="logo-icon"
         />
@@ -170,7 +170,7 @@
     <!-- Testimonial Section -->
     <section class="testimonial-section">
       <div class="testimonial-image-box">
-        <img src="../assets/Kaya-Kitchen.jpg" alt="Kaya Kitchen" />
+        <img src="../../assets/Kaya-Kitchen.jpg" alt="Kaya Kitchen" />
       </div>
       <div class="testimonial-content">
         <p class="quote">
@@ -235,7 +235,7 @@
       <div class="footer-col brand-col">
         <div class="logo-container">
           <img
-            src="../assets/website-logo.png"
+            src="../../assets/website-logo.png"
             alt="WeConnect"
             class="logo-icon-sm"
           />

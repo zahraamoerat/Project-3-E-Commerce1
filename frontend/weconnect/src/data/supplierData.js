@@ -1,6 +1,7 @@
 import { computed, ref } from "vue";
 
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+// Use the same backend URL as the main API service.
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:28794/api";
 
 const categories = ref([]);
 const categoriesLoading = ref(false);
@@ -16,7 +17,14 @@ const products = ref([]);
 const orders = ref([]);
 const deliveries = ref([]);
 const reviews = ref([]);
-const profile = ref({ businessName: "", owner: "", email: "", phone: "", location: "", description: "" });
+const profile = ref({
+  businessName: "",
+  owner: "",
+  email: "",
+  phone: "",
+  location: "",
+  description: "",
+});
 const loading = ref(true);
 const error = ref("");
 let loaded = false;
@@ -24,15 +32,27 @@ let loaded = false;
 async function request(path, options = {}) {
   const token = localStorage.getItem("weconnect_token");
   const response = await fetch(`${API_URL}${path}`, {
-    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
     ...options,
   });
   const rawBody = await response.text();
   let body = {};
-  try { body = rawBody ? JSON.parse(rawBody) : {}; } catch { body = {}; }
+  try {
+    body = rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    body = {};
+  }
   if (!response.ok) {
     const detail = body.message || rawBody?.trim();
-    throw new Error(detail ? `Request failed (${response.status}): ${detail}` : `Request failed (${response.status}): ${response.statusText || "The server request failed."}`);
+    throw new Error(
+      detail
+        ? `Request failed (${response.status}): ${detail}`
+        : `Request failed (${response.status}): ${response.statusText || "The server request failed."}`,
+    );
   }
   return body;
 }
@@ -40,7 +60,12 @@ async function request(path, options = {}) {
 function refreshStatus(product) {
   const quantity = Number(product.quantity || 0);
   const threshold = Number(product.low_stock_threshold || 0);
-  product.stockStatus = quantity === 0 ? "Out of stock" : quantity <= threshold ? "Low stock" : "In stock";
+  product.stockStatus =
+    quantity === 0
+      ? "Out of stock"
+      : quantity <= threshold
+        ? "Low stock"
+        : "In stock";
 }
 
 export async function loadCategories(force = false) {
@@ -100,76 +125,123 @@ loadCategories();
 loadSupplierData();
 
 async function addProduct(product) {
-  const result = await request("/supplier/products", { method: "POST", body: JSON.stringify(product) });
+  const result = await request("/supplier/products", {
+    method: "POST",
+    body: JSON.stringify(product),
+  });
   const created = await request(`/supplier/products/${result.product_id}`);
   products.value.unshift(created);
   return created;
 }
 
 async function updateProduct(id, changes) {
-  const payload = { ...changes, category_name: changes.category_name || products.value.find((item) => item.product_id === Number(id))?.category_name };
-  const result = await request(`/supplier/products/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+  const payload = {
+    ...changes,
+    category_name:
+      changes.category_name ||
+      products.value.find((item) => item.product_id === Number(id))
+        ?.category_name,
+  };
+  const result = await request(`/supplier/products/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
   const updated = await request(`/supplier/products/${id}`);
-  const index = products.value.findIndex((item) => item.product_id === Number(id));
+  const index = products.value.findIndex(
+    (item) => item.product_id === Number(id),
+  );
   if (index !== -1) products.value[index] = updated;
   return result;
 }
 
 async function duplicateProduct(id) {
-  const result = await request(`/supplier/products/${id}/duplicate`, { method: "POST" });
+  const result = await request(`/supplier/products/${id}/duplicate`, {
+    method: "POST",
+  });
   const created = await request(`/supplier/products/${result.product_id}`);
   products.value.unshift(created);
   return created;
 }
 
 async function updateProductStock(id, quantity, reason = "Manual adjustment") {
-  await request(`/supplier/products/${id}/stock`, { method: "PATCH", body: JSON.stringify({ quantity, reason }) });
+  await request(`/supplier/products/${id}/stock`, {
+    method: "PATCH",
+    body: JSON.stringify({ quantity, reason }),
+  });
   const updated = await request(`/supplier/products/${id}`);
-  const index = products.value.findIndex((item) => item.product_id === Number(id));
+  const index = products.value.findIndex(
+    (item) => item.product_id === Number(id),
+  );
   if (index !== -1) products.value[index] = updated;
   return updated;
 }
 
 async function removeProduct(id) {
   await request(`/supplier/products/${id}`, { method: "DELETE" });
-  products.value = products.value.filter((product) => product.product_id !== Number(id));
+  products.value = products.value.filter(
+    (product) => product.product_id !== Number(id),
+  );
 }
 
 async function updateOrderStatus(id, status) {
   const apiStatus = status === "Ready to ship" ? "Shipped" : status;
-  await request(`/supplier/orders/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status: apiStatus }) });
+  await request(`/supplier/orders/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: apiStatus }),
+  });
   const order = orders.value.find((item) => item.id === id);
   if (order) order.status = status;
   return order;
 }
 
 async function updateDeliveryStatus(id, status) {
-  await request(`/supplier/deliveries/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
-  const delivery = deliveries.value.find((item) => String(item.id) === String(id));
+  await request(`/supplier/deliveries/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+  const delivery = deliveries.value.find(
+    (item) => String(item.id) === String(id),
+  );
   if (delivery) delivery.status = status;
   return delivery;
 }
 
 async function replyToReview(id, reply_text = "Thank you for your feedback.") {
-  await request(`/supplier/reviews/${id}/replies`, { method: "POST", body: JSON.stringify({ reply_text }) });
+  await request(`/supplier/reviews/${id}/replies`, {
+    method: "POST",
+    body: JSON.stringify({ reply_text }),
+  });
   const review = reviews.value.find((item) => item.id === id);
   if (review) review.replied = true;
   return review;
 }
 
 async function updateProfile(changes) {
-  const updated = await request("/supplier/profile", { method: "PATCH", body: JSON.stringify(changes) });
+  const updated = await request("/supplier/profile", {
+    method: "PATCH",
+    body: JSON.stringify(changes),
+  });
   Object.assign(profile.value, updated);
   return updated;
 }
 
 async function cleanupProductImages(urls) {
-  const safeUrls = Array.isArray(urls) ? urls.filter((url) => {
-    try { const parsed = new URL(url); return parsed.pathname.startsWith("/uploads/products/"); } catch { return false; }
-  }) : [];
+  const safeUrls = Array.isArray(urls)
+    ? urls.filter((url) => {
+        try {
+          const parsed = new URL(url);
+          return parsed.pathname.startsWith("/uploads/products/");
+        } catch {
+          return false;
+        }
+      })
+    : [];
   if (!safeUrls.length) return;
   try {
-    await request("/uploads/products", { method: "DELETE", body: JSON.stringify({ urls: safeUrls }) });
+    await request("/uploads/products", {
+      method: "DELETE",
+      body: JSON.stringify({ urls: safeUrls }),
+    });
   } catch (cleanupError) {
     console.warn("Product image cleanup could not be completed:", cleanupError);
   }
@@ -193,7 +265,11 @@ async function uploadProductImages(imageSources, onUploaded = null) {
     const { source } = blobs[index];
     const blob = await (await fetch(source)).blob();
     const extension = blob.type === "image/png" ? "png" : "jpg";
-    formData.append("images", blob, `product-${Date.now()}-${index}.${extension}`);
+    formData.append(
+      "images",
+      blob,
+      `product-${Date.now()}-${index}.${extension}`,
+    );
   }
 
   const response = await fetch(`${API_URL}/uploads/products`, {
@@ -210,7 +286,9 @@ async function uploadProductImages(imageSources, onUploaded = null) {
   }
 
   if (!response.ok) {
-    throw new Error(body.message || rawBody?.trim() || "Unable to upload product images.");
+    throw new Error(
+      body.message || rawBody?.trim() || "Unable to upload product images.",
+    );
   }
 
   const uploadedUrls = Array.isArray(body.urls) ? body.urls : [];
@@ -230,12 +308,49 @@ async function uploadProductImages(imageSources, onUploaded = null) {
 }
 
 export function useSupplierData() {
-  return { products, orders, deliveries, reviews, profile, categories, categoriesLoading, categoriesError, loading, error, imagePlaceholders, refreshStatus, loadCategories, loadSupplierData, refreshSupplierProducts, uploadProductImages, cleanupProductImages, addProduct, updateProduct, duplicateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
+  return {
+    products,
+    orders,
+    deliveries,
+    reviews,
+    profile,
+    categories,
+    categoriesLoading,
+    categoriesError,
+    loading,
+    error,
+    imagePlaceholders,
+    refreshStatus,
+    loadCategories,
+    loadSupplierData,
+    refreshSupplierProducts,
+    uploadProductImages,
+    cleanupProductImages,
+    addProduct,
+    updateProduct,
+    duplicateProduct,
+    updateProductStock,
+    removeProduct,
+    updateOrderStatus,
+    updateDeliveryStatus,
+    replyToReview,
+    updateProfile,
+  };
 }
 
 export const supplierStats = {
   productCount: computed(() => products.value.length),
-  lowStockCount: computed(() => products.value.filter((product) => product.stockStatus === "Low stock").length),
-  outOfStockCount: computed(() => products.value.filter((product) => product.stockStatus === "Out of stock").length),
-  revenue: computed(() => orders.value.reduce((sum, order) => sum + Number(order.total || 0), 0)),
+  lowStockCount: computed(
+    () =>
+      products.value.filter((product) => product.stockStatus === "Low stock")
+        .length,
+  ),
+  outOfStockCount: computed(
+    () =>
+      products.value.filter((product) => product.stockStatus === "Out of stock")
+        .length,
+  ),
+  revenue: computed(() =>
+    orders.value.reduce((sum, order) => sum + Number(order.total || 0), 0),
+  ),
 };
