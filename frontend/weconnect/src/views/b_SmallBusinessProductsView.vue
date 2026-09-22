@@ -6,7 +6,7 @@
     <section class="shop-hero">
       <div class="hero-dots hero-dots-left" aria-hidden="true"></div>
       <div class="hero-dots hero-dots-right" aria-hidden="true"></div>
-      <p>Home <span>/</span> Shop</p>
+      <p>Home <span>/</span> Shop <span v-if="isDetailView">/</span> <strong v-if="isDetailView">Product Details</strong></p>
       <h1>Shop</h1>
       <span class="hero-rule"></span>
     </section>
@@ -238,72 +238,122 @@
 
       <!-- Product details -->
       <section v-else-if="selectedProduct" class="detail-page">
-        <button type="button" class="detail-back" @click="router.push({ name: 'small-business-products' })">
-          <FontAwesomeIcon :icon="faArrowLeft" /> Back to shop
-        </button>
-
         <div class="detail-layout">
-          <div class="detail-gallery">
-            <div class="detail-image-wrap"><img :src="selectedProduct.image" :alt="selectedProduct.title" /></div>
-            <button type="button" class="detail-thumb active"><img :src="selectedProduct.image" :alt="`${selectedProduct.title} thumbnail`" /></button>
-          </div>
-
-          <div class="detail-copy">
-            <p class="detail-category">{{ selectedProduct.category }}</p>
-            <h1>{{ selectedProduct.title }}</h1>
-            <p class="detail-supplier">Sold by <strong>{{ selectedProduct.supplier }}</strong> <span>Verified supplier</span></p>
-            <div class="detail-rating"><span class="stars"><span v-for="star in 5" :key="star" :class="{ muted: star > Math.round(selectedProduct.rating) }">★</span></span> {{ selectedProduct.rating.toFixed(1) }}</div>
-            <div class="detail-price"><strong>R {{ formatPrice(selectedProduct.price) }}</strong><span v-if="selectedProduct.comparePrice">R {{ formatPrice(selectedProduct.comparePrice) }}</span><small>per unit</small></div>
-            <p class="detail-description">{{ selectedProduct.description }}</p>
-
-            <dl class="detail-facts">
-              <div><dt>SKU</dt><dd>{{ selectedProduct.sku || '—' }}</dd></div>
-              <div><dt>Availability</dt><dd :class="statusClass(selectedProduct.status)">{{ selectedProduct.stockQty }} units</dd></div>
-              <div><dt>Unit</dt><dd>{{ selectedProduct.unit || 'Standard' }}</dd></div>
-              <div><dt>Delivery</dt><dd>Supplier delivery available</dd></div>
-            </dl>
-
-            <div class="detail-purchase">
-              <label><span>Quantity</span><input v-model.number="quantity" type="number" min="1" :max="Math.max(1, selectedProduct.stockQty)" aria-label="Quantity" /></label>
-              <button type="button" class="detail-primary" :disabled="selectedProduct.status === 'Out of stock'" @click="addDetailToBasket">
-                {{ detailActionLabel }}
+          <section class="detail-gallery" aria-label="Product gallery">
+            <div class="detail-image-wrap">
+              <button v-if="detailImages.length > 1" type="button" class="detail-gallery-arrow detail-gallery-arrow-left" @click="activeDetailImage = activeDetailImage === 0 ? detailImages.length - 1 : activeDetailImage - 1" aria-label="Previous product image">‹</button>
+              <img :src="detailImages[activeDetailImage]" :alt="selectedProduct.title" />
+              <button v-if="detailImages.length > 1" type="button" class="detail-gallery-arrow detail-gallery-arrow-right" @click="activeDetailImage = activeDetailImage === detailImages.length - 1 ? 0 : activeDetailImage + 1" aria-label="Next product image">›</button>
+            </div>
+            <div class="detail-thumb-row">
+              <button v-for="(image, index) in detailImages" :key="image + index" type="button" class="detail-thumb" :class="{ active: activeDetailImage === index }" @click="activeDetailImage = index">
+                <img :src="image" :alt="selectedProduct.title + ' image ' + (index + 1)" />
               </button>
             </div>
-            <button type="button" class="detail-order-now" :disabled="selectedProduct.status === 'Out of stock'" @click="orderNow">
-              Order now <FontAwesomeIcon :icon="faArrowRight" />
-            </button>
-            <p v-if="notice" class="detail-notice" role="status">{{ notice }}</p>
-          </div>
+          </section>
+
+          <section class="detail-copy">
+            <div class="detail-category-row">
+              <p class="detail-category">{{ selectedProduct.category }}</p>
+              <span v-if="selectedProduct.discountPercent" class="detail-discount">{{ selectedProduct.discountPercent }}% Off</span>
+            </div>
+            <h1>{{ selectedProduct.title }}</h1>
+            <div class="detail-review-line">
+              <span class="detail-stars">{{ starsFor(selectedProduct.rating) }}</span>
+              <strong>{{ selectedProduct.rating.toFixed(1) }}</strong>
+              <span>({{ reviews.length || 'No' }} Reviews)</span>
+            </div>
+            <div class="detail-price">
+              <strong>R {{ formatPrice(selectedProduct.price) }}</strong>
+              <span v-if="selectedProduct.comparePrice">R {{ formatPrice(selectedProduct.comparePrice) }}</span>
+            </div>
+            <p class="detail-description">{{ selectedProduct.description }}</p>
+
+            <div class="detail-option">
+              <div class="detail-option-label"><strong>Size/Volume</strong><span>{{ detailPackSizes[selectedPackSize] }}</span></div>
+              <div class="detail-size-pills">
+                <button v-for="(size, index) in detailPackSizes" :key="size" type="button" :class="{ selected: selectedPackSize === index }" @click="selectedPackSize = index">{{ size }}</button>
+              </div>
+            </div>
+
+            <div class="detail-purchase">
+              <div class="detail-quantity">
+                <button type="button" :disabled="quantity <= 1" @click="quantity = Math.max(1, quantity - 1)">−</button>
+                <span>{{ quantity }}</span>
+                <button type="button" :disabled="quantity >= Math.max(1, selectedProduct.stockQty)" @click="quantity = Math.min(Math.max(1, selectedProduct.stockQty), quantity + 1)">+</button>
+              </div>
+              <button type="button" class="detail-primary" :disabled="selectedProduct.status === 'Out of stock'" @click="addDetailToBasket"><FontAwesomeIcon :icon="faBagShopping" /> {{ detailActionLabel }}</button>
+              <button type="button" class="detail-buy-now" :disabled="selectedProduct.status === 'Out of stock'" @click="orderNow">Buy Now</button>
+              <button type="button" class="detail-heart" :class="{ saved: detailSaved }" @click="detailSaved = !detailSaved" aria-label="Save product">♡</button>
+            </div>
+
+            <div class="detail-meta">
+              <div><b>SKU:</b> {{ selectedProduct.sku || 'Not provided' }}</div>
+              <div><b>Tags:</b> {{ selectedProduct.category }}, Wholesale, Bulk</div>
+              <div class="detail-share"><b>Share:</b>
+                <button type="button" @click="shareProduct('Facebook')">f</button>
+                <button type="button" @click="shareProduct('X')">x</button>
+                <button type="button" @click="shareProduct('Pinterest')">p</button>
+              </div>
+            </div>
+          </section>
         </div>
 
-        <div class="detail-information">
-          <div><p class="eyebrow">PRODUCT INFORMATION</p><h2>Made for your next order</h2></div>
-          <p>{{ selectedProduct.description }} Browse supplier availability, choose the quantity your business needs, and continue to Orders when you are ready to consolidate your purchase.</p>
-        </div>
+        <section class="detail-review-section">
+          <nav class="detail-tabs" aria-label="Product details">
+            <button :class="{ active: activeDetailTab === 'description' }" @click="activeDetailTab = 'description'">Description</button>
+            <button :class="{ active: activeDetailTab === 'info' }" @click="activeDetailTab = 'info'">Additional Information</button>
+            <button :class="{ active: activeDetailTab === 'reviews' }" @click="activeDetailTab = 'reviews'">Review</button>
+          </nav>
 
-        <section class="detail-reviews">
-          <div class="reviews-head">
-            <div><p class="eyebrow">RATINGS &amp; REVIEWS</p><h2>What buyers say</h2></div>
-            <div class="review-summary"><strong>{{ averageRating.toFixed(1) }}</strong><span class="stars"><span v-for="star in 5" :key="star" :class="{ muted: star > Math.round(averageRating) }">★</span></span><small>{{ reviews.length }} reviews</small></div>
+          <div v-if="activeDetailTab === 'description'" class="detail-tab-content">
+            <p>{{ selectedProduct.description }}</p>
+          </div>
+          <div v-else-if="activeDetailTab === 'info'" class="detail-tab-content detail-info-grid">
+            <div><span>Category</span><strong>{{ selectedProduct.category }}</strong></div>
+            <div><span>SKU</span><strong>{{ selectedProduct.sku || 'Not provided' }}</strong></div>
+            <div><span>Stock</span><strong>{{ selectedProduct.stockQty }} units</strong></div>
+            <div><span>Supplier</span><strong>{{ selectedProduct.supplier }}</strong></div>
           </div>
 
-          <p v-if="reviewsLoading" class="shop-message">Loading reviews...</p>
-          <p v-else-if="!reviews.length" class="shop-message">No reviews yet. Be the first to share your experience.</p>
-          <ul v-else class="review-list">
-            <li v-for="review in reviews" :key="review.reviewId" class="review-card">
-              <div><strong>{{ review.buyerName || 'WeConnect buyer' }}</strong><span class="stars">{{ starsFor(review.rating) }}</span><time>{{ formatReviewDate(review.reviewDate) }}</time></div>
-              <p>{{ review.reviewText }}</p>
-              <div v-if="review.supplierReply" class="supplier-reply"><strong>Supplier reply</strong><p>{{ review.supplierReply }}</p></div>
-            </li>
-          </ul>
+          <div v-else class="detail-reviews-content">
+            <div class="review-overview">
+              <div class="review-score">
+                <strong>{{ averageRating ? averageRating.toFixed(1) : selectedProduct.rating.toFixed(1) }}</strong>
+                <span>out of 5</span>
+                <div class="detail-stars">{{ starsFor(averageRating || selectedProduct.rating) }}</div>
+                <small>{{ reviews.length }} Reviews</small>
+              </div>
+              <div class="review-bars">
+                <div v-for="rating in [5,4,3,2,1]" :key="rating" class="review-bar-row">
+                  <span>{{ rating }} Star</span><div><i :style="{ width: reviewBreakdown[rating] + '%' }"></i></div><small>{{ reviewBreakdown[rating] }}%</small>
+                </div>
+              </div>
+            </div>
 
-          <form class="review-form" @submit.prevent="submitReview">
-            <h3>Share your review</h3>
-            <label><span>Rating</span><select v-model.number="reviewForm.rating"><option v-for="n in 5" :key="n" :value="n">{{ n }} star{{ n === 1 ? '' : 's' }}</option></select></label>
-            <label><span>Your review</span><textarea v-model="reviewForm.reviewText" rows="3" placeholder="Tell other small businesses about this product"></textarea></label>
-            <button type="submit" class="detail-primary" :disabled="reviewSubmitting">{{ reviewSubmitting ? 'Submitting...' : 'Submit review' }}</button>
-            <p v-if="reviewNotice" class="detail-notice">{{ reviewNotice }}</p>
-          </form>
+            <div class="review-list-heading">
+              <div><strong>Review List</strong><small>Showing {{ reviews.length }} of {{ reviews.length }} results</small></div>
+              <label>Sort by:
+                <select v-model="reviewSort"><option value="newest">Newest</option><option value="rating">Highest rating</option></select>
+              </label>
+            </div>
+
+            <p v-if="reviewsLoading" class="shop-message">Loading reviews...</p>
+            <p v-else-if="!reviews.length" class="shop-message">No reviews yet. Be the first to share your experience.</p>
+            <ul v-else class="review-list">
+              <li v-for="review in sortedReviews" :key="review.reviewId" class="review-card">
+                <div class="review-author">
+                  <span class="review-avatar">{{ initials(review.buyerName || 'Buyer') }}</span>
+                  <div><strong>{{ review.buyerName || 'WeConnect buyer' }}</strong><span class="review-verified">Verified</span></div>
+                  <time>{{ formatRelativeDate(review.reviewDate) }}</time>
+                </div>
+                <div class="detail-stars">{{ starsFor(review.rating) }}</div>
+                <strong class="review-title">{{ review.rating >= 4 ? 'Absolutely love this product!' : 'Good product for our business' }}</strong>
+                <p>{{ review.reviewText || 'Great quality and useful for our regular orders.' }}</p>
+                <div v-if="review.supplierReply" class="supplier-reply"><strong>Supplier reply</strong><p>{{ review.supplierReply }}</p></div>
+              </li>
+            </ul>
+          </div>
         </section>
       </section>
 
@@ -360,6 +410,12 @@ const viewMode = ref('grid')
 const currentPage = ref(1)
 const pageSize = 12
 const quantity = ref(1)
+const activeDetailImage = ref(0)
+const activeDetailTab = ref('reviews')
+const selectedPackSize = ref(0)
+const detailSaved = ref(false)
+const reviewSort = ref('newest')
+const detailPackSizes = ['30 ml', '60 ml', '80 ml', '100 ml']
 const notice = ref('')
 const isLoading = ref(true)
 const errorMessage = ref('')
@@ -415,6 +471,24 @@ const showingEnd = computed(() => Math.min(currentPage.value * pageSize, sortedP
 const basketCount = computed(() => Object.values(basket.value).reduce((total, item) => total + Number(item.quantity || 0), 0))
 const detailActionLabel = computed(() => basket.value[selectedProduct.value?.id] ? 'Update order' : 'Add to order')
 const averageRating = computed(() => reviews.value.length ? reviews.value.reduce((total, review) => total + Number(review.rating), 0) / reviews.value.length : 0)
+const detailImages = computed(() => {
+  const product = selectedProduct.value
+  if (!product) return []
+  const images = Array.isArray(product.images) ? product.images.filter(Boolean) : []
+  return images.length ? images : [product.image]
+})
+const sortedReviews = computed(() => {
+  const list = [...reviews.value]
+  if (reviewSort.value === 'rating') return list.sort((a, b) => Number(b.rating) - Number(a.rating))
+  return list.sort((a, b) => new Date(b.reviewDate || 0) - new Date(a.reviewDate || 0))
+})
+const reviewBreakdown = computed(() => {
+  const total = reviews.value.length || 1
+  return [5,4,3,2,1].reduce((result, rating) => {
+    result[rating] = Math.round((reviews.value.filter(review => Math.round(Number(review.rating)) === rating).length / total) * 100)
+    return result
+  }, {})
+})
 const hasActiveFilters = computed(() => selectedCategory.value !== 'All' || selectedAvailability.value !== 'All' || selectedRating.value || selectedPromotion.value !== 'all' || maxPrice.value < priceCeiling.value)
 
 function normalizeProduct(product) {
@@ -455,6 +529,18 @@ function formatReviewDate(value) {
   return value ? new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''
 }
 
+function initials(name) {
+  return String(name || 'Buyer').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0].toUpperCase()).join('')
+}
+function formatRelativeDate(value) {
+  if (!value) return 'Recently'
+  const date = new Date(value)
+  const days = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000))
+  if (days < 1) return 'Today'
+  if (days < 30) return days + ' days ago'
+  if (days < 365) return Math.floor(days / 30) + ' month' + (Math.floor(days / 30) === 1 ? '' : 's') + ' ago'
+  return Math.floor(days / 365) + ' year' + (Math.floor(days / 365) === 1 ? '' : 's') + ' ago'
+}
 function clearFilters() {
   selectedCategory.value = 'All'
   selectedAvailability.value = 'All'
@@ -773,62 +859,30 @@ onBeforeUnmount(() => {
 .benefit-item strong { display: block; margin-bottom: 3px; color: #4a4541; font-size: 11px; }
 .benefit-item small { color: #96908a; font-size: 9px; }
 
-.detail-page { padding-top: 5px; }
-.detail-back { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 25px; border: 0; background: transparent; color: #5c3d24; font-size: 11px; font-weight: 700; cursor: pointer; }
-.detail-layout { display: grid; grid-template-columns: minmax(300px, .95fr) minmax(320px, 1fr); gap: clamp(35px, 7vw, 85px); max-width: 1080px; margin: 0 auto; }
-.detail-image-wrap { height: min(520px, 48vw); overflow: hidden; border-radius: 14px; background: #f1e8dc; }
+.detail-page { padding-top: 28px; }
+.detail-layout { display: grid; grid-template-columns: minmax(330px, .95fr) minmax(330px, 1fr); gap: clamp(35px, 6vw, 72px); max-width: 1080px; margin: 0 auto; }
+.detail-gallery { min-width: 0; }
+.detail-image-wrap { position: relative; height: 390px; overflow: hidden; border-radius: 13px; background: #eee4d8; }
 .detail-image-wrap img { width: 100%; height: 100%; object-fit: cover; }
-.detail-thumb { width: 65px; height: 65px; margin-top: 12px; padding: 3px; border: 2px solid #5c3d24; border-radius: 7px; background: #fff; }
-.detail-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
-.detail-copy { padding-top: 7px; }
-.detail-category, .eyebrow { margin: 0 0 8px; color: #9a6b45; font-size: 9px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; }
-.detail-copy h1 { margin: 0 0 12px; color: #403b38; font-family: Georgia, serif; font-size: clamp(34px, 4.5vw, 52px); font-weight: 500; }
-.detail-supplier { margin: 0; color: #89817b; font-size: 11px; }
-.detail-supplier span { margin-left: 9px; color: #765036; font-weight: 700; }
-.detail-rating { margin-top: 13px; color: #716963; font-size: 10px; }
-.detail-price { display: flex; align-items: baseline; gap: 9px; margin: 24px 0 16px; }
-.detail-price strong { color: #8a603f; font-size: 26px; }
-.detail-price > span { color: #aaa19b; font-size: 11px; text-decoration: line-through; }
-.detail-price small { color: #8d857f; font-size: 9px; }
-.detail-description { color: #77706a; line-height: 1.7; font-size: 12px; }
-.detail-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin: 24px 0; padding: 16px 0; border-top: 1px solid #eee7e1; border-bottom: 1px solid #eee7e1; }
-.detail-facts div { display: grid; gap: 4px; }
-.detail-facts dt { color: #958d87; font-size: 8px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; }
-.detail-facts dd { margin: 0; color: #4b4541; font-size: 11px; font-weight: 700; }
-.detail-facts dd.low-stock { color: #b7773b; }
-.detail-purchase { display: grid; grid-template-columns: 105px 1fr; gap: 9px; }
-.detail-purchase label { display: grid; gap: 5px; color: #918983; font-size: 9px; font-weight: 700; text-transform: uppercase; }
-.detail-purchase input { min-height: 43px; width: 100%; border: 1px solid #ddd4cd; border-radius: 5px; padding: 0 10px; outline: 0; }
-.detail-primary, .detail-order-now { min-height: 43px; border-radius: 5px; font-size: 11px; font-weight: 800; cursor: pointer; }
-.detail-primary { align-self: end; border: 1px solid #5c3d24; background: #5c3d24; color: #fff; }
-.detail-primary:disabled, .detail-order-now:disabled { opacity: .45; cursor: not-allowed; }
-.detail-order-now { width: 100%; margin-top: 9px; border: 1px solid #5c3d24; background: #fff; color: #5c3d24; }
-.detail-order-now svg { margin-left: 7px; }
-.detail-notice { color: #765036; font-size: 10px; font-weight: 700; }
-
-.detail-information { display: grid; grid-template-columns: .7fr 1fr; gap: 65px; max-width: 1080px; margin: 70px auto 0; padding-top: 25px; border-top: 1px solid #eee7e1; }
-.detail-information h2, .detail-reviews h2 { margin: 0; color: #403b38; font-family: Georgia, serif; font-size: 26px; font-weight: 500; }
-.detail-information > p { margin: 0; color: #77706a; line-height: 1.7; font-size: 12px; }
-.detail-reviews { max-width: 1080px; margin: 55px auto 0; padding-top: 30px; border-top: 1px solid #eee7e1; }
-.reviews-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 20px; }
-.review-summary { display: grid; justify-items: end; gap: 3px; }
-.review-summary strong { color: #403b38; font-size: 28px; }
-.review-summary small { color: #8d857f; font-size: 9px; }
-.review-list { display: grid; gap: 12px; margin: 0 0 25px; padding: 0; list-style: none; }
-.review-card { padding: 16px 18px; border: 1px solid #e8e0da; border-radius: 8px; background: #fffdfb; }
-.review-card > div:first-child { display: flex; align-items: center; gap: 10px; }
-.review-card time { margin-left: auto; color: #9a918b; font-size: 9px; }
-.review-card > p { margin: 9px 0 0; color: #756e68; font-size: 11px; line-height: 1.6; }
-.supplier-reply { margin-top: 11px; padding: 10px 13px; border-left: 2px solid #9a6b45; background: #fbf7f2; }
-.supplier-reply strong { color: #a47645; font-size: 9px; text-transform: uppercase; }
-.supplier-reply p { margin: 4px 0 0; color: #776f69; font-size: 10px; }
-.review-form { display: grid; gap: 12px; max-width: 560px; padding: 20px; border: 1px solid #e8e0da; border-radius: 8px; background: #fbf9f6; }
-.review-form h3 { margin: 0; color: #403b38; font-size: 16px; }
-.review-form label { display: grid; gap: 5px; }
-.review-form label span { color: #8c837c; font-size: 9px; font-weight: 800; text-transform: uppercase; }
-.review-form select, .review-form textarea { width: 100%; border: 1px solid #ddd4cd; border-radius: 5px; padding: 9px 10px; background: #fff; color: #403b38; outline: 0; }
-.review-form textarea { resize: vertical; }
-
+.detail-gallery-arrow { position: absolute; top: 50%; z-index: 2; width: 31px; height: 31px; transform: translateY(-50%); border: 0; border-radius: 50%; background: rgba(255,255,255,.95); color: #5c3d24; font-size: 25px; cursor: pointer; box-shadow: 0 3px 10px rgba(60,43,38,.12); }
+.detail-gallery-arrow-left { left: 10px; }.detail-gallery-arrow-right { right: 10px; }
+.detail-thumb-row { display: flex; gap: 7px; margin-top: 8px; }
+.detail-thumb { width: 66px; height: 66px; padding: 2px; border: 2px solid transparent; border-radius: 7px; background: #eee4d8; cursor: pointer; overflow: hidden; }
+.detail-thumb.active { border-color: #5c3d24; }.detail-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+.detail-copy { padding-top: 8px; }.detail-category-row { display: flex; align-items: center; gap: 8px; }.detail-category { margin: 0; color: #8e8178; font-size: 9px; font-weight: 700; }.detail-discount { padding: 3px 7px; border-radius: 8px; background: #e7f2e9; color: #3e7650; font-size: 8px; font-weight: 800; }
+.detail-copy h1 { margin: 5px 0 8px; color: #3d332d; font: 600 25px Georgia, serif; }.detail-review-line { display: flex; align-items: center; gap: 6px; color: #8c837c; font-size: 9px; }.detail-stars { color: #e2b21b; letter-spacing: 1px; font-size: 11px; }
+.detail-price { display: flex; align-items: baseline; gap: 9px; margin: 9px 0 12px; }.detail-price strong { color: #6d4a32; font-size: 18px; }.detail-price span { color: #aaa19b; font-size: 10px; text-decoration: line-through; }
+.detail-description { margin: 0 0 13px; color: #756d67; line-height: 1.55; font-size: 10px; }.detail-option { margin: 12px 0; }.detail-option-label { display: flex; gap: 8px; margin-bottom: 6px; color: #5b514b; font-size: 9px; }.detail-option-label span { color: #9a6b45; }
+.detail-size-pills { display: flex; gap: 6px; }.detail-size-pills button { padding: 5px 11px; border: 1px solid #ded5cd; border-radius: 6px; background: #fff; color: #756d67; font-size: 8px; cursor: pointer; }.detail-size-pills button.selected { border-color: #5c3d24; background: #5c3d24; color: #fff; }
+.detail-purchase { display: grid; grid-template-columns: 82px 1fr 82px 32px; gap: 6px; align-items: center; margin-top: 14px; }.detail-quantity { display: flex; align-items: center; justify-content: space-between; height: 35px; border: 1px solid #ded5cd; border-radius: 6px; background: #fff; }.detail-quantity button { width: 25px; height: 100%; border: 0; background: transparent; color: #5c3d24; cursor: pointer; }.detail-quantity button:disabled { opacity: .35; }.detail-quantity span { font-size: 10px; font-weight: 700; }
+.detail-primary,.detail-buy-now { height: 35px; border-radius: 6px; font-size: 9px; font-weight: 800; cursor: pointer; }.detail-primary { border: 1px solid #5c3d24; background: #5c3d24; color: #fff; }.detail-buy-now { border: 1px solid #c48b5b; background: #c48b5b; color: #fff; }.detail-primary:disabled,.detail-buy-now:disabled { opacity: .45; }
+.detail-heart { width: 32px; height: 35px; border: 1px solid #ded5cd; border-radius: 6px; background: #fff; color: #6d4a32; font-size: 18px; cursor: pointer; }.detail-heart.saved { background: #f2e7dc; }
+.detail-meta { display: grid; gap: 5px; margin-top: 13px; padding-top: 10px; border-top: 1px solid #eee7e1; color: #857b74; font-size: 8px; }.detail-meta b { color: #4d433d; }.detail-share { display: flex; align-items: center; gap: 5px; }.detail-share button { width: 17px; height: 17px; border: 0; border-radius: 50%; background: #eee7e1; color: #5c3d24; font-size: 8px; cursor: pointer; }
+.detail-review-section { max-width: 1080px; margin: 55px auto 0; }.detail-tabs { display: flex; justify-content: center; gap: 30px; border-bottom: 1px solid #eee7e1; }.detail-tabs button { padding: 0 0 11px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #9b928b; font-size: 10px; font-weight: 700; cursor: pointer; }.detail-tabs button.active { border-color: #c48b5b; color: #4d433d; }
+.detail-tab-content { min-height: 90px; padding: 18px 8px; color: #746b65; font-size: 10px; line-height: 1.7; }.detail-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }.detail-info-grid div { display: grid; gap: 4px; padding: 10px; background: #fbf8f4; border-radius: 6px; }.detail-info-grid span { color: #9a9089; font-size: 8px; }.detail-info-grid strong { color: #4d433d; font-size: 9px; }
+.detail-reviews-content { padding-top: 18px; }.review-overview { display: grid; grid-template-columns: 180px 1fr; gap: 50px; align-items: center; max-width: 700px; margin: 0 auto 35px; padding-bottom: 25px; border-bottom: 1px solid #eee7e1; }.review-score { display: grid; justify-items: center; gap: 3px; }.review-score strong { color: #4d433d; font-size: 24px; }.review-score span:not(.detail-stars) { color: #999089; font-size: 8px; }.review-score small { color: #999089; font-size: 7px; }.review-bars { display: grid; gap: 5px; }.review-bar-row { display: grid; grid-template-columns: 45px 1fr 25px; gap: 6px; align-items: center; color: #817870; font-size: 8px; }.review-bar-row > div { height: 3px; background: #ece8e3; overflow: hidden; }.review-bar-row i { display: block; height: 100%; background: #e6b51e; }.review-bar-row small { color: #a09790; text-align: right; font-size: 7px; }
+.review-list-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }.review-list-heading div { display: grid; gap: 3px; }.review-list-heading strong { color: #4d433d; font-size: 11px; }.review-list-heading small { color: #9b928b; font-size: 7px; }.review-list-heading label { color: #8e857e; font-size: 8px; }.review-list-heading select { margin-left: 5px; border: 1px solid #e1d9d2; border-radius: 12px; padding: 5px 8px; background: #fff; color: #5c514a; font-size: 8px; }
+.review-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }.review-card { padding: 15px 0; border-bottom: 1px solid #eee7e1; }.review-author { display: flex; align-items: center; gap: 7px; }.review-avatar { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #eadfd5; color: #5c3d24; font-size: 7px; font-weight: 800; }.review-author > div { display: grid; gap: 2px; }.review-author strong { color: #4d433d; font-size: 8px; }.review-verified { color: #9a9089; font-size: 7px; }.review-author time { margin-left: auto; color: #9a9089; font-size: 7px; }.review-card > .detail-stars { margin: 5px 0; }.review-title { display: block; color: #554a43; font-size: 9px; }.review-card > p { margin: 4px 0 0; color: #817870; font-size: 8px; line-height: 1.6; }.supplier-reply { margin-top: 8px; padding: 7px 9px; border-left: 2px solid #c48b5b; background: #fbf7f2; }.supplier-reply strong { color: #8b6345; font-size: 7px; text-transform: uppercase; }.supplier-reply p { margin: 3px 0 0; color: #776f69; font-size: 8px; }
 @media (max-width: 1050px) {
   .shop-nav { gap: 20px; }
   .shop-links { gap: 16px; }
@@ -855,7 +909,7 @@ onBeforeUnmount(() => {
   .benefit-item { align-items: flex-start; }
   .detail-layout { grid-template-columns: 1fr; }
   .detail-image-wrap { height: 70vw; max-height: 470px; }
-  .detail-information { grid-template-columns: 1fr; gap: 18px; }
+  .review-overview { grid-template-columns: 1fr; gap: 20px; max-width: 560px; }
 }
 
 @media (max-width: 560px) {
@@ -880,10 +934,12 @@ onBeforeUnmount(() => {
   .product-price-row strong { font-size: 11px; }
   .compare-price { font-size: 8px; }
   .shop-benefits { grid-template-columns: 1fr; margin-top: 45px; }
-  .detail-facts { grid-template-columns: 1fr 1fr; }
-  .reviews-head { align-items: flex-start; flex-direction: column; }
-  .review-summary { justify-items: start; }
-  .review-card time { display: none; }
+  .detail-purchase { grid-template-columns: 1fr 1fr 1fr 32px; }
+  .detail-tabs { gap: 18px; overflow-x: auto; justify-content: flex-start; }
+  .detail-tabs button { white-space: nowrap; }
+  .detail-info-grid { grid-template-columns: 1fr 1fr; }
+  .review-list-heading { align-items: flex-start; gap: 10px; flex-direction: column; }
+  .review-author time { display: none; }
 }
 </style>
 
