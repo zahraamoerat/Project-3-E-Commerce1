@@ -39,12 +39,24 @@
       <div>
         <span class="section-kicker">Your business at a glance</span>
         <h2>Today's overview</h2>
+        <p v-if="lastUpdated" class="last-updated">Updated {{ lastUpdated }}</p>
       </div>
-      <div class="search-box">
+      <div class="section-tools">
+        <button type="button" class="refresh-btn" :disabled="isLoading" @click="loadDashboard">
+          {{ isLoading ? "Refreshing..." : "Refresh" }}
+        </button>
+        <div class="search-box">
         <span class="search-icon">⌕</span>
-        <input v-model="searchQuery" type="search" placeholder="Search orders or suppliers..." />
+          <input v-model="searchQuery" type="search" placeholder="Search orders or suppliers..." />
+        </div>
       </div>
     </section>
+
+    <div v-if="errorMessage" class="dashboard-alert" role="alert">
+      <strong>Some live data could not be loaded.</strong>
+      <span>{{ errorMessage }}</span>
+      <button type="button" @click="loadDashboard">Try again</button>
+    </div>
 
     <section class="stats-grid">
       <article class="metric-card">
@@ -129,7 +141,7 @@
           <article v-for="supplier in suggestedSuppliers" :key="supplier.supplierId" class="supplier-card">
             <div class="supplier-avatar">{{ initials(supplier.companyName) }}</div>
             <div class="supplier-copy"><strong>{{ supplier.companyName }}</strong><span>{{ supplier.description }}</span></div>
-            <button type="button" aria-label="Open supplier">→</button>
+            <button type="button" aria-label="Browse supplier products" @click="browseSupplier(supplier)">→</button>
           </article>
         </div>
       </section>
@@ -143,7 +155,7 @@
           <li v-for="notification in notifications" :key="notification.notificationId" :class="{ unread: !notification.isRead }">
             <span class="notification-icon" :class="notification.type">{{ notificationIcon(notification.type) }}</span>
             <div><strong>{{ notificationTitle(notification.type) }}</strong><p>{{ notification.message }}</p></div>
-            <span v-if="!notification.isRead" class="unread-dot"></span>
+            <button v-if="!notification.isRead" type="button" class="notification-read" @click="markNotificationRead(notification)" aria-label="Mark notification as read">✓</button>
           </li>
         </ul>
       </section>
@@ -168,6 +180,9 @@ import TrackingMap from "../components/tracking/TrackingMap.vue";
 
 const business = ref({ name: "Ndlovu Farm Supplies" });
 const searchQuery = ref("");
+const isLoading = ref(false);
+const errorMessage = ref("");
+const lastUpdated = ref("");
 
 const stats = ref({
   activeOrders: 6,
@@ -305,6 +320,8 @@ async function fetchJson(path) {
 }
 
 async function loadDashboard() {
+  isLoading.value = true;
+  errorMessage.value = "";
   try {
     const [orders, payments, deliveries] = await Promise.all([
       fetchJson("/orders?buyerId=1"),
@@ -393,9 +410,21 @@ async function loadDashboard() {
         trackedOrder.value.gpsLocation = null;
       }
     }
+    lastUpdated.value = new Date().toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" });
   } catch (error) {
-    console.warn("Dashboard API unavailable, showing sample data:", error.message);
+    console.warn("Dashboard API unavailable:", error.message);
+    errorMessage.value = "The dashboard is showing the latest available information. Check that the backend is running, then refresh.";
+  } finally {
+    isLoading.value = false;
   }
+}
+
+function browseSupplier(supplier) {
+  window.location.href = "/small-business/products";
+}
+
+function markNotificationRead(notification) {
+  notification.isRead = true;
 }
 
 function openTracking() {
@@ -423,14 +452,14 @@ onMounted(loadDashboard);
 
 <style scoped>
 .dashboard-page {
-  --dashboard-green: #1f4b32;
-  --dashboard-green-dark: #163b27;
-  --dashboard-green-soft: #e7f0e9;
-  --dashboard-cream: #f7f0e4;
-  --dashboard-ink: #27332c;
-  --dashboard-muted: #738078;
-  --dashboard-border: #e5e1d8;
-  --dashboard-white: #fffdfa;
+  --dashboard-green: #5c3d24;
+  --dashboard-green-dark: #4e342e;
+  --dashboard-green-soft: #f3e7d9;
+  --dashboard-cream: #f8f2ed;
+  --dashboard-ink: #4e342e;
+  --dashboard-muted: #7a665b;
+  --dashboard-border: #e2d7cf;
+  --dashboard-white: #fffefa;
   color: var(--dashboard-ink);
   max-width: 1420px;
   margin: 0 auto;
@@ -443,8 +472,8 @@ onMounted(loadDashboard);
   grid-template-columns: 1.15fr .85fr;
   overflow: hidden;
   border-radius: 28px;
-  background: radial-gradient(circle at 83% 25%, rgba(255,255,255,.62), transparent 23%), linear-gradient(115deg, #f6f0e5 0%, #f2ebdd 55%, #e8eee4 100%);
-  border: 1px solid #e5e0d5;
+  background: radial-gradient(circle at 83% 25%, rgba(255,255,255,.62), transparent 23%), linear-gradient(115deg, #f3e7d9 0%, #f8f2ed 55%, #eee7e2 100%);
+  border: 1px solid #e2d7cf;
   position: relative;
 }
 
@@ -470,13 +499,13 @@ onMounted(loadDashboard);
   font-size: clamp(28px, 3vw, 42px);
   line-height: 1.05;
   letter-spacing: -.035em;
-  color: #22352a;
+  color: #4e342e;
 }
 
 .hero-copy p {
   max-width: 530px;
   margin: 0;
-  color: #667168;
+  color: #7a665b;
   font-size: 14px;
   line-height: 1.7;
 }
@@ -511,7 +540,7 @@ onMounted(loadDashboard);
   position: relative;
   min-height: 270px;
   overflow: hidden;
-  background: linear-gradient(135deg, #e9e4d8, #dfe9df);
+  background: linear-gradient(135deg, #f3e7d9, #eee7e2);
 }
 
 .hero-gallery { position: absolute; inset: 0; }
@@ -618,9 +647,15 @@ onMounted(loadDashboard);
 }
 
 .section-heading { margin: 4px 2px 15px; }
+.last-updated { margin: 4px 0 0; color: var(--dashboard-muted); font-size: 9px; }
+.section-tools { display: flex; align-items: center; gap: 8px; width: min(430px, 100%); }
+.refresh-btn { border: 1px solid #d8ccc4; border-radius: 999px; padding: 8px 12px; background: #fffefa; color: #5c3d24; font-size: 10px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.refresh-btn:hover:not(:disabled) { background: #f8f2ed; }
+.refresh-btn:disabled { opacity: .55; cursor: wait; }
 .section-heading h2, .panel-heading h2 { margin: 4px 0 0; font-size: 21px; letter-spacing: -.025em; }
 
 .search-box {
+  flex: 1;
   display: flex;
   align-items: center;
   width: min(310px, 100%);
@@ -677,8 +712,8 @@ onMounted(loadDashboard);
 .metric-card p { margin: 3px 0 0; color: var(--dashboard-muted); font-size: 10px; }
 .featured p { color: rgba(255,255,255,.7); }
 
-.positive { color: #3e8057; font-weight: 750; }
-.warning { color: #b18440; font-weight: 750; }
+.positive { color: #8a5a32; font-weight: 750; }
+.warning { color: #a06b3b; font-weight: 750; }
 .featured .positive, .featured .warning { color: #f1d6a2; }
 
 .category-strip {
@@ -702,7 +737,7 @@ onMounted(loadDashboard);
   transition: transform .18s ease, border-color .18s ease;
 }
 
-.category-strip button:hover { transform: translateY(-2px); border-color: #c8d6cb; }
+.category-strip button:hover { transform: translateY(-2px); border-color: #ddc9bc; }
 
 .category-icon {
   width: 38px;
@@ -715,9 +750,9 @@ onMounted(loadDashboard);
   font-weight: 800;
 }
 
-.category-icon.orders, .category-icon.suppliers { background: #e9f0e8; color: var(--dashboard-green); }
+.category-icon.orders, .category-icon.suppliers { background: #f3e7d9; color: var(--dashboard-green); }
 .category-icon.delivery { background: #f3ecdf; color: #8a6d3f; }
-.category-icon.alerts { background: #f5e5dd; color: #9d634d; }
+.category-icon.alerts { background: #f5e5dd; color: #9a4938; }
 .category-strip strong { font-size: 12px; }
 .category-strip small { color: var(--dashboard-muted); font-size: 9px; }
 
@@ -767,7 +802,7 @@ onMounted(loadDashboard);
   place-items: center;
   border-radius: 13px;
   background: var(--dashboard-cream);
-  color: #7b623c;
+  color: #8a5a32;
   font-size: 10px;
   font-weight: 800;
 }
@@ -804,10 +839,10 @@ onMounted(loadDashboard);
   color: #68716b;
 }
 
-.status-pill.out_for_delivery, .status-pill.in_transit { background: #e6f0e7; color: #2c7048; }
+.status-pill.out_for_delivery, .status-pill.in_transit { background: #e6f0e7; color: #8a5a32; }
 .status-pill.dispatched { background: #e7eef4; color: #3f6685; }
-.status-pill.delivered { background: #e9efe9; color: #4e765b; }
-.status-pill.processing { background: #f3ecdf; color: #8b6d3e; }
+.status-pill.delivered { background: #e9efe9; color: #8a5a32; }
+.status-pill.processing { background: #f3ecdf; color: #8a5a32; }
 .eta { text-align: right; }
 
 .tracking-order {
@@ -830,8 +865,8 @@ onMounted(loadDashboard);
   align-items: center;
   gap: 5px;
   border-radius: 999px;
-  background: #e8f2e9;
-  color: #327047;
+  background: #f3e7d9;
+  color: #8a5a32;
   padding: 6px 9px;
   font-size: 9px;
   font-weight: 800;
@@ -871,8 +906,8 @@ onMounted(loadDashboard);
 
 .step-dot { width: 9px; height: 9px; border-radius: 50%; background: #deded8; position: relative; z-index: 1; }
 .tracking-steps > div.active { color: var(--dashboard-green); font-weight: 750; }
-.tracking-steps > div.active .step-dot { background: var(--dashboard-green); box-shadow: 0 0 0 4px #e7f0e9; }
-.tracking-steps > div.active:not(:last-child)::after { background: #aac1af; }
+.tracking-steps > div.active .step-dot { background: var(--dashboard-green); box-shadow: 0 0 0 4px #f3e7d9; }
+.tracking-steps > div.active:not(:last-child)::after { background: #d1b39b; }
 
 .dashboard-map-preview {
   position: relative;
@@ -883,6 +918,9 @@ onMounted(loadDashboard);
 }
 
 .dashboard-map-preview.clickable { cursor: pointer; }
+.dashboard-alert { display: flex; align-items: center; gap: 10px; margin: 0 2px 14px; padding: 11px 13px; border: 1px solid #e2d7cf; border-radius: 12px; background: #f8f2ed; color: #5c3d24; font-size: 10px; }
+.dashboard-alert span { color: #7a665b; flex: 1; }
+.dashboard-alert button { border: 0; background: transparent; color: #d17a4a; font-weight: 800; cursor: pointer; }
 
 .dashboard-map-empty {
   height: 100%;
@@ -941,7 +979,7 @@ onMounted(loadDashboard);
   border: 1px solid #eee9df;
 }
 
-.supplier-avatar { width: 40px; height: 40px; background: #e6efe7; color: var(--dashboard-green); }
+.supplier-avatar { width: 40px; height: 40px; background: #f3e7d9; color: var(--dashboard-green); }
 .supplier-copy { min-width: 0; }
 .supplier-copy strong, .supplier-copy span { display: block; }
 .supplier-copy strong { font-size: 11px; }
@@ -979,12 +1017,13 @@ onMounted(loadDashboard);
   font-weight: 800;
 }
 
-.notification-icon.order_update { background: #e8f1e8; color: #347049; }
-.notification-icon.payment_reminder { background: #f5ecdf; color: #9a7542; }
+.notification-icon.order_update { background: #e8f1e8; color: #8a5a32; }
+.notification-icon.payment_reminder { background: #f5ecdf; color: #8a5a32; }
 .notification-icon.rating_request { background: #efe8ef; color: #795c7b; }
 .notifications-list strong { font-size: 10px; }
 .notifications-list p { margin: 3px 0 0; color: var(--dashboard-muted); font-size: 9px; line-height: 1.4; }
-.unread-dot { width: 6px; height: 6px; border-radius: 50%; background: #d57b4d; margin-top: 7px; }
+.notification-read { width: 24px; height: 24px; border: 1px solid #d8ccc4; border-radius: 50%; background: #fffefa; color: #5c3d24; cursor: pointer; font-weight: 800; }
+.notification-read:hover { background: #f3e7d9; }
 
 .empty-state {
   min-height: 150px;
@@ -1013,14 +1052,14 @@ onMounted(loadDashboard);
   overflow: hidden;
 }
 
-.bottom-promo .section-kicker { color: #b9cfbd; }
+.bottom-promo .section-kicker { color: #e5c9b7; }
 .bottom-promo h2 { margin: 5px 0; max-width: 500px; font-size: 20px; letter-spacing: -.02em; }
-.bottom-promo p { margin: 0; max-width: 590px; color: #c8d6cb; font-size: 10px; line-height: 1.5; }
+.bottom-promo p { margin: 0; max-width: 590px; color: #ddc9bc; font-size: 10px; line-height: 1.5; }
 
 .promo-stat { min-width: 80px; padding-left: 20px; border-left: 1px solid rgba(255,255,255,.16); }
 .promo-stat strong, .promo-stat span { display: block; }
 .promo-stat strong { font-size: 23px; }
-.promo-stat span { margin-top: 2px; color: #bdcec1; font-size: 9px; }
+.promo-stat span { margin-top: 2px; color: #d8c0b0; font-size: 9px; }
 
 .promo-leaf {
   width: 60px;
@@ -1029,7 +1068,7 @@ onMounted(loadDashboard);
   place-items: center;
   border-radius: 50%;
   background: rgba(255,255,255,.08);
-  color: #d9e4da;
+  color: #ead9cc;
   font-size: 25px;
 }
 
@@ -1044,6 +1083,7 @@ onMounted(loadDashboard);
 }
 
 @media (max-width: 720px) {
+  .section-tools { width: 100%; }
   .dashboard-page { padding: 0 0 28px; }
   .hero-card { border-radius: 20px; }
   .hero-copy { padding: 30px 22px; }
