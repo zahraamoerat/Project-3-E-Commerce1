@@ -11,9 +11,11 @@
         </div>
       </div>
       <div class="hero-visual" aria-hidden="true">
-        <div class="leaf leaf-one"></div>
-        <div class="leaf leaf-two"></div>
-        <div class="leaf leaf-three"></div>
+        <div class="hero-gallery">
+          <div class="placeholder-image image-main"><span>PRODUCT<br>IMAGE</span></div>
+          <div class="placeholder-image image-top"><span>NEW<br>STOCK</span></div>
+          <div class="placeholder-image image-bottom"><span>FARM<br>SUPPLIES</span></div>
+        </div>
         <div class="hero-product-card">
           <div class="hero-icon">▦</div>
           <strong>Business overview</strong>
@@ -290,7 +292,7 @@ function mapDeliveryStatus(status) {
 
 function isTrackingStepActive(step) {
   const current = trackedOrder.value.status;
-  const order = { awaiting_pickup: 0, placed: 0, dispatched: 1, in_transit: 2, delivered: 3 };
+  const order = { awaiting_pickup: 0, placed: 0, processing: 0, dispatched: 1, in_transit: 2, out_for_delivery: 2, delivered: 3 };
   return order[current] >= order[step];
 }
 
@@ -344,7 +346,7 @@ async function loadDashboard() {
       orderList.slice(0, 4).map(async (order) => {
         let itemsSummary = "Order items";
         try {
-          const items = await fetchJson("/orders?buyerId=1/" + order.order_id + "/items");
+          const items = await fetchJson("/orders/" + order.order_id + "/items");
           if (Array.isArray(items) && items.length) {
             itemsSummary = items
               .map((item) => (item.product_name || "Product") + " ×" + item.quantity)
@@ -385,7 +387,7 @@ async function loadDashboard() {
 
       try {
         trackedOrder.value.gpsLocation = await fetchJson(
-          "/deliveries?buyerId=1/" + trackedDelivery.delivery_id + "/location"
+          "/deliveries/" + trackedDelivery.delivery_id + "/location"
         );
       } catch {
         trackedOrder.value.gpsLocation = null;
@@ -505,17 +507,39 @@ onMounted(loadDashboard);
 
 .primary-btn:hover, .secondary-btn:hover { transform: translateY(-1px); }
 
-.hero-visual {
+ .hero-visual {
   position: relative;
   min-height: 270px;
   overflow: hidden;
-  background: radial-gradient(circle at 60% 45%, rgba(255,255,255,.85) 0 20%, transparent 21%), linear-gradient(135deg, #e9e4d8, #dfe9df);
+  background: linear-gradient(135deg, #e9e4d8, #dfe9df);
 }
+
+.hero-gallery { position: absolute; inset: 0; }
+
+.placeholder-image {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 8px solid rgba(255,253,250,.88);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(31,75,50,.9), rgba(31,75,50,.48));
+  color: rgba(255,255,255,.92);
+  box-shadow: 0 18px 35px rgba(40,55,45,.14);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-align: center;
+  line-height: 1.35;
+}
+.image-main { width: 180px; height: 145px; right: 14%; top: 52px; transform: rotate(4deg); }
+.image-top { width: 88px; height: 72px; right: 5%; top: 16px; transform: rotate(10deg); background: linear-gradient(145deg, rgba(155,112,63,.9), rgba(155,112,63,.5)); }
+.image-bottom { width: 100px; height: 82px; right: 5%; bottom: 12px; transform: rotate(-8deg); background: linear-gradient(145deg, rgba(111,86,55,.9), rgba(111,86,55,.5)); }
 
 .hero-product-card {
   position: absolute;
-  left: 18%;
-  top: 48px;
+  left: 7%;
+  top: 52px;
   width: 240px;
   min-height: 164px;
   padding: 20px;
