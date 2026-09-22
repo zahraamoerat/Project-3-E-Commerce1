@@ -1,5 +1,6 @@
 <template>
   <div class="dashboard-page">
+    <SmallBusinessNavbar />
     <section class="hero-card">
       <div class="hero-copy">
         <span class="eyebrow">Small Business Hub</span>
@@ -175,6 +176,7 @@
 </template>
 
 <script setup>
+import SmallBusinessNavbar from '../components/SmallBusinessNavbar.vue'
 import { computed, onMounted, ref } from "vue";
 import TrackingMap from "../components/tracking/TrackingMap.vue";
 
