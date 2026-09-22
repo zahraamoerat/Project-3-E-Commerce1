@@ -57,7 +57,19 @@ export async function loadCategories(force = false) {
   return categories.value;
 }
 
-export async function loadSupplierData(force = false) {
+export async function refreshSupplierProducts() {
+  try {
+    await refreshSupplierProducts();
+    error.value = "";
+    return products.value;
+  } catch (requestError) {
+    error.value = requestError.message;
+    console.error("Unable to refresh products:", requestError);
+    throw requestError;
+  }
+}
+
+async function loadSupplierData(force = false) {
   if (loaded && !force) return;
   loading.value = true;
   try {
@@ -218,7 +230,7 @@ async function uploadProductImages(imageSources, onUploaded = null) {
 }
 
 export function useSupplierData() {
-  return { products, orders, deliveries, reviews, profile, categories, categoriesLoading, categoriesError, loading, error, imagePlaceholders, refreshStatus, loadCategories, loadSupplierData, uploadProductImages, cleanupProductImages, addProduct, updateProduct, duplicateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
+  return { products, orders, deliveries, reviews, profile, categories, categoriesLoading, categoriesError, loading, error, imagePlaceholders, refreshStatus, loadCategories, loadSupplierData, refreshSupplierProducts, uploadProductImages, cleanupProductImages, addProduct, updateProduct, duplicateProduct, updateProductStock, removeProduct, updateOrderStatus, updateDeliveryStatus, replyToReview, updateProfile };
 }
 
 export const supplierStats = {
