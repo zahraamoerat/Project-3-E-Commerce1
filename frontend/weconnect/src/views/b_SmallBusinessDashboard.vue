@@ -1,137 +1,171 @@
 <template>
-  <div class="main-content">
-    <header class="page-header">
-      <div>
+  <div class="dashboard-page">
+    <section class="hero-card">
+      <div class="hero-copy">
+        <span class="eyebrow">Small Business Hub</span>
         <h1>Welcome back, {{ business.name }}</h1>
-        <p class="subtitle">Here's what's moving across your orders today.</p>
+        <p>Everything you need to keep orders, suppliers and deliveries moving in one place.</p>
+        <div class="hero-actions">
+          <button class="primary-btn" type="button" @click="scrollToOrders">View recent orders</button>
+          <button class="secondary-btn" type="button" @click="openTracking">Track delivery</button>
+        </div>
       </div>
-      <div class="search-box">
-        <input type="text" placeholder="Search suppliers or products..." />
-      </div>
-    </header>
-
-    <!-- Stat cards -->
-    <section class="stats-grid">
-      <div class="card stat-card">
-        <span class="stat-label">Active orders</span>
-        <span class="stat-value">{{ stats.activeOrders }}</span>
-        <span class="stat-trend positive">+2 this week</span>
-      </div>
-      <div class="card stat-card highlight">
-        <span class="stat-label">Pending payment</span>
-        <span class="stat-value">R{{ formatMoney(stats.pendingPayment) }}</span>
-        <span class="stat-trend warning">{{ stats.pendingInvoices }} invoice due</span>
-      </div>
-      <div class="card stat-card">
-        <span class="stat-label">In transit</span>
-        <span class="stat-value">{{ stats.inTransit }}</span>
-        <span class="stat-trend">On schedule</span>
-      </div>
-      <div class="card stat-card">
-        <span class="stat-label">Total spend (mo.)</span>
-        <span class="stat-value">R{{ formatMoney(stats.totalSpend) }}</span>
-        <span class="stat-trend positive">+{{ stats.spendChangePercent }}% vs last month</span>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="leaf leaf-one"></div>
+        <div class="leaf leaf-two"></div>
+        <div class="leaf leaf-three"></div>
+        <div class="hero-product-card">
+          <div class="hero-icon">▦</div>
+          <strong>Business overview</strong>
+          <span>Live order activity</span>
+          <div class="hero-mini-stats">
+            <span><b>{{ stats.activeOrders }}</b> Active</span>
+            <span><b>{{ stats.inTransit }}</b> Transit</span>
+          </div>
+        </div>
       </div>
     </section>
 
-    <div class="two-col">
-      <!-- Recent orders -->
-      <section class="card">
-        <h3>Recent orders</h3>
-        <table class="orders-table">
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Supplier</th>
-              <th>Items</th>
-              <th>Status</th>
-              <th>ETA</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="order in recentOrders" :key="order.orderId">
-              <td>#{{ order.orderId }}</td>
-              <td>{{ order.supplierName }}</td>
-              <td class="truncate">{{ order.itemsSummary }}</td>
-              <td><span class="status-pill" :class="order.status">{{ statusLabel(order.status) }}</span></td>
-              <td>{{ order.eta || "—" }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <section class="trust-row">
+      <div><span class="trust-icon">✓</span><span><strong>Orders</strong> tracked in one place</span></div>
+      <div><span class="trust-icon">R</span><span><strong>Payments</strong> kept visible</span></div>
+      <div><span class="trust-icon">↗</span><span><strong>Deliveries</strong> monitored live</span></div>
+      <div><span class="trust-icon">★</span><span><strong>Suppliers</strong> at your fingertips</span></div>
+    </section>
 
-        <h3 class="section-spacer">Suggested suppliers</h3>
-        <ul class="suggested-list">
-          <li v-for="s in suggestedSuppliers" :key="s.supplierId">
-            <div class="supplier-initials">{{ initials(s.companyName) }}</div>
-            <div class="supplier-info">
-              <strong>{{ s.companyName }}</strong>
-              <span>{{ s.description }}</span>
+    <section class="section-heading">
+      <div>
+        <span class="section-kicker">Your business at a glance</span>
+        <h2>Today's overview</h2>
+      </div>
+      <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input v-model="searchQuery" type="search" placeholder="Search orders or suppliers..." />
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="metric-card">
+        <div class="metric-top"><span class="metric-icon green">↗</span><span class="metric-caption">Orders</span></div>
+        <strong>{{ stats.activeOrders }}</strong>
+        <p><span class="positive">+2</span> active this week</p>
+      </article>
+      <article class="metric-card featured">
+        <div class="metric-top"><span class="metric-icon cream">R</span><span class="metric-caption">Pending payment</span></div>
+        <strong>R{{ formatMoney(stats.pendingPayment) }}</strong>
+        <p><span class="warning">{{ stats.pendingInvoices }}</span> invoice due</p>
+      </article>
+      <article class="metric-card">
+        <div class="metric-top"><span class="metric-icon green">↗</span><span class="metric-caption">In transit</span></div>
+        <strong>{{ stats.inTransit }}</strong>
+        <p><span class="positive">On schedule</span></p>
+      </article>
+      <article class="metric-card">
+        <div class="metric-top"><span class="metric-icon cream">R</span><span class="metric-caption">Monthly spend</span></div>
+        <strong>R{{ formatMoney(stats.totalSpend) }}</strong>
+        <p><span class="positive">+{{ stats.spendChangePercent }}%</span> vs last month</p>
+      </article>
+    </section>
+
+    <section class="category-strip">
+      <button type="button" @click="scrollToOrders"><span class="category-icon orders">▤</span><strong>Orders</strong><small>Recent activity</small></button>
+      <button type="button" @click="openTracking"><span class="category-icon delivery">⌁</span><strong>Deliveries</strong><small>Track shipments</small></button>
+      <button type="button" @click="scrollToSuppliers"><span class="category-icon suppliers">♧</span><strong>Suppliers</strong><small>Suggested partners</small></button>
+      <button type="button" @click="scrollToNotifications"><span class="category-icon alerts">!</span><strong>Notifications</strong><small>{{ unreadNotifications }} unread</small></button>
+    </section>
+
+    <div class="content-grid">
+      <section id="orders" class="panel orders-panel">
+        <div class="panel-heading">
+          <div><span class="section-kicker">Latest activity</span><h2>Recent orders</h2></div>
+          <span class="panel-badge">{{ filteredOrders.length }} shown</span>
+        </div>
+        <div v-if="filteredOrders.length" class="orders-list">
+          <article v-for="order in filteredOrders" :key="order.orderId" class="order-row">
+            <div class="order-number">
+              <span class="order-avatar">{{ initials(order.supplierName) }}</span>
+              <div><strong>#{{ order.orderId }}</strong><span>{{ order.supplierName }}</span></div>
             </div>
-            <span class="chevron">›</span>
+            <div class="order-items"><span>Items</span><strong>{{ order.itemsSummary }}</strong></div>
+            <div><span class="status-pill" :class="order.status">{{ statusLabel(order.status) }}</span></div>
+            <div class="eta"><span>ETA</span><strong>{{ order.eta || "—" }}</strong></div>
+          </article>
+        </div>
+        <div v-else class="empty-state"><strong>No matching orders</strong><span>Try a different order or supplier search.</span></div>
+      </section>
+
+      <section class="panel tracking-panel">
+        <div class="panel-heading">
+          <div><span class="section-kicker">Delivery monitor</span><h2>Track your order</h2></div>
+          <span class="live-badge" :class="{ offline: !trackedOrder.deliveryId }"><i></i>{{ trackedOrder.deliveryId ? "Live" : "Waiting" }}</span>
+        </div>
+        <div class="tracking-order">
+          <div><span>Order</span><strong>#{{ trackedOrder.orderId }}</strong></div>
+          <div class="tracking-destination"><span>Destination</span><strong>{{ trackedOrder.destinationCity || "—" }}</strong></div>
+        </div>
+        <div class="tracking-steps">
+          <div v-for="step in trackingSteps" :key="step.key" :class="{ active: isTrackingStepActive(step.key) }">
+            <span class="step-dot"></span><span>{{ step.label }}</span>
+          </div>
+        </div>
+        <div class="dashboard-map-preview" :class="{ clickable: trackedOrder.deliveryId }" @click="openTracking">
+          <TrackingMap v-if="trackedOrder.deliveryId" :gps-location="trackedOrder.gpsLocation" />
+          <div v-else class="dashboard-map-empty">
+            <span class="map-pin">⌖</span><strong>GPS tracking waiting</strong>
+            <span>Live tracking will appear when a delivery is assigned.</span>
+          </div>
+          <div v-if="trackedOrder.deliveryId" class="dashboard-map-action">View live tracking <span>→</span></div>
+        </div>
+      </section>
+
+      <section id="suppliers" class="panel suppliers-panel">
+        <div class="panel-heading">
+          <div><span class="section-kicker">Keep growing</span><h2>Suggested suppliers</h2></div>
+          <span class="panel-badge">For you</span>
+        </div>
+        <div class="supplier-cards">
+          <article v-for="supplier in suggestedSuppliers" :key="supplier.supplierId" class="supplier-card">
+            <div class="supplier-avatar">{{ initials(supplier.companyName) }}</div>
+            <div class="supplier-copy"><strong>{{ supplier.companyName }}</strong><span>{{ supplier.description }}</span></div>
+            <button type="button" aria-label="Open supplier">→</button>
+          </article>
+        </div>
+      </section>
+
+      <section id="notifications" class="panel notifications-panel">
+        <div class="panel-heading">
+          <div><span class="section-kicker">Stay informed</span><h2>Notifications</h2></div>
+          <span v-if="unreadNotifications" class="unread-badge">{{ unreadNotifications }} new</span>
+        </div>
+        <ul class="notifications-list">
+          <li v-for="notification in notifications" :key="notification.notificationId" :class="{ unread: !notification.isRead }">
+            <span class="notification-icon" :class="notification.type">{{ notificationIcon(notification.type) }}</span>
+            <div><strong>{{ notificationTitle(notification.type) }}</strong><p>{{ notification.message }}</p></div>
+            <span v-if="!notification.isRead" class="unread-dot"></span>
           </li>
         </ul>
       </section>
-
-      <!-- Tracking + notifications -->
-      <section class="side-col">
-        <div class="card">
-          <h3>Order #{{ trackedOrder.orderId }} tracking</h3>
-          <div class="tracking-steps">
-            <span :class="{ active: true }">Placed</span>
-            <span :class="{ active: trackedOrder.status !== 'awaiting_pickup' }">Dispatched</span>
-            <span :class="{ active: trackedOrder.status === 'in_transit' || trackedOrder.status === 'delivered' }">In transit</span>
-            <span :class="{ active: trackedOrder.status === 'delivered' }">Delivered</span>
-          </div>
-          <div
-            class="dashboard-map-preview"
-            :class="{ clickable: trackedOrder.deliveryId }"
-            @click="openTracking"
-          >
-            <TrackingMap
-              v-if="trackedOrder.deliveryId"
-              :gps-location="trackedOrder.gpsLocation"
-            />
-
-            <div v-else class="dashboard-map-empty">
-              <strong>GPS tracking waiting</strong>
-              <span>
-                Live tracking will appear when a delivery is assigned.
-              </span>
-            </div>
-
-            <div
-              v-if="trackedOrder.deliveryId"
-              class="dashboard-map-action"
-            >
-              View live tracking →
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Notifications</h3>
-          <ul class="notifications-list">
-            <li v-for="n in notifications" :key="n.notificationId" :class="{ unread: !n.isRead }">
-              <span class="dot" :class="n.type"></span>
-              <div>
-                <strong>{{ notificationTitle(n.type) }}</strong>
-                <p>{{ n.message }}</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </section>
     </div>
+
+    <section class="bottom-promo">
+      <div>
+        <span class="section-kicker">Small business, simplified</span>
+        <h2>Keep every part of your operation connected.</h2>
+        <p>Use your dashboard as the daily starting point for orders, payments, deliveries and supplier relationships.</p>
+      </div>
+      <div class="promo-stat"><strong>{{ stats.activeOrders }}</strong><span>active orders</span></div>
+      <div class="promo-stat"><strong>{{ stats.inTransit }}</strong><span>deliveries in transit</span></div>
+      <div class="promo-leaf">✦</div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import TrackingMap from "../components/tracking/TrackingMap.vue";
 
-// Populated from GET /api/dashboard once the backend route exists.
-// Placeholder sample data below so the page is viewable while you build.
 const business = ref({ name: "Ndlovu Farm Supplies" });
+const searchQuery = ref("");
 
 const stats = ref({
   activeOrders: 6,
@@ -143,10 +177,10 @@ const stats = ref({
 });
 
 const recentOrders = ref([
-  { orderId: "SB-1042", supplierName: "Highveld Seed Co...", itemsSummary: "Maize seed (10kg bags)...", status: "out_for_delivery", eta: "24 min" },
-  { orderId: "SB-1041", supplierName: "Karoo Fertiliser T...", itemsSummary: "NPK fertiliser (50kg)...", status: "dispatched", eta: "Tomorrow 9–11am" },
-  { orderId: "SB-1038", supplierName: "CropGuard Distrib...", itemsSummary: "Crop protection spray...", status: "delivered", eta: "—" },
-  { orderId: "SB-1035", supplierName: "FarmTech Equipm...", itemsSummary: "Irrigation pipe fittings...", status: "processing", eta: "Awaiting confirmation" },
+  { orderId: "SB-1042", supplierName: "Highveld Seed Co.", itemsSummary: "Maize seed (10kg bags)", status: "out_for_delivery", eta: "24 min" },
+  { orderId: "SB-1041", supplierName: "Karoo Fertiliser Traders", itemsSummary: "NPK fertiliser (50kg)", status: "dispatched", eta: "Tomorrow 9–11am" },
+  { orderId: "SB-1038", supplierName: "CropGuard Distribution", itemsSummary: "Crop protection spray", status: "delivered", eta: "—" },
+  { orderId: "SB-1035", supplierName: "FarmTech Equipment Parts", itemsSummary: "Irrigation pipe fittings", status: "processing", eta: "Awaiting confirmation" },
 ]);
 
 const suggestedSuppliers = ref([
@@ -170,9 +204,30 @@ const notifications = ref([
   { notificationId: 3, type: "rating_request", message: "Share your feedback for FarmTech Equipment Parts' delivery", isRead: true },
 ]);
 
-function formatMoney(n) {
-  return Number(n).toLocaleString("en-ZA", { minimumFractionDigits: 0 });
+const trackingSteps = [
+  { key: "placed", label: "Placed" },
+  { key: "dispatched", label: "Dispatched" },
+  { key: "in_transit", label: "In transit" },
+  { key: "delivered", label: "Delivered" },
+];
+
+const filteredOrders = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  if (!query) return recentOrders.value;
+  return recentOrders.value.filter((order) =>
+    [order.orderId, order.supplierName, order.itemsSummary, statusLabel(order.status)]
+      .some((value) => String(value).toLowerCase().includes(query))
+  );
+});
+
+const unreadNotifications = computed(
+  () => notifications.value.filter((notification) => !notification.isRead).length
+);
+
+function formatMoney(value) {
+  return Number(value || 0).toLocaleString("en-ZA", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
+
 function statusLabel(status) {
   return {
     out_for_delivery: "Out for delivery",
@@ -186,25 +241,29 @@ function statusLabel(status) {
     delayed: "Delayed",
   }[status] || status;
 }
+
 function notificationTitle(type) {
   return {
-    order_update: "Order Confirmed",
-    payment_reminder: "Payment Reminder",
-    rating_request: "New Rating Available",
-    message: "New Message",
+    order_update: "Order confirmed",
+    payment_reminder: "Payment reminder",
+    rating_request: "Rating available",
+    message: "New message",
     system: "Notice",
   }[type] || "Notification";
 }
-function initials(name) {
-  return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+
+function notificationIcon(type) {
+  return {
+    order_update: "✓",
+    payment_reminder: "R",
+    rating_request: "★",
+    message: "•",
+    system: "!",
+  }[type] || "•";
 }
 
-const apiUrl = import.meta.env.VITE_API_URL || "/api";
-
-async function fetchJson(path) {
-  const response = await fetch(`${apiUrl}${path}`);
-  if (!response.ok) throw new Error(`Request failed: ${path}`);
-  return response.json();
+function initials(name) {
+  return String(name || "").split(" ").filter(Boolean).map((word) => word[0]).slice(0, 2).join("").toUpperCase();
 }
 
 function mapOrderStatus(status) {
@@ -229,6 +288,20 @@ function mapDeliveryStatus(status) {
   return normalized.replace(/\s+/g, "_");
 }
 
+function isTrackingStepActive(step) {
+  const current = trackedOrder.value.status;
+  const order = { awaiting_pickup: 0, placed: 0, dispatched: 1, in_transit: 2, delivered: 3 };
+  return order[current] >= order[step];
+}
+
+const apiUrl = import.meta.env.VITE_API_URL || "/api";
+
+async function fetchJson(path) {
+  const response = await fetch(apiUrl + path);
+  if (!response.ok) throw new Error("Request failed: " + path);
+  return response.json();
+}
+
 async function loadDashboard() {
   try {
     const [orders, payments, deliveries] = await Promise.all([
@@ -240,18 +313,18 @@ async function loadDashboard() {
     const orderList = Array.isArray(orders) ? orders : [];
     const paymentList = Array.isArray(payments) ? payments : [];
     const deliveryList = Array.isArray(deliveries) ? deliveries : [];
-
     const activeStatuses = ["pending", "processing", "in transit", "out for delivery"];
+
     const unpaid = paymentList.filter(
       (payment) => String(payment.payment_status || "").toLowerCase() !== "completed"
     );
+
     const pendingPayment = unpaid.reduce(
-      (total, payment) => total + Number(payment.amount || 0),
-      0
+      (total, payment) => total + Number(payment.amount || 0), 0
     );
+
     const totalSpend = orderList.reduce(
-      (total, order) => total + Number(order.total_amount || 0),
-      0
+      (total, order) => total + Number(order.total_amount || 0), 0
     );
 
     stats.value = {
@@ -261,9 +334,7 @@ async function loadDashboard() {
       pendingPayment,
       pendingInvoices: unpaid.length,
       inTransit: deliveryList.filter((delivery) =>
-        ["in transit", "out for delivery"].includes(
-          String(delivery.current_status || "").toLowerCase()
-        )
+        ["in transit", "out for delivery"].includes(String(delivery.current_status || "").toLowerCase())
       ).length,
       totalSpend,
       spendChangePercent: 0,
@@ -273,14 +344,14 @@ async function loadDashboard() {
       orderList.slice(0, 4).map(async (order) => {
         let itemsSummary = "Order items";
         try {
-          const items = await fetchJson(`/orders?buyerId=1/${order.order_id}/items`);
+          const items = await fetchJson("/orders?buyerId=1/" + order.order_id + "/items");
           if (Array.isArray(items) && items.length) {
             itemsSummary = items
-              .map((item) => `${item.product_name || "Product"} ×${item.quantity}`)
+              .map((item) => (item.product_name || "Product") + " ×" + item.quantity)
               .join(", ");
           }
         } catch {
-          // keep the fallback summary when item lines cannot be loaded
+          // Keep the fallback summary when item lines cannot be loaded.
         }
 
         return {
@@ -295,9 +366,7 @@ async function loadDashboard() {
 
     const trackedDelivery =
       deliveryList.find((delivery) =>
-        ["in transit", "out for delivery"].includes(
-          String(delivery.current_status || "").toLowerCase()
-        )
+        ["in transit", "out for delivery"].includes(String(delivery.current_status || "").toLowerCase())
       ) || deliveryList[0];
 
     if (trackedDelivery) {
@@ -306,8 +375,7 @@ async function loadDashboard() {
       );
 
       trackedOrder.value = {
-        orderId:
-          order?.order_number || trackedDelivery.order_number || trackedDelivery.order_id,
+        orderId: order?.order_number || trackedDelivery.order_number || trackedDelivery.order_id,
         status: mapDeliveryStatus(trackedDelivery.current_status),
         etaMinutes: null,
         destinationCity: order?.buyer_city || "",
@@ -317,7 +385,7 @@ async function loadDashboard() {
 
       try {
         trackedOrder.value.gpsLocation = await fetchJson(
-          `/deliveries?buyerId=1/${trackedDelivery.delivery_id}/location`
+          "/deliveries?buyerId=1/" + trackedDelivery.delivery_id + "/location"
         );
       } catch {
         trackedOrder.value.gpsLocation = null;
@@ -330,161 +398,467 @@ async function loadDashboard() {
 
 function openTracking() {
   if (!trackedOrder.value.deliveryId) {
+    scrollToOrders();
     return;
   }
+  window.location.href = "/tracking/" + trackedOrder.value.deliveryId;
+}
 
-  window.location.href = `/tracking/${trackedOrder.value.deliveryId}`;
+function scrollToOrders() {
+  document.getElementById("orders")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function scrollToSuppliers() {
+  document.getElementById("suppliers")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function scrollToNotifications() {
+  document.getElementById("notifications")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 onMounted(loadDashboard);
 </script>
 
 <style scoped>
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-}
-.subtitle {
-  color: var(--color-text-muted);
-  font-size: 14px;
-  margin: 4px 0 0;
-}
-.search-box input {
-  width: 260px;
+.dashboard-page {
+  --dashboard-green: #1f4b32;
+  --dashboard-green-dark: #163b27;
+  --dashboard-green-soft: #e7f0e9;
+  --dashboard-cream: #f7f0e4;
+  --dashboard-ink: #27332c;
+  --dashboard-muted: #738078;
+  --dashboard-border: #e5e1d8;
+  --dashboard-white: #fffdfa;
+  color: var(--dashboard-ink);
+  max-width: 1420px;
+  margin: 0 auto;
+  padding: 6px 4px 40px;
 }
 
-.stats-grid {
+.hero-card {
+  min-height: 270px;
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  overflow: hidden;
+  border-radius: 28px;
+  background: radial-gradient(circle at 83% 25%, rgba(255,255,255,.62), transparent 23%), linear-gradient(115deg, #f6f0e5 0%, #f2ebdd 55%, #e8eee4 100%);
+  border: 1px solid #e5e0d5;
+  position: relative;
+}
+
+.hero-copy {
+  padding: 42px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.eyebrow, .section-kicker {
+  color: var(--dashboard-green);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.hero-copy h1 {
+  margin: 10px 0;
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.05;
+  letter-spacing: -.035em;
+  color: #22352a;
+}
+
+.hero-copy p {
+  max-width: 530px;
+  margin: 0;
+  color: #667168;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.hero-actions { display: flex; gap: 10px; margin-top: 22px; }
+
+.primary-btn, .secondary-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 17px;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.primary-btn {
+  background: var(--dashboard-green);
+  color: white;
+  box-shadow: 0 8px 18px rgba(31,75,50,.18);
+}
+
+.secondary-btn {
+  background: rgba(255,255,255,.74);
+  color: var(--dashboard-green);
+  border: 1px solid rgba(31,75,50,.14);
+}
+
+.primary-btn:hover, .secondary-btn:hover { transform: translateY(-1px); }
+
+.hero-visual {
+  position: relative;
+  min-height: 270px;
+  overflow: hidden;
+  background: radial-gradient(circle at 60% 45%, rgba(255,255,255,.85) 0 20%, transparent 21%), linear-gradient(135deg, #e9e4d8, #dfe9df);
+}
+
+.hero-product-card {
+  position: absolute;
+  left: 18%;
+  top: 48px;
+  width: 240px;
+  min-height: 164px;
+  padding: 20px;
+  border-radius: 24px;
+  background: rgba(255,253,250,.9);
+  border: 1px solid rgba(255,255,255,.8);
+  box-shadow: 0 18px 45px rgba(40,55,45,.13);
+  transform: rotate(-2deg);
+}
+
+.hero-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--dashboard-green);
+  color: white;
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.hero-product-card strong { display: block; font-size: 17px; margin-bottom: 4px; }
+.hero-product-card > span { color: var(--dashboard-muted); font-size: 11px; }
+
+.hero-mini-stats { display: flex; gap: 18px; margin-top: 18px; color: var(--dashboard-muted); font-size: 10px; }
+.hero-mini-stats b { display: block; color: var(--dashboard-green); font-size: 17px; }
+
+.leaf {
+  position: absolute;
+  border-radius: 100% 0 100% 0;
+  background: rgba(31,75,50,.16);
+  transform: rotate(35deg);
+}
+
+.leaf-one { width: 110px; height: 55px; right: 12%; top: 8%; }
+.leaf-two { width: 145px; height: 70px; right: -1%; bottom: 7%; transform: rotate(-25deg); }
+.leaf-three { width: 80px; height: 40px; left: 8%; bottom: 2%; transform: rotate(65deg); }
+
+.trust-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.stat-card.highlight {
-  border-color: var(--color-accent);
-  background: var(--color-accent-soft);
-}
-.stat-label {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-}
-.stat-trend {
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-.stat-trend.positive { color: var(--color-success); }
-.stat-trend.warning { color: var(--color-warning); }
-
-.two-col {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 20px;
-  align-items: start;
-}
-.side-col {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  gap: 8px;
+  padding: 13px 4px 23px;
 }
 
-.orders-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-.orders-table th {
-  text-align: left;
-  color: var(--color-text-muted);
-  font-weight: 500;
-  padding: 8px 6px;
-  border-bottom: 1px solid var(--color-border);
-}
-.orders-table td {
-  padding: 10px 6px;
-  border-bottom: 1px solid var(--color-border);
-}
-.truncate {
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.status-pill {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 20px;
-  background: #EEE;
-}
-.status-pill.out_for_delivery { background: var(--color-accent-soft); color: var(--color-accent); }
-.status-pill.dispatched { background: #E7EEF7; color: #3563A8; }
-.status-pill.delivered { background: #E3F2E7; color: var(--color-success); }
-.status-pill.processing { background: #F3F0E9; color: var(--color-warning); }
-
-.section-spacer { margin-top: 24px; }
-
-.suggested-list { list-style: none; padding: 0; margin: 12px 0 0; }
-.suggested-list li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--color-border);
-}
-.supplier-initials {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-  font-size: 12px;
-  font-weight: 700;
+.trust-row > div {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  gap: 7px;
+  color: var(--dashboard-muted);
+  font-size: 10px;
+  text-align: center;
 }
-.supplier-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  font-size: 13px;
-}
-.supplier-info span { color: var(--color-text-muted); font-size: 12px; }
-.chevron { color: var(--color-text-muted); }
 
-.tracking-steps {
+.trust-row strong { color: var(--dashboard-ink); font-weight: 750; }
+
+.trust-icon {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--dashboard-green-soft);
+  color: var(--dashboard-green);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.section-heading, .panel-heading {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
-  color: var(--color-text-muted);
-  margin: 12px 0;
+  align-items: flex-end;
+  gap: 15px;
 }
-.tracking-steps .active { color: var(--color-accent); font-weight: 600; }
+
+.section-heading { margin: 4px 2px 15px; }
+.section-heading h2, .panel-heading h2 { margin: 4px 0 0; font-size: 21px; letter-spacing: -.025em; }
+
+.search-box {
+  display: flex;
+  align-items: center;
+  width: min(310px, 100%);
+  height: 38px;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 999px;
+  background: var(--dashboard-white);
+  padding: 0 13px;
+}
+
+.search-icon { color: var(--dashboard-muted); font-size: 19px; line-height: 1; }
+.search-box input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--dashboard-ink);
+  font-size: 12px;
+  padding-left: 7px;
+}
+
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+.metric-card {
+  min-height: 126px;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--dashboard-white);
+  border: 1px solid var(--dashboard-border);
+  box-shadow: 0 6px 20px rgba(38,47,41,.035);
+}
+
+.metric-card.featured { background: var(--dashboard-green); color: white; border-color: var(--dashboard-green); }
+.metric-top { display: flex; align-items: center; gap: 8px; }
+
+.metric-icon {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.metric-icon.green { color: var(--dashboard-green); background: var(--dashboard-green-soft); }
+.metric-icon.cream { color: #8c6d3c; background: var(--dashboard-cream); }
+.metric-caption { font-size: 11px; color: var(--dashboard-muted); font-weight: 650; }
+
+.featured .metric-caption, .featured .metric-top .metric-icon { color: rgba(255,255,255,.82); }
+.featured .metric-icon { background: rgba(255,255,255,.13); }
+
+.metric-card > strong { display: block; margin-top: 10px; font-size: 25px; letter-spacing: -.035em; }
+.metric-card p { margin: 3px 0 0; color: var(--dashboard-muted); font-size: 10px; }
+.featured p { color: rgba(255,255,255,.7); }
+
+.positive { color: #3e8057; font-weight: 750; }
+.warning { color: #b18440; font-weight: 750; }
+.featured .positive, .featured .warning { color: #f1d6a2; }
+
+.category-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 16px 0 24px;
+}
+
+.category-strip button {
+  border: 1px solid var(--dashboard-border);
+  background: var(--dashboard-white);
+  border-radius: 18px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  color: var(--dashboard-ink);
+  transition: transform .18s ease, border-color .18s ease;
+}
+
+.category-strip button:hover { transform: translateY(-2px); border-color: #c8d6cb; }
+
+.category-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  margin-bottom: 3px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.category-icon.orders, .category-icon.suppliers { background: #e9f0e8; color: var(--dashboard-green); }
+.category-icon.delivery { background: #f3ecdf; color: #8a6d3f; }
+.category-icon.alerts { background: #f5e5dd; color: #9d634d; }
+.category-strip strong { font-size: 12px; }
+.category-strip small { color: var(--dashboard-muted); font-size: 9px; }
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(310px, .85fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.panel {
+  border: 1px solid var(--dashboard-border);
+  border-radius: 22px;
+  background: var(--dashboard-white);
+  padding: 20px;
+  box-shadow: 0 7px 22px rgba(38,47,41,.035);
+}
+
+.orders-panel { min-width: 0; }
+.panel-heading { margin-bottom: 16px; }
+
+.panel-badge, .unread-badge {
+  background: var(--dashboard-green-soft);
+  color: var(--dashboard-green);
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.orders-list { display: flex; flex-direction: column; }
+
+.order-row {
+  display: grid;
+  grid-template-columns: 1.35fr 1.3fr auto .7fr;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 0;
+  border-top: 1px solid #eeeae2;
+}
+
+.order-number { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.order-avatar, .supplier-avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--dashboard-cream);
+  color: #7b623c;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.order-avatar { width: 38px; height: 38px; }
+.order-number div, .order-items, .eta { min-width: 0; }
+.order-number strong, .order-number span, .order-items span, .order-items strong, .eta span, .eta strong { display: block; }
+.order-number strong { font-size: 12px; }
+.order-number div > span { margin-top: 2px; color: var(--dashboard-muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.order-items span, .eta span {
+  color: #9a9f9b;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.order-items strong, .eta strong {
+  margin-top: 3px;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 750;
+  white-space: nowrap;
+  background: #eee;
+  color: #68716b;
+}
+
+.status-pill.out_for_delivery, .status-pill.in_transit { background: #e6f0e7; color: #2c7048; }
+.status-pill.dispatched { background: #e7eef4; color: #3f6685; }
+.status-pill.delivered { background: #e9efe9; color: #4e765b; }
+.status-pill.processing { background: #f3ecdf; color: #8b6d3e; }
+.eta { text-align: right; }
+
+.tracking-order {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  background: #f7f5ef;
+  border-radius: 14px;
+  margin-bottom: 15px;
+}
+
+.tracking-order span, .tracking-order strong { display: block; }
+.tracking-order span { color: #949a95; font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
+.tracking-order strong { margin-top: 2px; font-size: 11px; }
+.tracking-destination { text-align: right; }
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  background: #e8f2e9;
+  color: #327047;
+  padding: 6px 9px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.live-badge i { width: 6px; height: 6px; border-radius: 50%; background: #4e9c67; }
+.live-badge.offline { background: #f0eee9; color: #7c817d; }
+.live-badge.offline i { background: #9a9e9a; }
+
+.tracking-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  margin-bottom: 14px;
+}
+
+.tracking-steps > div {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: #a0a49f;
+  font-size: 8px;
+  text-align: center;
+}
+
+.tracking-steps > div:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: calc(50% + 6px);
+  width: calc(100% - 12px);
+  height: 1px;
+  background: #deded8;
+}
+
+.step-dot { width: 9px; height: 9px; border-radius: 50%; background: #deded8; position: relative; z-index: 1; }
+.tracking-steps > div.active { color: var(--dashboard-green); font-weight: 750; }
+.tracking-steps > div.active .step-dot { background: var(--dashboard-green); box-shadow: 0 0 0 4px #e7f0e9; }
+.tracking-steps > div.active:not(:last-child)::after { background: #aac1af; }
 
 .dashboard-map-preview {
   position: relative;
-  height: 140px;
-  border-radius: var(--radius-sm);
+  height: 170px;
   overflow: hidden;
-  background: #F5F3EF;
+  border-radius: 17px;
+  background: #edf0ea;
 }
 
-.dashboard-map-preview.clickable {
-  cursor: pointer;
-}
+.dashboard-map-preview.clickable { cursor: pointer; }
 
 .dashboard-map-empty {
   height: 100%;
@@ -493,54 +867,185 @@ onMounted(loadDashboard);
   align-items: center;
   justify-content: center;
   gap: 5px;
+  padding: 18px;
   text-align: center;
-  padding: 12px;
-  color: var(--color-text-muted);
-  background: linear-gradient(135deg, #E7EEF7, #F5F3EF);
+  background: radial-gradient(circle at 25% 35%, rgba(255,255,255,.85) 0 8%, transparent 9%), radial-gradient(circle at 72% 62%, rgba(255,255,255,.8) 0 10%, transparent 11%), linear-gradient(135deg, #e6eee6, #f1ede3);
 }
 
-.dashboard-map-empty strong {
-  color: var(--color-text);
-  font-size: 13px;
+.map-pin {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--dashboard-green);
+  color: white;
+  font-size: 17px;
 }
 
-.dashboard-map-empty span {
-  font-size: 11px;
-}
+.dashboard-map-empty strong { margin-top: 2px; font-size: 11px; }
+.dashboard-map-empty > span:last-child { color: var(--dashboard-muted); font-size: 9px; max-width: 190px; }
 
 .dashboard-map-action {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  padding: 7px 10px;
-  border-radius: 8px;
-  background: rgba(255, 254, 252, 0.94);
-  color: var(--color-accent);
-  font-size: 11px;
-  font-weight: 600;
+  left: 9px;
+  right: 9px;
+  bottom: 9px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255,253,250,.94);
+  color: var(--dashboard-green);
+  font-size: 10px;
+  font-weight: 800;
   text-align: center;
 }
 
-.notifications-list { list-style: none; padding: 0; margin: 12px 0 0; }
-.notifications-list li {
-  display: flex;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 13px;
+.dashboard-map-action span { margin-left: 4px; }
+
+.suppliers-panel, .notifications-panel { min-height: 300px; }
+
+.supplier-cards { display: flex; flex-direction: column; gap: 9px; }
+
+.supplier-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 11px;
+  align-items: center;
+  padding: 11px;
+  border-radius: 15px;
+  background: #f8f6f1;
+  border: 1px solid #eee9df;
 }
-.notifications-list li p { margin: 2px 0 0; color: var(--color-text-muted); font-size: 12px; }
-.notifications-list li.unread strong { color: var(--color-text); }
-.dot {
-  width: 8px;
-  height: 8px;
+
+.supplier-avatar { width: 40px; height: 40px; background: #e6efe7; color: var(--dashboard-green); }
+.supplier-copy { min-width: 0; }
+.supplier-copy strong, .supplier-copy span { display: block; }
+.supplier-copy strong { font-size: 11px; }
+.supplier-copy span { margin-top: 3px; color: var(--dashboard-muted); font-size: 9px; line-height: 1.35; }
+
+.supplier-card button {
+  width: 29px;
+  height: 29px;
+  border: 0;
   border-radius: 50%;
-  margin-top: 5px;
-  flex-shrink: 0;
-  background: var(--color-text-muted);
+  background: white;
+  color: var(--dashboard-green);
+  cursor: pointer;
 }
-.dot.order_update { background: var(--color-success); }
-.dot.payment_reminder { background: var(--color-warning); }
-.dot.rating_request { background: var(--color-accent); }
+
+.notifications-list { list-style: none; margin: 0; padding: 0; }
+.notifications-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 9px;
+  align-items: start;
+  padding: 11px 0;
+  border-top: 1px solid #eeeae2;
+}
+
+.notification-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #f1eee7;
+  color: #7e725d;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.notification-icon.order_update { background: #e8f1e8; color: #347049; }
+.notification-icon.payment_reminder { background: #f5ecdf; color: #9a7542; }
+.notification-icon.rating_request { background: #efe8ef; color: #795c7b; }
+.notifications-list strong { font-size: 10px; }
+.notifications-list p { margin: 3px 0 0; color: var(--dashboard-muted); font-size: 9px; line-height: 1.4; }
+.unread-dot { width: 6px; height: 6px; border-radius: 50%; background: #d57b4d; margin-top: 7px; }
+
+.empty-state {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  color: var(--dashboard-muted);
+  text-align: center;
+}
+
+.empty-state strong { color: var(--dashboard-ink); font-size: 12px; }
+.empty-state span { font-size: 10px; }
+
+.bottom-promo {
+  margin-top: 14px;
+  padding: 22px 24px;
+  border-radius: 22px;
+  background: radial-gradient(circle at 82% 30%, rgba(255,255,255,.12), transparent 25%), var(--dashboard-green);
+  color: white;
+  display: grid;
+  grid-template-columns: 1fr auto auto 80px;
+  gap: 30px;
+  align-items: center;
+  overflow: hidden;
+}
+
+.bottom-promo .section-kicker { color: #b9cfbd; }
+.bottom-promo h2 { margin: 5px 0; max-width: 500px; font-size: 20px; letter-spacing: -.02em; }
+.bottom-promo p { margin: 0; max-width: 590px; color: #c8d6cb; font-size: 10px; line-height: 1.5; }
+
+.promo-stat { min-width: 80px; padding-left: 20px; border-left: 1px solid rgba(255,255,255,.16); }
+.promo-stat strong, .promo-stat span { display: block; }
+.promo-stat strong { font-size: 23px; }
+.promo-stat span { margin-top: 2px; color: #bdcec1; font-size: 9px; }
+
+.promo-leaf {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  color: #d9e4da;
+  font-size: 25px;
+}
+
+@media (max-width: 1050px) {
+  .stats-grid, .category-strip { grid-template-columns: repeat(2, 1fr); }
+  .content-grid { grid-template-columns: 1fr; }
+  .tracking-panel { order: -1; }
+  .hero-card { grid-template-columns: 1fr; }
+  .hero-visual { display: none; }
+  .bottom-promo { grid-template-columns: 1fr auto auto; }
+  .promo-leaf { display: none; }
+}
+
+@media (max-width: 720px) {
+  .dashboard-page { padding: 0 0 28px; }
+  .hero-card { border-radius: 20px; }
+  .hero-copy { padding: 30px 22px; }
+  .hero-copy h1 { font-size: 29px; }
+  .hero-actions { flex-wrap: wrap; }
+  .trust-row { grid-template-columns: repeat(2, 1fr); gap: 12px 4px; }
+  .section-heading { align-items: stretch; flex-direction: column; }
+  .search-box { width: 100%; }
+  .stats-grid, .category-strip { grid-template-columns: 1fr 1fr; }
+  .panel { padding: 15px; border-radius: 18px; }
+  .order-row { grid-template-columns: 1fr auto; gap: 8px; }
+  .order-items { display: none; }
+  .eta { text-align: left; }
+  .bottom-promo { grid-template-columns: 1fr 1fr; gap: 15px; }
+  .bottom-promo > div:first-child { grid-column: 1 / -1; }
+  .promo-stat { border-left: 0; padding-left: 0; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid, .category-strip { grid-template-columns: 1fr; }
+  .metric-card { min-height: auto; }
+  .trust-row { grid-template-columns: 1fr; }
+  .trust-row > div { justify-content: flex-start; }
+  .hero-actions button { width: 100%; }
+  .tracking-steps { gap: 0; }
+  .tracking-steps > div { font-size: 7px; }
+  .bottom-promo { grid-template-columns: 1fr; }
+}
 </style>
