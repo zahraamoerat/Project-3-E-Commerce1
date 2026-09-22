@@ -163,7 +163,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faArrowLeft, faArrowRight, faBasketShopping, faCheck, faList, faMagnifyingGlass, faPlus, faTableCellsLarge } from '@fortawesome/free-solid-svg-icons'
@@ -362,19 +362,35 @@ watch(() => route.params.productId, (productId) => {
   if (productId) loadReviews(productId)
 })
 
-onMounted(async () => {
-  try {
-    const response = await fetch(`${apiUrl}/products`)
-    if (!response.ok) throw new Error('Products could not be loaded.')
-    products.value = (await response.json()).map(normalizeProduct)
-  } catch (error) {
-    errorMessage.value = error.message
-  } finally {
-    isLoading.value = false
-  }
+let productRefreshTimer = null
 
+async function loadMarketplaceProducts({ silent = false } = {}) {
+  try {
+    const response = await fetch(`${apiUrl}/products?catalog=active&_=${Date.now()}`, {
+      cache: "no-store"
+    })
+    if (!response.ok) throw new Error('Products could not be loaded.')
+    const nextProducts = (await response.json()).map(normalizeProduct)
+    products.value = nextProducts
+    if (!silent) errorMessage.value = ''
+  } catch (error) {
+    if (!silent) errorMessage.value = error.message
+  }
+}
+
+onMounted(async () => {
+  await loadMarketplaceProducts()
+  isLoading.value = false
   await syncBasketFromCart()
   if (isDetailView.value) loadReviews(route.params.productId)
+
+  productRefreshTimer = window.setInterval(() => {
+    if (!document.hidden) loadMarketplaceProducts({ silent: true })
+  }, 5000)
+})
+
+onBeforeUnmount(() => {
+  if (productRefreshTimer) window.clearInterval(productRefreshTimer)
 })
 </script>
 
