@@ -191,6 +191,7 @@ async function publish(){
     const images=await uploadProductImages(form.images,(urls)=>{uploadedUrls=urls;});
     await addProduct({...form,product_name:form.product_name.trim(),description:form.description.trim(),image:images[0]||imagePlaceholders.packaging,images});
     message.value="Product published successfully.";
+    localStorage.setItem("weconnect-product-catalog-updated", String(Date.now()));
     setTimeout(()=>router.push("/products"),500);
   }catch(e){
     if(uploadedUrls.length) await cleanupProductImages(uploadedUrls);
@@ -210,6 +211,7 @@ async function saveDraft(){
     const images=await uploadProductImages(form.images,(urls)=>{uploadedUrls=urls;});
     await addProduct({...form,product_name:form.product_name.trim()||"Untitled draft",category_name:form.category_name,image:images[0]||imagePlaceholders.packaging,images});
     message.value="Draft saved.";
+    localStorage.setItem("weconnect-product-catalog-updated", String(Date.now()));
     setTimeout(()=>router.push("/products"),500);
   }catch(e){
     if(uploadedUrls.length) await cleanupProductImages(uploadedUrls);
