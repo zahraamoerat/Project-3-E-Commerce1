@@ -27,16 +27,27 @@
       <div class="sb-nav-actions">
         <button type="button" aria-label="View orders" @click="goToOrders">🛍</button>
         <button type="button" aria-label="Profile" @click="goToProfile">♙</button>
+        <button type="button" class="sb-menu-button" :aria-expanded="mobileMenuOpen" aria-label="Open navigation menu" @click="mobileMenuOpen = !mobileMenuOpen">☰</button>
       </div>
+    </div>
+
+    <nav v-if="mobileMenuOpen" class="sb-mobile-menu" aria-label="Mobile navigation">
+      <router-link to="/small-business/dashboard" :class="{ active: isActive('/small-business/dashboard') }" @click="mobileMenuOpen = false">Home</router-link>
+      <router-link to="/small-business/products" :class="{ active: isActive('/small-business/products') }" @click="mobileMenuOpen = false">Shop</router-link>
+      <router-link to="/small-business/orders" :class="{ active: isActive('/small-business/orders') }" @click="mobileMenuOpen = false">Orders</router-link>
+      <router-link to="/small-business/deliveries" :class="{ active: isActive('/small-business/deliveries') }" @click="mobileMenuOpen = false">Deliveries</router-link>
+    </nav>
     </div>
   </header>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
+const mobileMenuOpen = ref(false)
 
 function isActive(path) {
   return route.path === path || route.path.startsWith(path + '/')
@@ -171,6 +182,31 @@ function goToProfile() {
   transform: translateY(-1px);
 }
 
+.sb-menu-button { display: none; }
+
+.sb-mobile-menu {
+  display: none;
+  width: min(1280px, 94%);
+  margin: 0 auto;
+  padding: 8px 0 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+
+.sb-mobile-menu a {
+  display: block;
+  padding: 11px 8px;
+  border-radius: 6px;
+  color: #f4ebe4;
+  text-decoration: none;
+  font-size: 11px;
+}
+
+.sb-mobile-menu a.active,
+.sb-mobile-menu a:hover {
+  background: rgba(255,255,255,.08);
+  color: #fff;
+}
+
 @media (max-width: 760px) {
   .sb-navbar-inner {
     min-height: 64px;
@@ -213,6 +249,8 @@ function goToProfile() {
 }
 
 @media (max-width: 520px) {
+  .sb-menu-button { display: inline-grid !important; place-items: center; }
+  .sb-mobile-menu { display: block; }
   .sb-brand-copy strong {
     font-size: 15px;
   }
