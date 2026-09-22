@@ -1,5 +1,6 @@
 <template>
   <div class="connect-sb-deliveries-page">
+    <SmallBusinessNavbar />
 
     <!-- Delivery dashboard header -->
     <header class="connect-sb-deliveries-hero">
@@ -679,6 +680,7 @@
 
 
 <script setup>
+import SmallBusinessNavbar from '../components/SmallBusinessNavbar.vue'
 import { computed, onMounted, ref } from 'vue'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -779,7 +781,7 @@ onMounted(() => {
   min-height: 100vh;
   padding: 34px;
   box-sizing: border-box;
-  background: #E8E2DD;
+  background: #f5f0eb;
   color: #5C3D24;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -1889,4 +1891,17 @@ onMounted(() => {
   }
 }
 
+</style>
+
+<style scoped>
+/* Shared WeConnect brown theme refinements */
+.connect-sb-deliveries-page { --sb-brown: #5c3d24; --sb-brown-dark: #4e342e; --sb-brown-soft: #eadfd5; --sb-accent: #c48b5b; }
+.connect-sb-deliveries-page h1, .connect-sb-deliveries-page h2, .connect-sb-deliveries-page h3 { color: var(--sb-brown); }
+.connect-sb-deliveries-page .connect-sb-deliveries-overview-card,
+.connect-sb-deliveries-page .connect-sb-deliveries-card { border-color: #dfd1c5; }
+.connect-sb-deliveries-page .connect-sb-deliveries-overview-main,
+.connect-sb-deliveries-page .connect-sb-deliveries-track-button.active { background: var(--sb-brown); color: #fff; }
+.connect-sb-deliveries-page .connect-sb-deliveries-overview-icon,
+.connect-sb-deliveries-page .connect-sb-deliveries-route-marker { color: var(--sb-brown); background: var(--sb-brown-soft); }
+.connect-sb-deliveries-page .connect-sb-deliveries-track-button { border-color: var(--sb-brown); color: var(--sb-brown); }
 </style>
