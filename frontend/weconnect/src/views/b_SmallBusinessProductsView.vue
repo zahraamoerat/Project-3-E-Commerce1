@@ -1138,7 +1138,7 @@ onBeforeUnmount(() => {
 
 .detail-page { padding-top: 28px; }
 .detail-layout { display: grid; grid-template-columns: minmax(330px, .95fr) minmax(330px, 1fr); gap: clamp(35px, 6vw, 72px); max-width: 1080px; margin: 0 auto; }
-.detail-gallery { position: relative; } min-width: 0; }
+.detail-gallery { position: relative; min-width: 0; }
 .detail-image-wrap { position: relative; box-shadow: 0 18px 45px rgba(75, 49, 31, .10); height: 390px; overflow: hidden; border-radius: 13px; background: #eee4d8; }
 .detail-image-wrap img { width: 100%; height: 100%; object-fit: cover; }
 .detail-gallery-arrow { position: absolute; top: 50%; z-index: 2; width: 31px; height: 31px; transform: translateY(-50%); border: 0; border-radius: 50%; background: rgba(255,255,255,.95); color: #5c3d24; font-size: 25px; cursor: pointer; box-shadow: 0 3px 10px rgba(60,43,38,.12); }
