@@ -1,110 +1,148 @@
 <template>
   <div class="main-content">
-    <header class="page-header">
-      <div>
-        <h1>Welcome back, {{ business.name }}</h1>
-        <p class="subtitle">Here's what's moving across your orders today.</p>
-      </div>
-      <div class="search-box">
-        <input type="text" placeholder="Search suppliers or products..." />
-      </div>
-    </header>
+    <!-- Loading state -->
+    <div v-if="isLoading" class="state-message">
+      <p>Loading dashboard…</p>
+    </div>
 
-    <!-- Stat cards -->
-    <section class="stats-grid">
-      <div class="card stat-card">
-        <span class="stat-label">Active orders</span>
-        <span class="stat-value">{{ stats.activeOrders }}</span>
-        <span class="stat-trend positive">+2 this week</span>
-      </div>
-      <div class="card stat-card">
-        <span class="stat-label">Pending payment</span>
-        <span class="stat-value">R{{ formatMoney(stats.pendingPayment) }}</span>
-        <span class="stat-trend warning">{{ stats.pendingInvoices }} invoice due</span>
-      </div>
-      <div class="card stat-card">
-        <span class="stat-label">In transit</span>
-        <span class="stat-value">{{ stats.inTransit }}</span>
-        <span class="stat-trend">On schedule</span>
-      </div>
-      <div class="card stat-card">
-        <span class="stat-label">Total spend (mo.)</span>
-        <span class="stat-value">R{{ formatMoney(stats.totalSpend) }}</span>
-        <span class="stat-trend positive">+{{ stats.spendChangePercent }}% vs last month</span>
-      </div>
-    </section>
+    <!-- No buyer profile yet -->
+    <div v-else-if="needsProfile" class="state-message card">
+      <h3>Set up your business profile</h3>
+      <p class="subtitle">
+        You need to complete your Business Profile before your dashboard can show real data.
+      </p>
+      <button class="btn-primary" @click="router.push('/business-profile')">
+        Go to Business Profile
+      </button>
+    </div>
 
-    <div class="two-col">
-      <!-- Recent orders -->
-      <section class="card">
-        <h3>Recent orders</h3>
-        <table class="orders-table">
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Supplier</th>
-              <th>Items</th>
-              <th>Status</th>
-              <th>ETA</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="order in recentOrders" :key="order.orderId">
-              <td>#{{ order.orderId }}</td>
-              <td>{{ order.supplierName }}</td>
-              <td class="truncate">{{ order.itemsSummary }}</td>
-              <td><span class="status-pill" :class="order.status">{{ statusLabel(order.status) }}</span></td>
-              <td>{{ order.eta || "—" }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- Real error (not the "no profile" case) -->
+    <div v-else-if="loadError" class="state-message card error-state">
+      <h3>Couldn't load your dashboard</h3>
+      <p class="subtitle">{{ loadError }}</p>
+      <button class="btn-primary" @click="loadDashboard">Try again</button>
+    </div>
 
-        <h3 class="section-spacer">Suggested suppliers</h3>
-        <ul class="suggested-list">
-          <li v-for="s in suggestedSuppliers" :key="s.supplierId" @click="goToSuppliers">
-            <div class="supplier-initials">{{ initials(s.companyName) }}</div>
-            <div class="supplier-info">
-              <strong>{{ s.companyName }}</strong>
-              <span>{{ s.description }}</span>
-            </div>
-            <span class="chevron">›</span>
-          </li>
-        </ul>
+    <!-- Loaded successfully -->
+    <template v-else>
+      <header class="page-header">
+        <div>
+          <h1>Welcome back, {{ business.name }}</h1>
+          <p class="subtitle">Here's what's moving across your orders today.</p>
+        </div>
+        <div class="search-box">
+          <input type="text" placeholder="Search suppliers or products..." />
+        </div>
+      </header>
+
+      <!-- Stat cards -->
+      <section class="stats-grid">
+        <div class="card stat-card">
+          <span class="stat-label">Active orders</span>
+          <span class="stat-value">{{ stats.activeOrders }}</span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-label">Pending payment</span>
+          <span class="stat-value">R{{ formatMoney(stats.pendingPayment) }}</span>
+          <span class="stat-trend warning" v-if="stats.pendingInvoices > 0">
+            {{ stats.pendingInvoices }} invoice{{ stats.pendingInvoices > 1 ? "s" : "" }} due
+          </span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-label">In transit</span>
+          <span class="stat-value">{{ stats.inTransit }}</span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-label">Total spend (mo.)</span>
+          <span class="stat-value">R{{ formatMoney(stats.totalSpend) }}</span>
+          <span
+            class="stat-trend"
+            :class="stats.spendChangePercent >= 0 ? 'positive' : 'negative'"
+            v-if="stats.spendChangePercent !== 0"
+          >
+            {{ stats.spendChangePercent > 0 ? "+" : "" }}{{ stats.spendChangePercent }}% vs last month
+          </span>
+        </div>
       </section>
 
-      <!-- Tracking + notifications -->
-      <section class="side-col">
-        <div class="card" v-if="trackedOrder">
-          <h3>Order #{{ trackedOrder.orderId }} tracking</h3>
-          <div class="tracking-steps">
-            <span :class="{ active: true }">Placed</span>
-            <span :class="{ active: trackedOrder.status !== 'awaiting_pickup' }">Dispatched</span>
-            <span :class="{ active: trackedOrder.status === 'in_transit' || trackedOrder.status === 'delivered' }">In transit</span>
-            <span :class="{ active: trackedOrder.status === 'delivered' }">Delivered</span>
-          </div>
-          <div class="map-placeholder">
-            <span>Simulated GPS marker — courier is approx. {{ trackedOrder.etaMinutes }} minutes from {{ trackedOrder.destinationCity }}</span>
-          </div>
-        </div>
-        <div class="card" v-else>
-          <h3>Order tracking</h3>
-          <p class="subtitle">Nothing in transit right now.</p>
-        </div>
+      <div class="two-col">
+        <!-- Recent orders -->
+        <section class="card">
+          <h3>Recent orders</h3>
+          <table class="orders-table" v-if="recentOrders.length">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Supplier</th>
+                <th>Items</th>
+                <th>Status</th>
+                <th>ETA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="order in recentOrders" :key="order.orderId">
+                <td>#{{ order.orderId }}</td>
+                <td>{{ order.supplierName }}</td>
+                <td class="truncate">{{ order.itemsSummary || "—" }}</td>
+                <td><span class="status-pill" :class="order.status">{{ statusLabel(order.status) }}</span></td>
+                <td>{{ order.eta || "—" }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="subtitle" v-else>No orders yet.</p>
 
-        <div class="card">
-          <h3>Notifications</h3>
-          <ul class="notifications-list">
-            <li v-for="n in notifications" :key="n.notificationId" :class="{ unread: !n.isRead }">
-              <span class="dot"></span>
-              <div>
-                <strong>{{ n.title }}</strong>
-                <p>{{ n.message }}</p>
+          <h3 class="section-spacer">Suggested suppliers</h3>
+          <ul class="suggested-list" v-if="suggestedSuppliers.length">
+            <li v-for="s in suggestedSuppliers" :key="s.supplierId" @click="goToSuppliers">
+              <div class="supplier-initials">{{ initials(s.companyName) }}</div>
+              <div class="supplier-info">
+                <strong>{{ s.companyName }}</strong>
+                <span>{{ s.description }}</span>
               </div>
+              <span class="chevron">›</span>
             </li>
           </ul>
-        </div>
-      </section>
-    </div>
+          <p class="subtitle" v-else>No suggestions right now.</p>
+        </section>
+
+        <!-- Tracking + notifications -->
+        <section class="side-col">
+          <div class="card" v-if="trackedOrder">
+            <h3>Order #{{ trackedOrder.orderId }} tracking</h3>
+            <div class="tracking-steps">
+              <span :class="{ active: true }">Placed</span>
+              <span :class="{ active: trackedOrder.status !== 'awaiting_pickup' }">Dispatched</span>
+              <span :class="{ active: trackedOrder.status === 'in_transit' || trackedOrder.status === 'delivered' }">In transit</span>
+              <span :class="{ active: trackedOrder.status === 'delivered' }">Delivered</span>
+            </div>
+            <div class="map-placeholder">
+              <span>
+                Simulated GPS marker — courier is approx.
+                {{ trackedOrder.etaMinutes ?? "?" }} minutes from {{ trackedOrder.destinationCity }}
+              </span>
+            </div>
+          </div>
+          <div class="card" v-else>
+            <h3>Order tracking</h3>
+            <p class="subtitle">Nothing in transit right now.</p>
+          </div>
+
+          <div class="card">
+            <h3>Notifications</h3>
+            <ul class="notifications-list" v-if="notifications.length">
+              <li v-for="n in notifications" :key="n.notificationId" :class="{ unread: !n.isRead }">
+                <span class="dot"></span>
+                <div>
+                  <strong>{{ n.title }}</strong>
+                  <p>{{ n.message }}</p>
+                </div>
+              </li>
+            </ul>
+            <p class="subtitle" v-else>No notifications.</p>
+          </div>
+        </section>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -115,41 +153,23 @@ import api from "../services/api";
 
 const router = useRouter();
 
-// Sample data below is a fallback in case the API call fails —
-// loadDashboard() overwrites these with real data on mount.
-const business = ref({ name: "Ndlovu Farm Supplies" });
+const isLoading = ref(true);
+const needsProfile = ref(false);
+const loadError = ref(null);
 
+const business = ref({ name: "" });
 const stats = ref({
-  activeOrders: 6,
-  pendingPayment: 2140,
-  pendingInvoices: 1,
-  inTransit: 2,
-  totalSpend: 18760,
-  spendChangePercent: 11,
+  activeOrders: 0,
+  pendingPayment: 0,
+  pendingInvoices: 0,
+  inTransit: 0,
+  totalSpend: 0,
+  spendChangePercent: 0,
 });
-
-const recentOrders = ref([
-  { orderId: "SB-1042", supplierName: "Highveld Seed Co...", itemsSummary: "Maize seed (10kg bags)...", status: "out_for_delivery", eta: "24 min" },
-  { orderId: "SB-1041", supplierName: "Karoo Fertiliser T...", itemsSummary: "NPK fertiliser (50kg)...", status: "dispatched", eta: "Tomorrow 9–11am" },
-  { orderId: "SB-1038", supplierName: "CropGuard Distrib...", itemsSummary: "Crop protection spray...", status: "delivered", eta: "—" },
-  { orderId: "SB-1035", supplierName: "FarmTech Equipm...", itemsSummary: "Irrigation pipe fittings...", status: "processing", eta: "Awaiting confirmation" },
-]);
-
-const suggestedSuppliers = ref([
-  { supplierId: 1, companyName: "Highveld Seed Co.", description: "Certified maize, wheat & soya seed supplier" },
-  { supplierId: 2, companyName: "Karoo Fertiliser Traders", description: "Bulk NPK, lime, and soil conditioner supply" },
-  { supplierId: 3, companyName: "FarmTech Equipment Parts", description: "Tractor and irrigation equipment spares" },
-]);
-
-// Can legitimately be null (nothing currently in transit) — the template
-// guards the tracking card with v-if/v-else, so don't default this to an object.
+const recentOrders = ref([]);
+const suggestedSuppliers = ref([]);
 const trackedOrder = ref(null);
-
-const notifications = ref([
-  { notificationId: 1, title: "Order Confirmed", message: "Karoo Fertiliser Traders has accepted your NPK fertiliser order", isRead: false },
-  { notificationId: 2, title: "Payment Reminder", message: "Invoice for #SB-1035 is due in 2 days (R1,450)", isRead: false },
-  { notificationId: 3, title: "New Rating Available", message: "Share your feedback for FarmTech Equipment Parts' delivery", isRead: true },
-]);
+const notifications = ref([]);
 
 function formatMoney(n) {
   return Number(n).toLocaleString("en-ZA", { minimumFractionDigits: 0 });
@@ -160,17 +180,28 @@ function statusLabel(status) {
     dispatched: "Dispatched",
     delivered: "Delivered",
     processing: "Processing",
+    pending: "Pending",
+    shipped: "Shipped",
+    cancelled: "Cancelled",
   }[status] || status;
 }
 function initials(name) {
-  return name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  return (name || "")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
-
 function goToSuppliers() {
   router.push("/browse-suppliers");
 }
 
 async function loadDashboard() {
+  isLoading.value = true;
+  needsProfile.value = false;
+  loadError.value = null;
+
   try {
     const { data } = await api.get("/dashboard");
     business.value = data.business;
@@ -181,7 +212,15 @@ async function loadDashboard() {
     notifications.value = data.notifications;
   } catch (err) {
     console.error("Failed to load dashboard data:", err);
-    // Falls back to the placeholder sample data above.
+
+    if (err.response?.status === 404 && err.response?.data?.error === "No buyer profile found for this user") {
+      needsProfile.value = true;
+    } else {
+      loadError.value =
+        err.response?.data?.error || "Something went wrong loading your dashboard. Please try again.";
+    }
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -189,6 +228,34 @@ onMounted(loadDashboard);
 </script>
 
 <style scoped>
+.state-message {
+  max-width: 480px;
+  margin: 80px auto;
+  text-align: center;
+  padding: 32px;
+}
+.state-message h3 {
+  margin-bottom: 8px;
+}
+.state-message .subtitle {
+  margin-bottom: 20px;
+}
+.error-state h3 {
+  color: var(--color-warning, #b35c00);
+}
+.btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm, 6px);
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -215,10 +282,6 @@ onMounted(loadDashboard);
   flex-direction: column;
   gap: 6px;
 }
-.stat-card.highlight {
-  border-color: var(--color-accent);
-  background: var(--color-accent-soft);
-}
 .stat-label {
   font-size: 12px;
   color: var(--color-text-muted);
@@ -234,6 +297,7 @@ onMounted(loadDashboard);
   color: var(--color-text-muted);
 }
 .stat-trend.positive { color: var(--color-success); }
+.stat-trend.negative { color: var(--color-warning); }
 .stat-trend.warning { color: var(--color-warning); }
 
 .two-col {
@@ -281,6 +345,9 @@ onMounted(loadDashboard);
 .status-pill.dispatched { background: #E7EEF7; color: #3563A8; }
 .status-pill.delivered { background: #E3F2E7; color: var(--color-success); }
 .status-pill.processing { background: #F3F0E9; color: var(--color-warning); }
+.status-pill.pending { background: #F3F0E9; color: var(--color-warning); }
+.status-pill.shipped { background: #E7EEF7; color: #3563A8; }
+.status-pill.cancelled { background: #F5E5E5; color: #A33; }
 
 .section-spacer { margin-top: 24px; }
 
