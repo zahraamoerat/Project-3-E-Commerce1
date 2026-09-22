@@ -155,15 +155,26 @@
               <button v-if="hasActiveFilters" type="button" class="clear-inline" @click="clearFilters">Clear All</button>
             </div>
 
-            <p v-if="errorMessage" class="shop-message error-message">{{ errorMessage }}</p>
-            <p v-else-if="isLoading" class="shop-message">Loading available products...</p>
+            <div v-if="errorMessage" class="shop-message error-message">
+  <strong>We couldn't load the marketplace.</strong>
+  <span>{{ errorMessage }}</span>
+  <button type="button" class="retry-button" @click="retryProducts">Try again</button>
+</div>
+            <div v-else-if="isLoading" class="product-grid loading-grid" aria-label="Loading products">
+  <div v-for="n in 8" :key="n" class="product-skeleton">
+    <div class="skeleton-image"></div>
+    <div class="skeleton-line short"></div>
+    <div class="skeleton-line"></div>
+    <div class="skeleton-line price"></div>
+  </div>
+</div>
 
             <template v-else>
               <div v-if="filteredProducts.length" class="product-grid" :class="{ 'list-mode': viewMode === 'list' }">
                 <article v-for="product in paginatedProducts" :key="product.id" class="beauty-product-card">
                   <div class="product-visual">
                     <button type="button" class="product-image-button" :aria-label="`View ${product.title}`" @click="viewProduct(product)">
-                      <img :src="product.image" :alt="product.title" class="product-image" />
+                      <img :src="product.image" :alt="product.title" class="product-image" loading="lazy" @error="imageFallback" />
                     </button>
 
                     <span v-if="product.discountPercent > 0" class="discount-badge">{{ product.discountPercent }}% off</span>
@@ -171,7 +182,7 @@
 
                     <div class="product-hover-actions">
                       <button type="button" aria-label="View product" @click="viewProduct(product)"><FontAwesomeIcon :icon="faExpand" /></button>
-                      <button type="button" aria-label="Add to order" :disabled="product.status === 'Out of stock'" @click="toggleBasket(product)">
+                      <button type="button" aria-label="Add to order" :disabled="product.status === 'Out of stock' || basketBusy[product.id]" @click="toggleBasket(product)">
                         <FontAwesomeIcon :icon="basket[product.id] ? faCheck : faBagShopping" />
                       </button>
                     </div>
@@ -196,7 +207,7 @@
                       @click="toggleBasket(product)"
                     >
                       <FontAwesomeIcon :icon="basket[product.id] ? faCheck : faPlus" />
-                      {{ basket[product.id] ? 'Added to order' : 'Add to order' }}
+                      {{ basketBusy[product.id] ? 'Updating...' : (basket[product.id] ? 'Added to order' : 'Add to order') }}
                     </button>
                   </div>
                 </article>
@@ -295,7 +306,7 @@
               </div>
               <button type="button" class="detail-primary" :disabled="selectedProduct.status === 'Out of stock'" @click="addDetailToBasket"><FontAwesomeIcon :icon="faBagShopping" /> {{ detailActionLabel }}</button>
               <button type="button" class="detail-buy-now" :disabled="selectedProduct.status === 'Out of stock'" @click="orderNow">Buy Now</button>
-              <button type="button" class="detail-heart" :class="{ saved: detailSaved }" @click="detailSaved = !detailSaved" aria-label="Save product">♡</button>
+              <button type="button" class="detail-heart" :class="{ saved: detailSaved }" :aria-pressed="detailSaved" @click="toggleDetailWishlist" :aria-label="detailSaved ? 'Remove from wishlist' : 'Save product'">{{ detailSaved ? '♥' : '♡' }}</button>
             </div>
 
             <div class="detail-meta">
@@ -401,7 +412,7 @@
                       :aria-label="`View ${product.title}`"
                       @click="viewProduct(product)"
                     >
-                      <img :src="product.image" :alt="product.title" loading="lazy" />
+                      <img :src="product.image" :alt="product.title" loading="lazy" @error="imageFallback" />
                     </button>
 
                     <span v-if="product.discountPercent > 0" class="related-discount">
@@ -411,7 +422,7 @@
                     <button
                       type="button"
                       class="related-quick-add"
-                      :disabled="product.status === 'Out of stock'"
+                      :disabled="product.status === 'Out of stock' || basketBusy[product.id]"
                       :aria-label="`Add ${product.title} to order`"
                       @click="toggleBasket(product)"
                     >
@@ -446,7 +457,7 @@
                       @click="toggleBasket(product)"
                     >
                       <FontAwesomeIcon :icon="basket[product.id] ? faCheck : faPlus" />
-                      {{ basket[product.id] ? 'Added to order' : 'Add to order' }}
+                      {{ basketBusy[product.id] ? 'Updating...' : (basket[product.id] ? 'Added to order' : 'Add to order') }}
                     </button>
                   </div>
                 </article>
@@ -489,6 +500,8 @@ const router = useRouter()
 
 const products = ref([])
 const basket = ref(readStoredBasket())
+const basketBusy = ref({})
+const savedProducts = ref(readStoredWishlist())
 const reviews = ref([])
 const reviewsLoading = ref(false)
 const reviewSubmitting = ref(false)
@@ -520,6 +533,14 @@ const searchInput = ref(null)
 function readStoredBasket() {
   try {
     return JSON.parse(localStorage.getItem('weconnect-order-basket') || '{}')
+  } catch {
+    return {}
+  }
+}
+
+function readStoredWishlist() {
+  try {
+    return JSON.parse(localStorage.getItem('weconnect-wishlist') || '{}')
   } catch {
     return {}
   }
@@ -626,6 +647,17 @@ function normalizeProduct(product) {
 function formatPrice(price) { return Number(price || 0).toFixed(2) }
 function statusClass(status) { return String(status || '').toLowerCase().replace(/\s+/g, '-') }
 function persistBasket() { localStorage.setItem('weconnect-order-basket', JSON.stringify(basket.value)) }
+function persistWishlist() { localStorage.setItem('weconnect-wishlist', JSON.stringify(savedProducts.value)) }
+function toggleWishlist(productId) {
+  const next = { ...savedProducts.value }
+  if (next[productId]) delete next[productId]
+  else next[productId] = true
+  savedProducts.value = next
+  persistWishlist()
+}
+function imageFallback(event) {
+  event.target.src = 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=900&q=80'
+}
 function starsFor(rating) {
   const filled = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)))
   return '★'.repeat(filled) + '☆'.repeat(5 - filled)
@@ -693,6 +725,8 @@ async function syncBasketFromCart() {
 }
 
 async function toggleBasket(product) {
+  if (basketBusy.value[product.id]) return
+  basketBusy.value = { ...basketBusy.value, [product.id]: true }
   const existing = basket.value[product.id]
   try {
     if (existing) {
@@ -700,25 +734,38 @@ async function toggleBasket(product) {
       const next = { ...basket.value }
       delete next[product.id]
       basket.value = next
+      notice.value = `${product.title} removed from your order.`
     } else {
       const created = await cartRequest('', {
         method: 'POST',
         body: JSON.stringify({ buyerId, productId: product.id, quantity: 1 })
       })
       basket.value = { ...basket.value, [product.id]: { product, quantity: 1, cartItemId: created.cartItemId } }
+      notice.value = `${product.title} added to your order.`
     }
   } catch {
+    // Keep the page usable if the API is unavailable.
     const next = { ...basket.value }
-    if (existing) delete next[product.id]
-    else next[product.id] = { product, quantity: 1 }
+    if (existing) {
+      delete next[product.id]
+      notice.value = `${product.title} removed locally. Cart service is unavailable.`
+    } else {
+      next[product.id] = { product, quantity: 1 }
+      notice.value = `${product.title} added locally. Cart service is unavailable.`
+    }
     basket.value = next
+  } finally {
+    const nextBusy = { ...basketBusy.value }
+    delete nextBusy[product.id]
+    basketBusy.value = nextBusy
+    persistBasket()
   }
-  persistBasket()
 }
 
 async function addDetailToBasket() {
   const product = selectedProduct.value
-  if (!product) return
+  if (!product || basketBusy.value[product.id]) return
+  basketBusy.value = { ...basketBusy.value, [product.id]: true }
   const nextQuantity = Math.max(1, Math.min(quantity.value || 1, Math.max(1, product.stockQty)))
   const existing = basket.value[product.id]
   try {
@@ -738,6 +785,9 @@ async function addDetailToBasket() {
   }
   persistBasket()
   notice.value = `${product.title} added to your order.`
+  const nextBusy = { ...basketBusy.value }
+  delete nextBusy[product.id]
+  basketBusy.value = nextBusy
 }
 
 async function loadReviews(productId) {
@@ -814,13 +864,23 @@ function viewProduct(product) {
   router.push({ name: 'small-business-product', params: { productId: product.id } })
 }
 
+function toggleDetailWishlist() {
+  if (!selectedProduct.value) return
+  toggleWishlist(selectedProduct.value.id)
+  detailSaved.value = Boolean(savedProducts.value[selectedProduct.value.id])
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 function browseRelatedProducts() {
   router.push({ name: 'small-business-products' })
 }
 
 async function focusSearch() {
   await nextTick()
-  searchInput?.focus()
+  searchInput.value?.focus()
 }
 
 watch(searchQuery, () => { currentPage.value = 1 })
@@ -828,7 +888,7 @@ watch([selectedCategory, selectedAvailability, selectedRating, selectedPromotion
   currentPage.value = 1
 })
 watch(priceCeiling, (value) => {
-  if (maxPrice.value > value) maxPrice.value = value
+  if (!isDetailView.value && (maxPrice.value === 1000 || maxPrice.value > value)) maxPrice.value = value
 })
 
 watch(() => route.params.productId, (productId) => {
@@ -836,13 +896,23 @@ watch(() => route.params.productId, (productId) => {
   activeDetailImage.value = 0
   activeDetailTab.value = 'reviews'
   selectedPackSize.value = 0
-  detailSaved.value = false
+  detailSaved.value = Boolean(savedProducts.value[productId])
   reviewNotice.value = ''
   notice.value = ''
-  if (productId) loadReviews(productId)
+  if (productId) {
+    loadReviews(productId)
+    scrollToTop()
+  }
 })
 
 let productRefreshTimer = null
+
+async function retryProducts() {
+  isLoading.value = true
+  errorMessage.value = ''
+  await loadMarketplaceProducts()
+  isLoading.value = false
+}
 
 async function loadMarketplaceProducts({ silent = false } = {}) {
   try {
@@ -946,7 +1016,13 @@ onBeforeUnmount(() => {
 .clear-inline { margin-left: 3px; border: 0; padding: 4px; background: transparent; color: #a36f48; font-size: 9px; text-decoration: underline; cursor: pointer; }
 
 .product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 15px; }
-.beauty-product-card { min-width: 0; background: #fff; }
+.beauty-product-card {
+  position: relative;
+  transition: transform .25s ease, box-shadow .25s ease;
+ min-width: 0; background: #fff; }
+.beauty-product-card:hover { transform: translateY(-4px); }
+.beauty-product-card:hover .product-visual { box-shadow: 0 12px 30px rgba(75, 49, 31, .12); }
+
 .product-visual { position: relative; height: 205px; overflow: hidden; border-radius: 14px; background: #f1e8dc; }
 .product-image-button { display: block; width: 100%; height: 100%; padding: 0; border: 0; cursor: pointer; background: #f1e8dc; }
 .product-image { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
@@ -977,7 +1053,19 @@ onBeforeUnmount(() => {
 .list-mode .product-visual { height: 175px; }
 .list-mode .product-copy { padding-top: 15px; }
 
-.shop-message { padding: 35px 0; color: #77716c; font-size: 12px; }
+.shop-message { display: grid; gap: 7px; padding: 35px 0; color: #77716c; font-size: 12px; }
+.retry-button { width: fit-content; margin-top: 6px; border: 0; border-radius: 5px; padding: 8px 13px; background: #5c3d24; color: #fff; font-size: 10px; cursor: pointer; }
+.retry-button:hover { background: #755036; }
+
+.loading-grid { pointer-events: none; }
+.product-skeleton { min-width: 0; }
+.skeleton-image, .skeleton-line { position: relative; overflow: hidden; background: #eee7e1; }
+.skeleton-image::after, .skeleton-line::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); animation: skeleton-shimmer 1.25s infinite; }
+.skeleton-image { height: 205px; border-radius: 12px; }
+.skeleton-line { height: 8px; margin-top: 9px; border-radius: 5px; }
+.skeleton-line.short { width: 38%; }
+.skeleton-line.price { width: 28%; }
+@keyframes skeleton-shimmer { 100% { transform: translateX(100%); } }
 .error-message { color: #b44d43; }
 .empty-state { display: grid; place-items: center; min-height: 320px; padding: 30px; border: 1px dashed #ddd5ce; text-align: center; }
 .empty-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 10px; border-radius: 50%; background: #f2eee9; color: #7c6c61; }
@@ -1000,7 +1088,7 @@ onBeforeUnmount(() => {
 .detail-page { padding-top: 28px; }
 .detail-layout { display: grid; grid-template-columns: minmax(330px, .95fr) minmax(330px, 1fr); gap: clamp(35px, 6vw, 72px); max-width: 1080px; margin: 0 auto; }
 .detail-gallery { min-width: 0; }
-.detail-image-wrap { position: relative; height: 390px; overflow: hidden; border-radius: 13px; background: #eee4d8; }
+.detail-image-wrap { position: relative; box-shadow: 0 18px 45px rgba(75, 49, 31, .10); height: 390px; overflow: hidden; border-radius: 13px; background: #eee4d8; }
 .detail-image-wrap img { width: 100%; height: 100%; object-fit: cover; }
 .detail-gallery-arrow { position: absolute; top: 50%; z-index: 2; width: 31px; height: 31px; transform: translateY(-50%); border: 0; border-radius: 50%; background: rgba(255,255,255,.95); color: #5c3d24; font-size: 25px; cursor: pointer; box-shadow: 0 3px 10px rgba(60,43,38,.12); }
 .detail-gallery-arrow-left { left: 10px; }.detail-gallery-arrow-right { right: 10px; }
@@ -1020,7 +1108,7 @@ onBeforeUnmount(() => {
 .detail-tab-content { min-height: 90px; padding: 18px 8px; color: #746b65; font-size: 10px; line-height: 1.7; }.detail-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }.detail-info-grid div { display: grid; gap: 4px; padding: 10px; background: #fbf8f4; border-radius: 6px; }.detail-info-grid span { color: #9a9089; font-size: 8px; }.detail-info-grid strong { color: #4d433d; font-size: 9px; }
 .detail-reviews-content { padding-top: 18px; }
 .detail-notice { max-width: 1080px; margin: 15px auto 0; padding: 10px 13px; border-radius: 7px; background: #f3e7d9; color: #6d4a32; font-size: 9px; }
-.review-form { margin: 0 0 25px; padding: 15px; border: 1px solid #e7ded6; border-radius: 9px; background: #fbf8f4; }
+.review-form { margin: 0 0 25px; box-shadow: 0 10px 28px rgba(75, 49, 31, .05); padding: 15px; border: 1px solid #e7ded6; border-radius: 9px; background: #fbf8f4; }
 .review-form-heading { display: flex; justify-content: space-between; gap: 15px; align-items: center; margin-bottom: 10px; }
 .review-form-heading div:first-child { display: grid; gap: 3px; }
 .review-form-heading strong { color: #4d433d; font-size: 11px; }.review-form-heading small { color: #9b928b; font-size: 8px; }
@@ -1089,7 +1177,9 @@ onBeforeUnmount(() => {
 
 .related-product-card {
   min-width: 0;
+  transition: transform .25s ease;
 }
+.related-product-card:hover { transform: translateY(-4px); }
 
 .related-product-image-wrap {
   position: relative;
