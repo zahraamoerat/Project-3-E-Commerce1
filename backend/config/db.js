@@ -1,13 +1,8 @@
-import mysql from "mysql2/promise";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import dotenv from "dotenv";
+const mysql = require("mysql2/promise");
+const fs = require("fs");
+const path = require("path");
+require("dotenv").config();
 
-dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "../..");
 
 const caPath = process.env.DB_SSL_CA
@@ -26,13 +21,11 @@ const db = mysql.createPool({
   queueLimit: 0,
 });
 
-export default db;
-
 /* =========================================================
    TEST DATABASE CONNECTION
    ========================================================= */
 
-export async function testDatabaseConnection() {
+async function testDatabaseConnection() {
   const connection = await db.getConnection();
 
   try {
@@ -41,4 +34,7 @@ export async function testDatabaseConnection() {
   } finally {
     connection.release();
   }
-} 
+}
+
+module.exports = db;
+module.exports.testDatabaseConnection = testDatabaseConnection;
