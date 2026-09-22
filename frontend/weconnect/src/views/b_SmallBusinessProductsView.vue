@@ -380,6 +380,78 @@
                 <div v-if="review.supplierReply" class="supplier-reply"><strong>Supplier reply</strong><p>{{ review.supplierReply }}</p></div>
               </li>
             </ul>
+
+            <!-- Related products -->
+            <section v-if="relatedProducts.length" class="related-products-section" aria-labelledby="related-products-title">
+              <div class="related-products-heading">
+                <div>
+                  <span class="related-eyebrow">YOU MAY ALSO NEED</span>
+                  <h2 id="related-products-title">Related Products</h2>
+                  <p>Explore more {{ selectedProduct.category }} products from our marketplace.</p>
+                </div>
+                <button type="button" class="related-view-all" @click="browseRelatedProducts">View all products</button>
+              </div>
+
+              <div class="related-products-grid">
+                <article v-for="product in relatedProducts" :key="product.id" class="related-product-card">
+                  <div class="related-product-image-wrap">
+                    <button
+                      type="button"
+                      class="related-product-image-button"
+                      :aria-label="`View ${product.title}`"
+                      @click="viewProduct(product)"
+                    >
+                      <img :src="product.image" :alt="product.title" loading="lazy" />
+                    </button>
+
+                    <span v-if="product.discountPercent > 0" class="related-discount">
+                      {{ product.discountPercent }}% off
+                    </span>
+
+                    <button
+                      type="button"
+                      class="related-quick-add"
+                      :disabled="product.status === 'Out of stock'"
+                      :aria-label="`Add ${product.title} to order`"
+                      @click="toggleBasket(product)"
+                    >
+                      <FontAwesomeIcon :icon="basket[product.id] ? faCheck : faPlus" />
+                    </button>
+                  </div>
+
+                  <div class="related-product-copy">
+                    <div class="related-product-meta">
+                      <span>{{ product.category }}</span>
+                      <span><FontAwesomeIcon :icon="faStar" /> {{ product.rating.toFixed(1) }}</span>
+                    </div>
+                    <h3>
+                      <button type="button" @click="viewProduct(product)">
+                        {{ product.title }}
+                      </button>
+                    </h3>
+                    <p>{{ product.supplier }}</p>
+                    <div class="related-product-price">
+                      <strong>R {{ formatPrice(product.price) }}</strong>
+                      <span
+                        v-if="product.comparePrice && Number(product.comparePrice) > Number(product.price)"
+                      >
+                        R {{ formatPrice(product.comparePrice) }}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      class="related-add-button"
+                      :class="{ selected: basket[product.id] }"
+                      :disabled="product.status === 'Out of stock'"
+                      @click="toggleBasket(product)"
+                    >
+                      <FontAwesomeIcon :icon="basket[product.id] ? faCheck : faPlus" />
+                      {{ basket[product.id] ? 'Added to order' : 'Add to order' }}
+                    </button>
+                  </div>
+                </article>
+              </div>
+            </section>
           </div>
         </section>
         <p v-if="notice" class="detail-notice" role="status">{{ notice }}</p>
@@ -494,6 +566,15 @@ const showingStart = computed(() => sortedProducts.value.length ? ((currentPage.
 const showingEnd = computed(() => Math.min(currentPage.value * pageSize, sortedProducts.value.length))
 const basketCount = computed(() => Object.values(basket.value).reduce((total, item) => total + Number(item.quantity || 0), 0))
 const detailActionLabel = computed(() => basket.value[selectedProduct.value?.id] ? 'Update order' : 'Add to order')
+const relatedProducts = computed(() => {
+  const current = selectedProduct.value
+  if (!current) return []
+
+  // Related products are all other products in the same category.
+  return products.value
+    .filter((product) => String(product.id) !== String(current.id))
+    .filter((product) => String(product.category).toLowerCase() === String(current.category).toLowerCase())
+})
 const averageRating = computed(() => reviews.value.length ? reviews.value.reduce((total, review) => total + Number(review.rating), 0) / reviews.value.length : 0)
 const detailImages = computed(() => {
   const product = selectedProduct.value
@@ -733,6 +814,10 @@ function viewProduct(product) {
   router.push({ name: 'small-business-product', params: { productId: product.id } })
 }
 
+function browseRelatedProducts() {
+  router.push({ name: 'small-business-products' })
+}
+
 async function focusSearch() {
   await nextTick()
   searchInput?.focus()
@@ -944,7 +1029,222 @@ onBeforeUnmount(() => {
 .review-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }.review-form-footer span { color: #8a603f; font-size: 8px; }.review-form-footer button { border: 0; border-radius: 5px; padding: 7px 11px; background: #5c3d24; color: #fff; font-size: 8px; font-weight: 700; cursor: pointer; }.review-form-footer button:disabled { opacity: .45; cursor: not-allowed; }
 .review-overview { display: grid; grid-template-columns: 180px 1fr; gap: 50px; align-items: center; max-width: 700px; margin: 0 auto 35px; padding-bottom: 25px; border-bottom: 1px solid #eee7e1; }.review-score { display: grid; justify-items: center; gap: 3px; }.review-score strong { color: #4d433d; font-size: 24px; }.review-score span:not(.detail-stars) { color: #999089; font-size: 8px; }.review-score small { color: #999089; font-size: 7px; }.review-bars { display: grid; gap: 5px; }.review-bar-row { display: grid; grid-template-columns: 45px 1fr 25px; gap: 6px; align-items: center; color: #817870; font-size: 8px; }.review-bar-row > div { height: 3px; background: #ece8e3; overflow: hidden; }.review-bar-row i { display: block; height: 100%; background: #e6b51e; }.review-bar-row small { color: #a09790; text-align: right; font-size: 7px; }
 .review-list-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }.review-list-heading div { display: grid; gap: 3px; }.review-list-heading strong { color: #4d433d; font-size: 11px; }.review-list-heading small { color: #9b928b; font-size: 7px; }.review-list-heading label { color: #8e857e; font-size: 8px; }.review-list-heading select { margin-left: 5px; border: 1px solid #e1d9d2; border-radius: 12px; padding: 5px 8px; background: #fff; color: #5c514a; font-size: 8px; }
-.review-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }.review-card { padding: 15px 0; border-bottom: 1px solid #eee7e1; }.review-author { display: flex; align-items: center; gap: 7px; }.review-avatar { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #eadfd5; color: #5c3d24; font-size: 7px; font-weight: 800; }.review-author > div { display: grid; gap: 2px; }.review-author strong { color: #4d433d; font-size: 8px; }.review-verified { color: #9a9089; font-size: 7px; }.review-author time { margin-left: auto; color: #9a9089; font-size: 7px; }.review-card > .detail-stars { margin: 5px 0; }.review-title { display: block; color: #554a43; font-size: 9px; }.review-card > p { margin: 4px 0 0; color: #817870; font-size: 8px; line-height: 1.6; }.supplier-reply { margin-top: 8px; padding: 7px 9px; border-left: 2px solid #c48b5b; background: #fbf7f2; }.supplier-reply strong { color: #8b6345; font-size: 7px; text-transform: uppercase; }.supplier-reply p { margin: 3px 0 0; color: #776f69; font-size: 8px; }
+.review-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }.related-products-section {
+  margin-top: 58px;
+  padding-top: 35px;
+  border-top: 1px solid #eee7e1;
+}
+
+.related-products-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.related-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #a36f48;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.related-products-heading h2 {
+  margin: 0;
+  color: #403833;
+  font: 600 22px Georgia, serif;
+}
+
+.related-products-heading p {
+  margin: 5px 0 0;
+  color: #918983;
+  font-size: 9px;
+}
+
+.related-view-all {
+  flex: 0 0 auto;
+  border: 1px solid #d8c6b7;
+  border-radius: 5px;
+  padding: 8px 13px;
+  background: #fff;
+  color: #5c3d24;
+  font-size: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.related-view-all:hover {
+  background: #5c3d24;
+  color: #fff;
+}
+
+.related-products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.related-product-card {
+  min-width: 0;
+}
+
+.related-product-image-wrap {
+  position: relative;
+  height: 190px;
+  overflow: hidden;
+  border-radius: 11px;
+  background: #f1e8dc;
+}
+
+.related-product-image-button {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: #f1e8dc;
+  cursor: pointer;
+}
+
+.related-product-image-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .3s ease;
+}
+
+.related-product-image-button:hover img {
+  transform: scale(1.04);
+}
+
+.related-discount {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  padding: 5px 8px;
+  border-radius: 15px;
+  background: #5c3d24;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.related-quick-add {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.95);
+  color: #5c3d24;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.09);
+}
+
+.related-quick-add:hover {
+  background: #5c3d24;
+  color: #fff;
+}
+
+.related-quick-add:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.related-product-copy {
+  padding: 9px 1px 0;
+}
+
+.related-product-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: #918983;
+  font-size: 8px;
+}
+
+.related-product-meta span:last-child {
+  color: #4d4743;
+}
+
+.related-product-meta svg {
+  color: #e3b421;
+  margin-right: 2px;
+}
+
+.related-product-copy h3 {
+  margin: 5px 0 3px;
+}
+
+.related-product-copy h3 button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #393531;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.related-product-copy > p {
+  margin: 0 0 6px;
+  overflow: hidden;
+  color: #9b938d;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.related-product-price {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.related-product-price strong {
+  color: #8a603f;
+  font-size: 12px;
+}
+
+.related-product-price span {
+  color: #aaa39d;
+  font-size: 8px;
+  text-decoration: line-through;
+}
+
+.related-add-button {
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid #d9c8bb;
+  border-radius: 5px;
+  padding: 7px 8px;
+  background: #fff;
+  color: #5c3d24;
+  font-size: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.related-add-button:hover,
+.related-add-button.selected {
+  border-color: #5c3d24;
+  background: #5c3d24;
+  color: #fff;
+}
+
+.related-add-button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.review-card { padding: 15px 0; border-bottom: 1px solid #eee7e1; }.review-author { display: flex; align-items: center; gap: 7px; }.review-avatar { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #eadfd5; color: #5c3d24; font-size: 7px; font-weight: 800; }.review-author > div { display: grid; gap: 2px; }.review-author strong { color: #4d433d; font-size: 8px; }.review-verified { color: #9a9089; font-size: 7px; }.review-author time { margin-left: auto; color: #9a9089; font-size: 7px; }.review-card > .detail-stars { margin: 5px 0; }.review-title { display: block; color: #554a43; font-size: 9px; }.review-card > p { margin: 4px 0 0; color: #817870; font-size: 8px; line-height: 1.6; }.supplier-reply { margin-top: 8px; padding: 7px 9px; border-left: 2px solid #c48b5b; background: #fbf7f2; }.supplier-reply strong { color: #8b6345; font-size: 7px; text-transform: uppercase; }.supplier-reply p { margin: 3px 0 0; color: #776f69; font-size: 8px; }
 @media (max-width: 1050px) {
   .shop-nav { gap: 20px; }
   .product-search { width: 190px; min-width: 150px; }
@@ -977,6 +1277,7 @@ onBeforeUnmount(() => {
   .detail-image-wrap { height: 70vw; max-height: 470px; }
   .detail-review-section { margin-top: 38px; }
   .review-overview { grid-template-columns: 1fr; gap: 20px; max-width: 560px; }
+  .related-products-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 560px) {
@@ -1015,6 +1316,9 @@ onBeforeUnmount(() => {
   .detail-info-grid { grid-template-columns: 1fr 1fr; }
   .review-list-heading { align-items: flex-start; gap: 10px; flex-direction: column; }
   .review-author time { display: none; }
+  .related-products-heading { align-items: flex-start; flex-direction: column; }
+  .related-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 10px; }
+  .related-product-image-wrap { height: 150px; }
 }
 </style>
 
