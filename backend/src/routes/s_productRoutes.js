@@ -1,0 +1,18 @@
+import express from "express";
+import {publishProduct,fetchProducts,fetchProductById,editProduct,removeProduct,patchProductStock,duplicateProduct,restoreProduct,fetchStockHistory,fetchProductStockHistory,fetchInventoryAlerts,fetchProductAnalytics,bulkPatchStock,fetchStockAnalytics} from "../controllers/s_productController.js";
+const router=express.Router();
+router.get("/",fetchProducts);
+router.get("/stock/history",fetchStockHistory);
+router.get("/stock/alerts",fetchInventoryAlerts);
+router.get("/stock/analytics",fetchStockAnalytics);
+router.patch("/stock/bulk",bulkPatchStock);
+router.get("/:id/stock/history",fetchProductStockHistory);
+router.get("/:id/analytics",fetchProductAnalytics);
+router.post("/:id/duplicate",duplicateProduct);
+router.post("/:id/restore",restoreProduct);
+router.get("/:id",fetchProductById);
+router.post("/",publishProduct);
+router.put("/:id",editProduct);
+router.patch("/:id/stock",patchProductStock);
+router.delete("/:id",removeProduct);
+export default router;

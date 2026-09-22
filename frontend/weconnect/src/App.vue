@@ -1,8 +1,6 @@
 <template>
   <!-- Route views are rendered inside the shared app shell. -->
-  <div id="app">
-    <router-view />
-  </div>
+  <router-view />
 </template>
 
 <script>

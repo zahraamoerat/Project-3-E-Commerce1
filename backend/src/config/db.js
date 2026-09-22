@@ -1,30 +1,16 @@
-const jwt = require("jsonwebtoken");
+const mysql = require("mysql2/promise");
 
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+// Shared database pool for the CommonJS backend.
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || "localhost",
+  port: Number(process.env.DB_PORT) || 3306,
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "weconnect",
+  ssl: process.env.DB_SSL_CA ? { ca: process.env.DB_SSL_CA } : undefined,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
 
-  if (!token) return res.status(401).json({ message: "Access token required" });
-
-  jwt.verify(
-    token,
-    process.env.JWT_SECRET || "your_jwt_secret_key_here",
-    (err, user) => {
-      if (err) return res.status(403).json({ message: "Invalid or expired token" });
-      req.user = user;
-      next();
-    }
-  );
-}
-
-function requireRole(role) {
-  return (req, res, next) => {
-    if (req.user && req.user.role === role) {
-      next();
-    } else {
-      res.status(403).json({ message: `Access denied. Requires ${role} role.` });
-    }
-  };
-}
-
-module.exports = { authenticateToken, requireRole };
+module.exports = pool;
