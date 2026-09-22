@@ -48,7 +48,19 @@ export async function getAllProducts() {
           WHEN COALESCE(i.quantity, 0) <= COALESCE(i.low_stock_threshold, 20) THEN 'Low stock'
           ELSE 'Active'
         END AS status,
-        p.product_image AS image,
+        COALESCE(NULLIF(p.product_image, ''), MIN(pm.media_url)) AS image,
+        COALESCE(
+          CONCAT(
+            '[',
+            GROUP_CONCAT(
+              DISTINCT JSON_QUOTE(pm.media_url)
+              ORDER BY pm.is_primary DESC, pm.sort_order ASC, pm.media_id ASC
+              SEPARATOR ','
+            ),
+            ']'
+          ),
+          '[]'
+        ) AS productImages,
         s.business_name AS supplier,
         p.description AS description,
         p.unit AS unit,
@@ -60,13 +72,50 @@ export async function getAllProducts() {
         ON p.supplier_id = s.supplier_id
       LEFT JOIN inventory i
         ON p.product_id = i.product_id
+      LEFT JOIN product_media pm
+        ON p.product_id = pm.product_id
+        AND pm.media_type = 'image'
       WHERE p.is_active = 1
         AND p.product_name <> ''
         AND p.price > 0
+      GROUP BY
+        p.product_id,
+        p.product_name,
+        c.category_name,
+        p.sku,
+        p.price,
+        i.quantity,
+        i.low_stock_threshold,
+        p.is_active,
+        p.product_image,
+        s.business_name,
+        p.description,
+        p.unit,
+        p.compare_price
       ORDER BY p.product_name ASC
     `);
 
-    return rows;
+    return rows.map((product) => {
+      let images = [];
+      try {
+        images = JSON.parse(product.productImages || '[]');
+      } catch {
+        images = [];
+      }
+
+      // Keep the supplier's primary product image first, then every image
+      // stored in product_media, without duplicates.
+      const allImages = [...new Set([
+        product.image,
+        ...images
+      ].filter((url) => typeof url === 'string' && url.trim()))];
+
+      return {
+        ...product,
+        image: allImages[0] || '',
+        images: allImages
+      };
+    });
   } catch (error) {
     console.error('Error fetching products from MySQL:', error.message);
     throw error;
