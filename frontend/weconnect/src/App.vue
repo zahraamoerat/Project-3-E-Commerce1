@@ -1,17 +1,19 @@
 <template>
+  <!-- Route views are rendered inside the shared app shell. -->
   <div id="app">
     <router-view />
   </div>
 </template>
 
 <script>
+// Root component used by every page in the application.
 export default {
-  name: 'App'
+  name: "App",
 };
 </script>
 
 <style>
-/* Global resets */
+/* Global page defaults */
 body {
   margin: 0;
   padding: 0;

@@ -1,4 +1,5 @@
 <template>
+  <!-- Small reusable link for opening the cart. -->
   <router-link to="/cart" class="cart-button" aria-label="Open shopping cart">
     <svg
       width="18"
@@ -18,6 +19,7 @@
 </template>
 
 <style scoped>
+/* Cart button styling */
 .cart-button {
   display: inline-flex;
   align-items: center;

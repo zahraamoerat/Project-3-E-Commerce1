@@ -86,7 +86,11 @@
           </div>
 
           <button type="submit" class="primary-button">
-            {{ isLoading ? "Signing in..." : `Sign In as ${selectedRole === "buyer" ? "Buyer" : "Supplier"}` }}
+            {{
+              isLoading
+                ? "Signing in..."
+                : `Sign In as ${selectedRole === "buyer" ? "Buyer" : "Supplier"}`
+            }}
           </button>
         </form>
 
@@ -101,6 +105,7 @@
 </template>
 
 <script>
+// Login state and role-specific navigation.
 export default {
   name: "LoginPage",
   data() {
@@ -114,6 +119,7 @@ export default {
     };
   },
   methods: {
+    // Authenticate the user and save the session details for later requests.
     async handleLogin() {
       this.error = "";
       this.isLoading = true;
@@ -122,16 +128,25 @@ export default {
         const result = await api.login(this.email, this.password);
 
         if (result.role !== this.selectedRole) {
-          throw new Error(`This account is registered as a ${result.role}, not a ${this.selectedRole}.`);
+          throw new Error(
+            `This account is registered as a ${result.role}, not a ${this.selectedRole}.`,
+          );
         }
 
         localStorage.setItem("weconnect_token", result.token);
         localStorage.setItem("weconnect_role", result.role);
         localStorage.setItem("weconnect_user_id", String(result.userId));
-        if (result.buyerId) localStorage.setItem("weconnect_buyer_id", String(result.buyerId));
-        if (result.supplierId) localStorage.setItem("weconnect_supplier_id", String(result.supplierId));
+        if (result.buyerId)
+          localStorage.setItem("weconnect_buyer_id", String(result.buyerId));
+        if (result.supplierId)
+          localStorage.setItem(
+            "weconnect_supplier_id",
+            String(result.supplierId),
+          );
 
-        this.$router.push(result.role === "buyer" ? "/marketplace" : "/supplier-dashboard");
+        this.$router.push(
+          result.role === "buyer" ? "/marketplace" : "/supplier-dashboard",
+        );
       } catch (error) {
         this.error = error.message;
       } finally {
@@ -422,7 +437,15 @@ export default {
   text-decoration: none;
 }
 
-.error-message { color: #b42318; background: #fef3f2; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.8rem; margin-bottom: 1rem; text-align: center; }
+.error-message {
+  color: #b42318;
+  background: #fef3f2;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
 
 .footer-link:hover {
   color: #2d2522;

@@ -6,6 +6,7 @@ import SignUpPage from "../views/SignUpPage.vue";
 import CartView from "../views/CartView.vue";
 import MarketplaceView from "../views/MarketplaceView.vue";
 
+// Pages available to users before authentication and after login.
 const routes = [
   {
     path: "/",
@@ -44,6 +45,7 @@ const routes = [
 ];
 
 const router = createRouter({
+  // Use normal browser URLs while Vite handles the app fallback.
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior() {

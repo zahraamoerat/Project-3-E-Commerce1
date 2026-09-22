@@ -2,7 +2,11 @@
   <div class="page-wrapper">
     <header class="header-container">
       <div class="brand-group" @click="$router.push('/')">
-        <img src="../assets/website-logo.png" alt="WeConnect Logo" class="logo-icon" />
+        <img
+          src="../assets/website-logo.png"
+          alt="WeConnect Logo"
+          class="logo-icon"
+        />
         <span class="brand-title">WeConnect</span>
       </div>
       <span class="sub-header-text">B2B Trade Corridor</span>
@@ -13,22 +17,34 @@
         <div class="status-icon">⏳</div>
         <h2 class="card-title">Supplier Application Submitted!</h2>
         <p class="status-description">
-          Thank you for registering <strong>{{ form.companyName }}</strong>.
-          Your supplier application and
-          <strong>{{ form.subscriptionPlan }}</strong> subscription request have
-          been sent to our team for verification.
+          Thank you for registering <strong>{{ form.companyName }}</strong
+          >. Your supplier application and
+          <strong>{{ selectedPlan?.plan_name }}</strong> subscription request
+          have been sent to our team for verification.
         </p>
 
         <div class="info-banner">
           <p class="font-bold">What happens next?</p>
           <ul class="info-list">
-            <li>Our admin team will review your business and registration credentials.</li>
-            <li>You will receive an email once your account and seller access are approved.</li>
-            <li>Upon approval, you will be directed to activate your subscription and access your Supplier Dashboard.</li>
+            <li>
+              Our admin team will review your business and registration
+              credentials.
+            </li>
+            <li>
+              You will receive an email once your account and seller access are
+              approved.
+            </li>
+            <li>
+              Upon approval, you will be directed to activate your subscription
+              and access your Supplier Dashboard.
+            </li>
           </ul>
         </div>
 
-        <button @click="$router.push('/login')" class="primary-button max-w-xs mx-auto">
+        <button
+          @click="$router.push('/login')"
+          class="primary-button max-w-xs mx-auto"
+        >
           Return to Login
         </button>
       </div>
@@ -40,14 +56,21 @@
             <span class="tag-text">GET STARTED</span>
           </div>
           <h1 class="main-heading">Create your WeConnect account</h1>
-          <p class="sub-heading">Select your account type to configure your workspace.</p>
+          <p class="sub-heading">
+            Select your account type to configure your workspace.
+          </p>
         </div>
 
         <div class="role-switcher">
           <button
             type="button"
             @click="selectedRole = 'buyer'"
-            :class="['role-btn', selectedRole === 'buyer' ? 'role-btn-active' : 'role-btn-inactive']"
+            :class="[
+              'role-btn',
+              selectedRole === 'buyer'
+                ? 'role-btn-active'
+                : 'role-btn-inactive',
+            ]"
           >
             <span>🧺</span>
             <span>Small Business (Buyer)</span>
@@ -56,7 +79,12 @@
           <button
             type="button"
             @click="selectedRole = 'supplier'"
-            :class="['role-btn', selectedRole === 'supplier' ? 'role-btn-active' : 'role-btn-inactive']"
+            :class="[
+              'role-btn',
+              selectedRole === 'supplier'
+                ? 'role-btn-active'
+                : 'role-btn-inactive',
+            ]"
           >
             <span>📦</span>
             <span>Supplier / Wholesaler</span>
@@ -69,66 +97,110 @@
           <div class="grid-2-col">
             <div>
               <label class="form-label">FIRST NAME</label>
-              <input v-model="form.firstName" type="text" required placeholder="Thandeka" class="form-input" />
+              <input
+                v-model="form.firstName"
+                type="text"
+                required
+                placeholder="Thandeka"
+                class="form-input"
+              />
             </div>
             <div>
               <label class="form-label">LAST NAME</label>
-              <input v-model="form.lastName" type="text" required placeholder="Mthembu" class="form-input" />
+              <input
+                v-model="form.lastName"
+                type="text"
+                required
+                placeholder="Mthembu"
+                class="form-input"
+              />
             </div>
           </div>
 
           <div>
             <label class="form-label">WORK EMAIL</label>
-            <input v-model="form.email" type="email" required placeholder="thandeka@kayakitchen.co.za" class="form-input" />
+            <input
+              v-model="form.email"
+              type="email"
+              required
+              placeholder="thandeka@kayakitchen.co.za"
+              class="form-input"
+            />
           </div>
 
           <div>
             <label class="form-label">PASSWORD</label>
-            <input v-model="form.password" type="password" required placeholder="••••••••••••" class="form-input" />
+            <input
+              v-model="form.password"
+              type="password"
+              required
+              placeholder="••••••••••••"
+              class="form-input"
+            />
           </div>
 
           <div>
             <label class="form-label">
-              {{ selectedRole === "buyer" ? "BUSINESS NAME" : "SUPPLIER COMPANY NAME" }}
+              {{
+                selectedRole === "buyer"
+                  ? "BUSINESS NAME"
+                  : "SUPPLIER COMPANY NAME"
+              }}
             </label>
             <input
               v-model="form.companyName"
               type="text"
               required
-              :placeholder="selectedRole === 'buyer' ? 'Kaya Kitchen' : 'Cape Fresh Packaging Co.'"
+              :placeholder="
+                selectedRole === 'buyer'
+                  ? 'Kaya Kitchen'
+                  : 'Cape Fresh Packaging Co.'
+              "
               class="form-input"
             />
           </div>
 
           <div v-if="selectedRole === 'supplier'" class="supplier-section">
-            <label class="form-label highlight-label">SELECT TARGET SUBSCRIPTION PLAN</label>
-            <div class="grid-2-col">
+            <label class="form-label highlight-label"
+              >SELECT TARGET SUBSCRIPTION PLAN</label
+            >
+            <div class="plan-grid">
               <div
-                @click="form.subscriptionPlan = 'Starter Supplier'"
-                :class="['plan-card', form.subscriptionPlan === 'Starter Supplier' ? 'plan-card-active' : 'plan-card-inactive']"
+                v-for="plan in subscriptionPlans"
+                :key="plan.plan_id"
+                @click="form.planId = plan.plan_id"
+                :class="[
+                  'plan-card',
+                  form.planId === plan.plan_id
+                    ? 'plan-card-active'
+                    : 'plan-card-inactive',
+                ]"
               >
                 <div class="plan-header">
-                  <span class="plan-title">Starter Supplier</span>
-                  <span class="plan-price">R499/mo</span>
+                  <span class="plan-title">{{ plan.plan_name }}</span>
+                  <span class="plan-price">
+                    {{
+                      plan.monthly_price === null
+                        ? "Contact us"
+                        : `R${formatPrice(plan.monthly_price)}/mo`
+                    }}
+                  </span>
                 </div>
-                <p class="plan-desc">Up to 50 active product listings &amp; basic GPS dispatch.</p>
-              </div>
-
-              <div
-                @click="form.subscriptionPlan = 'Pro Fleet'"
-                :class="['plan-card', form.subscriptionPlan === 'Pro Fleet' ? 'plan-card-active' : 'plan-card-inactive']"
-              >
-                <div class="plan-header">
-                  <span class="plan-title">Pro Fleet</span>
-                  <span class="plan-price">R1,299/mo</span>
-                </div>
-                <p class="plan-desc">Unlimited products, priority route dispatch &amp; analytics.</p>
+                <p class="plan-desc">
+                  Up to {{ plan.max_products }} active product listings.
+                </p>
               </div>
             </div>
           </div>
 
           <button type="submit" class="primary-button" :disabled="isLoading">
-            {{ isLoading ? "Submitting..." : (selectedRole === "supplier" ? "Submit Supplier Application" : "Create Buyer Account") }}
+            {{
+              isLoading
+                ? "Submitting..."
+                : selectedRole === "supplier"
+                  ? "Submit Supplier Application"
+                  : "Create Buyer Account"
+            }}
           </button>
         </form>
       </div>
@@ -144,14 +216,25 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 
+// Signup state is shared by both buyer and supplier forms.
 const router = useRouter();
 const selectedRole = ref("buyer");
 const submittedSupplier = ref(false);
 const error = ref("");
 const isLoading = ref(false);
+const subscriptionPlans = ref([
+  { plan_id: 1, plan_name: "Starter", monthly_price: 250, max_products: 10 },
+  { plan_id: 2, plan_name: "Growth", monthly_price: 550, max_products: 25 },
+  {
+    plan_id: 3,
+    plan_name: "Enterprise",
+    monthly_price: null,
+    max_products: 75,
+  },
+]);
 
 const form = reactive({
   firstName: "",
@@ -159,8 +242,25 @@ const form = reactive({
   email: "",
   password: "",
   companyName: "",
-  subscriptionPlan: "Starter Supplier",
+  planId: 1,
 });
+
+const selectedPlan = computed(() =>
+  subscriptionPlans.value.find((plan) => plan.plan_id === form.planId),
+);
+
+const formatPrice = (price) => Number(price).toFixed(2);
+
+const loadSubscriptionPlans = async () => {
+  try {
+    const { api } = await import("@/services/api");
+    const plans = await api.getSubscriptionPlans();
+    if (plans.length > 0) subscriptionPlans.value = plans;
+  } catch (err) {
+    // Keep the updated plan values visible if the plans request is unavailable.
+    console.error("Unable to load subscription plans:", err);
+  }
+};
 
 const handleSignUp = async () => {
   error.value = "";
@@ -169,6 +269,7 @@ const handleSignUp = async () => {
   try {
     const { api } = await import("@/services/api");
 
+    // Supplier applications and buyer accounts use different backend routes.
     if (selectedRole.value === "supplier") {
       await api.registerSupplier({
         email: form.email,
@@ -176,6 +277,7 @@ const handleSignUp = async () => {
         first_name: form.firstName,
         last_name: form.lastName,
         business_name: form.companyName,
+        plan_id: form.planId,
       });
       submittedSupplier.value = true;
     } else {
@@ -193,6 +295,8 @@ const handleSignUp = async () => {
     isLoading.value = false;
   }
 };
+
+onMounted(loadSubscriptionPlans);
 </script>
 
 <style scoped>
@@ -204,11 +308,16 @@ const handleSignUp = async () => {
   flex-direction: column;
   justify-content: space-between;
   padding: 1.5rem;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 @media (min-width: 768px) {
-  .page-wrapper { padding: 2.5rem; }
+  .page-wrapper {
+    padding: 2.5rem;
+  }
 }
 
 .header-container {
@@ -264,7 +373,9 @@ const handleSignUp = async () => {
 }
 
 @media (min-width: 768px) {
-  .card-box { padding: 2.5rem; }
+  .card-box {
+    padding: 2.5rem;
+  }
 }
 
 .header-block {
@@ -303,7 +414,9 @@ const handleSignUp = async () => {
 }
 
 @media (min-width: 768px) {
-  .main-heading { font-size: 1.875rem; }
+  .main-heading {
+    font-size: 1.875rem;
+  }
 }
 
 .sub-heading {
@@ -359,7 +472,9 @@ const handleSignUp = async () => {
 }
 
 @media (min-width: 768px) {
-  .grid-2-col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-2-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .form-label {
@@ -372,7 +487,9 @@ const handleSignUp = async () => {
   margin-bottom: 0.375rem;
 }
 
-.highlight-label { color: #cd6d43; }
+.highlight-label {
+  color: #cd6d43;
+}
 
 .form-input {
   width: 100%;
@@ -405,12 +522,26 @@ const handleSignUp = async () => {
   transition: all 0.2s;
 }
 
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
 .plan-card-active {
   border-color: #cd6d43;
   background-color: #faf3ee;
 }
 
-.plan-card-inactive:hover { border-color: #d6d3d1; }
+.plan-card-inactive:hover {
+  border-color: #d6d3d1;
+}
+
+@media (max-width: 767px) {
+  .plan-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 .plan-header {
   display: flex;
@@ -451,8 +582,13 @@ const handleSignUp = async () => {
   margin-top: 1rem;
 }
 
-.primary-button:hover { background-color: #b85e37; }
-.primary-button:disabled { opacity: 0.7; cursor: not-allowed; }
+.primary-button:hover {
+  background-color: #b85e37;
+}
+.primary-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 
 .status-icon {
   width: 4rem;
@@ -527,5 +663,7 @@ const handleSignUp = async () => {
   text-decoration: none;
 }
 
-.link-highlight { color: #cd6d43; }
+.link-highlight {
+  color: #cd6d43;
+}
 </style>

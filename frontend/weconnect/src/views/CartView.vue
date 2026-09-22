@@ -185,6 +185,8 @@
 
 <script>
 import { api } from "@/services/api";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 
 export default {
   name: "CartView",
@@ -197,6 +199,7 @@ export default {
       error: "",
     };
   },
+  // Group the cart items by supplier so each supplier gets its own section.
   computed: {
     totalCartCount() {
       return this.cartGroups.reduce(
@@ -208,7 +211,11 @@ export default {
     subtotal() {
       return this.cartGroups.reduce(
         (total, group) =>
-          total + group.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+          total +
+          group.items.reduce(
+            (sum, item) => sum + item.unitPrice * item.quantity,
+            0,
+          ),
         0,
       );
     },
@@ -225,6 +232,7 @@ export default {
     await this.loadCart();
   },
   methods: {
+    // Group the cart items by supplier so each supplier gets its own section.
     async loadCart() {
       const buyerId = localStorage.getItem("weconnect_buyer_id");
       if (!buyerId) {
@@ -296,7 +304,9 @@ export default {
         this.cartGroups.forEach((group) => {
           group.items = group.items.filter((i) => i.cartItemId !== cartItemId);
         });
-        this.cartGroups = this.cartGroups.filter((group) => group.items.length > 0);
+        this.cartGroups = this.cartGroups.filter(
+          (group) => group.items.length > 0,
+        );
       } catch (error) {
         this.error = error.message;
       }
@@ -316,9 +326,13 @@ export default {
 
     handleCheckout() {
       if (!this.cartGroups.length) return;
-      alert(
-        `Order checkout is ready. Payment method: ${this.selectedPaymentMethod.toUpperCase()}. Total: R ${this.formatCurrency(this.grandTotal)}`,
-      );
+      // Checkout is currently a confirmation message until payment is connected.
+      Swal.fire({
+        title: "Checkout ready",
+        text: `Payment method: ${this.selectedPaymentMethod.toUpperCase()}. Total: R ${this.formatCurrency(this.grandTotal)}`,
+        icon: "info",
+        confirmButtonText: "Continue",
+      });
     },
   },
 };
@@ -748,5 +762,92 @@ export default {
   width: auto;
   padding: 10px 24px;
   margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .main-content {
+    padding: 24px;
+  }
+
+  .cart-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .main-content {
+    padding: 20px 16px;
+  }
+
+  .header-section {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .welcome-heading {
+    font-size: 24px;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .supplier-card {
+    padding: 16px;
+  }
+
+  .supplier-card-header {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .eta-pill {
+    white-space: nowrap;
+  }
+
+  .cart-item-row {
+    grid-template-columns: 1fr auto;
+    gap: 10px 12px;
+  }
+
+  .item-details {
+    min-width: 0;
+  }
+
+  .item-name {
+    overflow-wrap: anywhere;
+  }
+
+  .quantity-picker {
+    grid-column: 1;
+  }
+
+  .item-total {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .delete-icon {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+  }
+
+  .summary-card,
+  .empty-cart-card {
+    padding: 18px;
+  }
+
+  .summary-line {
+    gap: 16px;
+  }
+
+  .security-note {
+    text-align: center;
+  }
 }
 </style>

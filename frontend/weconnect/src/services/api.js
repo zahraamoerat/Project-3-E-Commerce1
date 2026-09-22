@@ -1,7 +1,9 @@
-const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+// Keep the API URL configurable for different environments.
+const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:28794/api";
 
 const getToken = () => localStorage.getItem("weconnect_token");
 
+// Send all requests through one place so headers and errors stay consistent.
 const request = async (path, options = {}) => {
   const headers = {
     "Content-Type": "application/json",
@@ -9,6 +11,7 @@ const request = async (path, options = {}) => {
   };
 
   const token = getToken();
+  // Add the saved login token when the request needs authentication.
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const response = await fetch(`${apiBaseUrl}${path}`, {
@@ -27,6 +30,8 @@ const request = async (path, options = {}) => {
 
 export const api = {
   health: () => request("/health"),
+
+  getSubscriptionPlans: () => request("/auth/plans"),
 
   login: (email, password) =>
     request("/auth/login", {
@@ -48,8 +53,7 @@ export const api = {
 
   getProducts: () => request("/products"),
 
-  getCart: (buyerId) =>
-    request(`/cart?buyerId=${encodeURIComponent(buyerId)}`),
+  getCart: (buyerId) => request(`/cart?buyerId=${encodeURIComponent(buyerId)}`),
 
   addToCart: (buyerId, productId, quantity = 1) =>
     request("/cart", {

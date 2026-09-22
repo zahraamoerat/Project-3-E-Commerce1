@@ -3,7 +3,7 @@
     <!-- Navbar -->
     <header class="navbar">
       <div class="logo-container">
-        <!-- Uses website-logo.png inside your src/assets folder -->
+        <!-- website-logo.png -->
         <img
           src="../assets/website-logo.png"
           alt="WeConnect Logo Icon"
@@ -45,15 +45,6 @@
           <router-link to="/signup" class="btn-secondary-lg"
             >I'm a supplier</router-link
           >
-        </div>
-
-        <div class="trust-badge">
-          <div class="avatar-group">
-            <span class="avatar"></span>
-            <span class="avatar"></span>
-            <span class="avatar"></span>
-          </div>
-          <span class="trust-text">Trusted by 250+ suppliers</span>
         </div>
       </div>
 
@@ -444,30 +435,6 @@ export default {
   margin-bottom: 30px;
 }
 
-.trust-badge {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.avatar-group {
-  display: flex;
-}
-
-.avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background-color: #d1c7b7;
-  border: 2px solid #f6f4ee;
-  margin-right: -8px;
-}
-
-.trust-text {
-  font-size: 13px;
-  color: #7a7571;
-}
-
 .hero-preview {
   position: relative;
   width: 400px;
@@ -847,6 +814,140 @@ export default {
   color: #6e6a66;
 }
 
+@media (max-width: 900px) {
+  .navbar {
+    padding: 18px 24px;
+  }
+
+  .nav-links {
+    gap: 16px;
+  }
+
+  .hero-section {
+    gap: 36px;
+    padding: 48px 24px 64px;
+  }
+
+  .hero-title {
+    font-size: 42px;
+  }
+
+  .hero-preview {
+    width: min(38vw, 360px);
+  }
+
+  .dashboards-grid,
+  .testimonial-section {
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar {
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .nav-links a {
+    font-size: 12px;
+  }
+
+  .nav-actions {
+    margin-left: auto;
+  }
+
+  .hero-section {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 40px 16px 48px;
+  }
+
+  .hero-content {
+    max-width: none;
+  }
+
+  .hero-title {
+    font-size: 36px;
+  }
+
+  .hero-subtitle {
+    font-size: 15px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-primary-lg,
+  .btn-secondary-lg {
+    text-align: center;
+  }
+
+  .hero-preview {
+    width: 100%;
+    height: 280px;
+  }
+
+  .delivery-map {
+    inset: 0;
+  }
+
+  .stats-banner {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px 12px;
+    padding: 28px 16px;
+  }
+
+  .stat-item h3 {
+    font-size: 30px;
+  }
+
+  .section-container {
+    padding: 56px 16px;
+  }
+
+  .section-title {
+    font-size: 28px;
+  }
+
+  .dashboards-grid,
+  .testimonial-section {
+    flex-direction: column;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .dashboard-card {
+    width: 100%;
+    padding: 24px;
+  }
+
+  .testimonial-image-box {
+    width: 180px;
+    height: 180px;
+  }
+
+  .quote {
+    font-size: 20px;
+  }
+
+  .grey-bg {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
 /* Bottom CTA */
 .bottom-cta {
   padding: 60px 20px;
@@ -916,4 +1017,3 @@ export default {
   text-decoration: underline;
 }
 </style>
-z

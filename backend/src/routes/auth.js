@@ -1,116 +1,186 @@
 const express = require("express");
-const bcrypt = require("bcryptjs");
-const db = require("../config/db");
-const { createToken } = require("../middleware/auth");
-
 const router = express.Router();
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const pool = require("../db");
 
-// Register Buyer
-router.post("/register-buyer", async (req, res) => {
-  const { email, password, business_name, phone, address, city, province, postal_code, contact_person } = req.body;
-  const connection = await db.getConnection();
-
+// Login and account registration routes.
+router.get("/plans", async (req, res) => {
   try {
-    await connection.beginTransaction();
-
-    const [existing] = await connection.query("SELECT user_id FROM users WHERE email = ?", [email]);
-    if (existing.length > 0) {
-      await connection.rollback();
-      return res.status(400).json({ message: "Email is already registered." });
-    }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const [userResult] = await connection.query(
-      "INSERT INTO users (email, password_hash, user_role, is_approved) VALUES (?, ?, 'buyer', TRUE)",
-      [email, passwordHash]
+    const [plans] = await pool.query(
+      "SELECT plan_id, plan_name, monthly_price, max_products, description FROM subscription_plans ORDER BY plan_id",
     );
-
-    const userId = userResult.insertId;
-    const registrationNum = `REG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-    await connection.query(
-      `INSERT INTO buyers (user_id, business_name, email, phone, address, city, province, postal_code, contact_person, registration_number)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, business_name, email, phone, address, city, province, postal_code, contact_person, registrationNum]
-    );
-
-    await connection.commit();
-    res.status(201).json({ message: "Buyer registered successfully.", role: "buyer", userId });
+    res.json(plans);
   } catch (error) {
-    await connection.rollback();
-    res.status(500).json({ message: "Registration failed.", error: error.message });
-  } finally {
-    connection.release();
+    console.error("Get subscription plans error:", error);
+    res.status(500).json({ message: "Failed to retrieve subscription plans." });
   }
 });
 
-// Register Supplier
-router.post("/register-supplier", async (req, res) => {
-  const { email, password, first_name, last_name, business_name, phone, address, city, province, postal_code } = req.body;
-  const connection = await db.getConnection();
-
-  try {
-    await connection.beginTransaction();
-
-    const [existing] = await connection.query("SELECT user_id FROM users WHERE email = ?", [email]);
-    if (existing.length > 0) {
-      await connection.rollback();
-      return res.status(400).json({ message: "Email is already registered." });
-    }
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const [userResult] = await connection.query(
-      "INSERT INTO users (email, password_hash, user_role, is_approved) VALUES (?, ?, 'supplier', FALSE)",
-      [email, passwordHash]
-    );
-
-    const userId = userResult.insertId;
-
-    await connection.query(
-      `INSERT INTO suppliers (user_id, first_name, last_name, business_name, email, phone, address, city, province, postal_code)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, first_name, last_name, business_name, email, phone, address, city, province, postal_code]
-    );
-
-    await connection.commit();
-    res.status(201).json({ message: "Supplier registered successfully. Pending admin approval.", role: "supplier", userId });
-  } catch (error) {
-    await connection.rollback();
-    res.status(500).json({ message: "Registration failed.", error: error.message });
-  } finally {
-    connection.release();
-  }
-});
-
-// Login (All Roles)
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const [users] = await db.query(`SELECT u.*, b.buyer_id, s.supplier_id FROM users u LEFT JOIN buyers b ON b.user_id = u.user_id LEFT JOIN suppliers s ON s.user_id = u.user_id WHERE u.email = ?`, [email]);
+    const [users] = await pool.query(
+      "SELECT * FROM users WHERE email = ? LIMIT 1",
+      [email],
+    );
     if (users.length === 0) {
-      return res.status(401).json({ message: "Invalid email or password." });
+      return res.status(400).json({ message: "Invalid credentials." });
     }
 
     const user = users[0];
-
-    if (!user.is_active) {
-      return res.status(403).json({ message: "Account is deactivated." });
-    }
-
-    if (!user.is_approved && user.user_role !== "admin") {
-      return res.status(403).json({ message: "Account is pending admin approval." });
-    }
-
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password." });
+      return res.status(400).json({ message: "Invalid credentials." });
     }
 
-    const token = createToken({ ...user, buyerId: user.buyer_id, supplierId: user.supplier_id });
-    res.json({ token, role: user.user_role, userId: user.user_id, buyerId: user.buyer_id || null, supplierId: user.supplier_id || null });
+    let buyerId = null;
+    let supplierId = null;
+
+    if (user.user_role === "buyer") {
+      const [buyers] = await pool.query(
+        "SELECT buyer_id FROM buyers WHERE user_id = ? LIMIT 1",
+        [user.user_id],
+      );
+      if (buyers.length > 0) buyerId = buyers[0].buyer_id;
+    } else if (user.user_role === "supplier") {
+      const [suppliers] = await pool.query(
+        "SELECT supplier_id FROM suppliers WHERE user_id = ? LIMIT 1",
+        [user.user_id],
+      );
+      if (suppliers.length > 0) supplierId = suppliers[0].supplier_id;
+    }
+
+    const token = jwt.sign(
+      { userId: user.user_id, role: user.user_role, buyerId, supplierId },
+      process.env.JWT_SECRET || "your_jwt_secret_key_here",
+      { expiresIn: "24h" },
+    );
+
+    res.json({
+      token,
+      role: user.user_role,
+      userId: user.user_id,
+      buyerId,
+      supplierId,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Login failed.", error: error.message });
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Server error during login." });
+  }
+});
+
+router.post("/register-buyer", async (req, res) => {
+  const { email, password, business_name, contact_person } = req.body;
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const [userResult] = await connection.query(
+      "INSERT INTO users (email, password_hash, user_role) VALUES (?, ?, 'buyer')",
+      [email, hashedPassword],
+    );
+
+    const buyerInsertValues = [
+      userResult.insertId,
+      business_name,
+      email,
+      contact_person || null,
+      null,
+      null,
+      null,
+      null,
+      null,
+    ];
+
+    await connection.query(
+      "INSERT INTO buyers (user_id, business_name, email, contact_person, category_id, phone, address, city, province, postal_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      buyerInsertValues,
+    );
+
+    await connection.commit();
+    res.status(201).json({ message: "Buyer account registered successfully." });
+  } catch (error) {
+    await connection.rollback();
+    console.error("Register buyer error:", error);
+    res.status(500).json({
+      message:
+        error && error.sqlState === "23000"
+          ? "Email already exists."
+          : "Registration failed.",
+    });
+  } finally {
+    connection.release();
+  }
+});
+
+// Supplier applications create both the login and supplier records together.
+router.post("/register-supplier", async (req, res) => {
+  const { email, password, first_name, last_name, business_name, plan_id } =
+    req.body;
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [plans] = await connection.query(
+      "SELECT plan_id FROM subscription_plans WHERE plan_id = ? LIMIT 1",
+      [plan_id],
+    );
+    if (plans.length === 0) {
+      await connection.rollback();
+      return res
+        .status(400)
+        .json({ message: "Please select a valid subscription plan." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const [userResult] = await connection.query(
+      "INSERT INTO users (email, password_hash, user_role) VALUES (?, ?, 'supplier')",
+      [email, hashedPassword],
+    );
+
+    await connection.query(
+      "INSERT INTO suppliers (user_id, business_name, email, first_name, last_name) VALUES (?, ?, ?, ?, ?)",
+      [
+        userResult.insertId,
+        business_name,
+        email,
+        first_name || null,
+        last_name || null,
+      ],
+    );
+
+    const [supplierResult] = await connection.query(
+      "SELECT supplier_id FROM suppliers WHERE user_id = ? LIMIT 1",
+      [userResult.insertId],
+    );
+    await connection.query(
+      "INSERT INTO supplier_subscriptions (supplier_id, plan_id, status, start_date, end_date) VALUES (?, ?, 'Pending', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH))",
+      [supplierResult[0].supplier_id, plan_id],
+    );
+
+    await connection.commit();
+    res
+      .status(201)
+      .json({
+        message: "Supplier application submitted successfully.",
+        plan_id,
+      });
+  } catch (error) {
+    await connection.rollback();
+    console.error("Register supplier error:", error);
+    res.status(500).json({
+      message:
+        error && error.sqlState === "23000"
+          ? "Email already exists."
+          : "Registration failed.",
+    });
+  } finally {
+    connection.release();
   }
 });
 

@@ -1,39 +1,30 @@
-const mysql = require("mysql2/promise");
-const fs = require("fs");
-const path = require("path");
-const dotenv = require("dotenv");
+const jwt = require("jsonwebtoken");
 
-dotenv.config();
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
-const caPath = process.env.DB_SSL_CA
-  ? path.resolve(process.cwd(), process.env.DB_SSL_CA)
-  : path.join(process.cwd(), "certs/ca.pem");
+  if (!token) return res.status(401).json({ message: "Access token required" });
 
-const poolOptions = {
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME || "weconnect",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-};
-
-if (fs.existsSync(caPath)) {
-  poolOptions.ssl = { ca: fs.readFileSync(caPath) };
+  jwt.verify(
+    token,
+    process.env.JWT_SECRET || "your_jwt_secret_key_here",
+    (err, user) => {
+      if (err) return res.status(403).json({ message: "Invalid or expired token" });
+      req.user = user;
+      next();
+    }
+  );
 }
 
-const db = mysql.createPool(poolOptions);
-
-async function checkDatabaseConnection() {
-  const connection = await db.getConnection();
-  try {
-    await connection.query("SELECT 1");
-  } finally {
-    connection.release();
-  }
+function requireRole(role) {
+  return (req, res, next) => {
+    if (req.user && req.user.role === role) {
+      next();
+    } else {
+      res.status(403).json({ message: `Access denied. Requires ${role} role.` });
+    }
+  };
 }
 
-module.exports = db;
-module.exports.checkDatabaseConnection = checkDatabaseConnection;
+module.exports = { authenticateToken, requireRole };
