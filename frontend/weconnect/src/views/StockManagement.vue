@@ -28,10 +28,10 @@
   </div>
 </template>
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
-const { products, updateProductStock, loading } = useSupplierData();
+const { products, updateProductStock, refreshSupplierProducts, loading } = useSupplierData();
 const router = useRouter(), query = ref(""), statusFilter = ref("All"), categoryFilter = ref("All"), sortOrder = ref("stock"), page = ref(1);
 const editing = ref(null), adjustmentMode = ref("set"), editQuantity = ref(0), editReason = ref("Manual adjustment"), saving = ref(false), message = ref(""), error = ref("");
 const selected = ref({}), bulkMode = ref("receive"), bulkQuantity = ref(0), bulkSaving = ref(false);
@@ -76,6 +76,22 @@ function exportInventory(){const headers=["Product","SKU","Category","Current st
 function formatDate(value){if(!value)return "—";return new Intl.DateTimeFormat("en-ZA",{dateStyle:"medium",timeStyle:"short"}).format(new Date(value))}
 async function loadAlerts(){alertsLoading.value=true;try{const token=localStorage.getItem("weconnect_token");const response=await fetch("/api/products/stock/alerts",{headers:token?{Authorization:`Bearer ${token}`}:{} });if(!response.ok)throw new Error("Unable to load inventory alerts.");alerts.value=await response.json()}catch(e){console.warn(e.message)}finally{alertsLoading.value=false}}
 loadHistory();loadAlerts();loadAnalytics();
+
+let productRefreshTimer = null;
+
+onMounted(async () => {
+  await refreshSupplierProducts().catch(() => {});
+  productRefreshTimer = window.setInterval(() => {
+    if (!document.hidden) refreshSupplierProducts().catch(() => {});
+  }, 5000);
+});
+
+onBeforeUnmount(() => {
+  if (productRefreshTimer) {
+    window.clearInterval(productRefreshTimer);
+    productRefreshTimer = null;
+  }
+});
 const alertTimer = window.setInterval(loadAlerts, 60000);
 window.addEventListener("beforeunload", () => window.clearInterval(alertTimer));
 </script>
