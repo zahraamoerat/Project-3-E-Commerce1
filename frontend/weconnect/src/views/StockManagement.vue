@@ -240,7 +240,6 @@ window.addEventListener("beforeunload", () => window.clearInterval(alertTimer));
   transition:transform .15s ease,background .15s ease,border-color .15s ease;
 }
 .actions button:hover{transform:translateY(-1px)}
-}
 .actions .secondary{border:1px solid #ded6d0;background:#fff;color:#704f43}
 .actions .edit-stock{border:1px solid #d8c9c0;background:#f8f3ef;color:#704f43}
 .actions .restock{background:#704f43;color:#fff}
