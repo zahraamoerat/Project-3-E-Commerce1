@@ -623,6 +623,7 @@ const hasActiveFilters = computed(() => selectedCategory.value !== 'All' || sele
 function normalizeProductImages(product) {
   const candidates = [
     ...(Array.isArray(product.images) ? product.images : []),
+    ...(typeof product.images === 'string' ? (() => { try { return JSON.parse(product.images) } catch { return [] } })() : []),
     ...(Array.isArray(product.product_images) ? product.product_images : []),
     ...(Array.isArray(product.productImages) ? product.productImages : []),
     ...(Array.isArray(product.gallery) ? product.gallery : []),
