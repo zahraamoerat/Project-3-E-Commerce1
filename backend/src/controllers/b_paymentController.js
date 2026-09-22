@@ -7,7 +7,8 @@ import {
 // Return all payments to the frontend.
 export async function fetchPayments(req, res) {
   try {
-    const buyerId = req.query.buyerId ? Number(req.query.buyerId) : null;\n    const payments = await getAllPayments(buyerId);
+    const buyerId = req.query.buyerId ? Number(req.query.buyerId) : null;
+    const payments = await getAllPayments(buyerId);
 
     res.json(payments);
   } catch (error) {
@@ -24,7 +25,8 @@ export async function fetchOrderPayments(req, res) {
   try {
     const { orderId } = req.params;
 
-    const buyerId = req.query.buyerId ? Number(req.query.buyerId) : null;\n    const payments = await getPaymentsByOrder(orderId, buyerId);
+    const buyerId = req.query.buyerId ? Number(req.query.buyerId) : null;
+    const payments = await getPaymentsByOrder(orderId, buyerId);
 
     res.json(payments);
   } catch (error) {
