@@ -68,18 +68,7 @@ export async function getAllProducts() {
 
     return rows;
   } catch (error) {
-    const canUseFallback = [
-      'ECONNREFUSED',
-      'ETIMEDOUT',
-      'ENOTFOUND',
-      'ER_ACCESS_DENIED_ERROR',
-      'PROTOCOL_CONNECTION_LOST'
-    ].includes(error.code);
-
-    if (!canUseFallback) {
-      throw error;
-    }
-
-    return fallbackProducts;
+    console.error('Error fetching products from MySQL:', error.message);
+    throw error;
   }
 }
