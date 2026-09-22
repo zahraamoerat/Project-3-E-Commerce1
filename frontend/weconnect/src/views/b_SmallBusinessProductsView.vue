@@ -18,6 +18,17 @@
             <span>Showing <strong>{{ showingStart }}-{{ showingEnd }}</strong> of {{ sortedProducts.length }} results</span>
           </div>
 
+          <label class="product-search" aria-label="Search products">
+            <FontAwesomeIcon :icon="faMagnifyingGlass" />
+            <input ref="searchInput" v-model="searchQuery" type="search" placeholder="Search products..." />
+            <button v-if="searchQuery" type="button" aria-label="Clear search" @click="searchQuery = ''">×</button>
+          </label>
+
+          <div class="view-toggle" aria-label="Product view">
+            <button type="button" :class="{ active: viewMode === 'grid' }" aria-label="Grid view" @click="viewMode = 'grid'">▦</button>
+            <button type="button" :class="{ active: viewMode === 'list' }" aria-label="List view" @click="viewMode = 'list'">☷</button>
+          </div>
+
           <label class="sort-control">
             <span>Sort by :</span>
             <select v-model="sortBy" aria-label="Sort products">
@@ -338,6 +349,22 @@
               </label>
             </div>
 
+            <form class="review-form" @submit.prevent="submitReview">
+              <div class="review-form-heading">
+                <div><strong>Write a Review</strong><small>Share your experience with this product.</small></div>
+                <div class="review-form-stars" role="radiogroup" aria-label="Your rating">
+                  <button v-for="rating in [5,4,3,2,1]" :key="rating" type="button" :class="{ selected: reviewForm.rating === rating }" @click="reviewForm.rating = rating">{{ rating }}★</button>
+                </div>
+              </div>
+              <textarea v-model="reviewForm.reviewText" maxlength="1000" rows="3" placeholder="Tell other businesses about this product..." aria-label="Review text"></textarea>
+              <div class="review-form-footer">
+                <span>{{ reviewNotice }}</span>
+                <button type="submit" :disabled="reviewSubmitting || !reviewForm.reviewText.trim()">
+                  {{ reviewSubmitting ? 'Publishing...' : 'Publish Review' }}
+                </button>
+              </div>
+            </form>
+
             <p v-if="reviewsLoading" class="shop-message">Loading reviews...</p>
             <p v-else-if="!reviews.length" class="shop-message">No reviews yet. Be the first to share your experience.</p>
             <ul v-else class="review-list">
@@ -355,6 +382,7 @@
             </ul>
           </div>
         </section>
+        <p v-if="notice" class="detail-notice" role="status">{{ notice }}</p>
       </section>
 
       <p v-else-if="!isLoading" class="shop-message error-message">This product is no longer available.</p>
@@ -368,8 +396,6 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
-  faArrowLeft,
-  faArrowRight,
   faBagShopping,
   faCheck,
   faChevronDown,
@@ -378,12 +404,10 @@ import {
   faCreditCard,
   faExpand,
   faHeadset,
-  faHeart,
   faMagnifyingGlass,
   faPlus,
   faStar,
   faTruckFast,
-  faUser
 } from '@fortawesome/free-solid-svg-icons'
 
 const apiUrl = import.meta.env.VITE_API_URL || '/api'
@@ -419,7 +443,7 @@ const detailPackSizes = ['30 ml', '60 ml', '80 ml', '100 ml']
 const notice = ref('')
 const isLoading = ref(true)
 const errorMessage = ref('')
-let searchInput = null
+const searchInput = ref(null)
 
 function readStoredBasket() {
   try {
@@ -679,9 +703,26 @@ async function submitReview() {
   }
 }
 
-function orderNow() {
-  addDetailToBasket()
+async function orderNow() {
+  await addDetailToBasket()
   router.push({ name: 'small-business-orders' })
+}
+
+async function shareProduct(platform) {
+  const product = selectedProduct.value
+  if (!product) return
+  const shareUrl = window.location.href
+  const shareText = `${product.title} — R ${formatPrice(product.price)}`
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: product.title, text: shareText, url: shareUrl })
+      return
+    }
+    await navigator.clipboard.writeText(shareUrl)
+    notice.value = `${platform} link copied. You can paste it anywhere to share.`
+  } catch {
+    notice.value = 'Sharing was cancelled.'
+  }
 }
 
 function goToOrders() {
@@ -707,6 +748,11 @@ watch(priceCeiling, (value) => {
 
 watch(() => route.params.productId, (productId) => {
   quantity.value = 1
+  activeDetailImage.value = 0
+  activeDetailTab.value = 'reviews'
+  selectedPackSize.value = 0
+  detailSaved.value = false
+  reviewNotice.value = ''
   notice.value = ''
   if (productId) loadReviews(productId)
 })
@@ -779,6 +825,13 @@ onBeforeUnmount(() => {
 .shop-toolbar-top { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 18px; }
 .results-copy { color: #77716c; font-size: 11px; }
 .results-copy strong { color: #3e3935; }
+.product-search { display: flex; align-items: center; gap: 7px; width: min(260px, 25vw); min-width: 170px; padding: 7px 9px; border: 1px solid #e6e1dc; border-radius: 4px; background: #fff; color: #8d857f; }
+.product-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: #403b38; font-size: 10px; }
+.product-search button { border: 0; background: transparent; color: #8d857f; cursor: pointer; font-size: 15px; line-height: 1; }
+.view-toggle { display: flex; border: 1px solid #e6e1dc; border-radius: 4px; overflow: hidden; }
+.view-toggle button { width: 29px; height: 29px; border: 0; background: #fff; color: #8d857f; cursor: pointer; }
+.view-toggle button.active { background: #5c3d24; color: #fff; }
+
 .sort-control { position: relative; display: inline-flex; align-items: center; gap: 7px; color: #77716c; font-size: 11px; }
 .sort-control select { appearance: none; min-width: 145px; padding: 8px 27px 8px 12px; border: 1px solid #e6e1dc; border-radius: 3px; background: #fff; color: #514b47; outline: none; font-size: 10px; }
 .sort-control svg { position: absolute; right: 9px; pointer-events: none; font-size: 8px; }
@@ -880,11 +933,21 @@ onBeforeUnmount(() => {
 .detail-meta { display: grid; gap: 5px; margin-top: 13px; padding-top: 10px; border-top: 1px solid #eee7e1; color: #857b74; font-size: 8px; }.detail-meta b { color: #4d433d; }.detail-share { display: flex; align-items: center; gap: 5px; }.detail-share button { width: 17px; height: 17px; border: 0; border-radius: 50%; background: #eee7e1; color: #5c3d24; font-size: 8px; cursor: pointer; }
 .detail-review-section { max-width: 1080px; margin: 55px auto 0; }.detail-tabs { display: flex; justify-content: center; gap: 30px; border-bottom: 1px solid #eee7e1; }.detail-tabs button { padding: 0 0 11px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #9b928b; font-size: 10px; font-weight: 700; cursor: pointer; }.detail-tabs button.active { border-color: #c48b5b; color: #4d433d; }
 .detail-tab-content { min-height: 90px; padding: 18px 8px; color: #746b65; font-size: 10px; line-height: 1.7; }.detail-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }.detail-info-grid div { display: grid; gap: 4px; padding: 10px; background: #fbf8f4; border-radius: 6px; }.detail-info-grid span { color: #9a9089; font-size: 8px; }.detail-info-grid strong { color: #4d433d; font-size: 9px; }
-.detail-reviews-content { padding-top: 18px; }.review-overview { display: grid; grid-template-columns: 180px 1fr; gap: 50px; align-items: center; max-width: 700px; margin: 0 auto 35px; padding-bottom: 25px; border-bottom: 1px solid #eee7e1; }.review-score { display: grid; justify-items: center; gap: 3px; }.review-score strong { color: #4d433d; font-size: 24px; }.review-score span:not(.detail-stars) { color: #999089; font-size: 8px; }.review-score small { color: #999089; font-size: 7px; }.review-bars { display: grid; gap: 5px; }.review-bar-row { display: grid; grid-template-columns: 45px 1fr 25px; gap: 6px; align-items: center; color: #817870; font-size: 8px; }.review-bar-row > div { height: 3px; background: #ece8e3; overflow: hidden; }.review-bar-row i { display: block; height: 100%; background: #e6b51e; }.review-bar-row small { color: #a09790; text-align: right; font-size: 7px; }
+.detail-reviews-content { padding-top: 18px; }
+.detail-notice { max-width: 1080px; margin: 15px auto 0; padding: 10px 13px; border-radius: 7px; background: #f3e7d9; color: #6d4a32; font-size: 9px; }
+.review-form { margin: 0 0 25px; padding: 15px; border: 1px solid #e7ded6; border-radius: 9px; background: #fbf8f4; }
+.review-form-heading { display: flex; justify-content: space-between; gap: 15px; align-items: center; margin-bottom: 10px; }
+.review-form-heading div:first-child { display: grid; gap: 3px; }
+.review-form-heading strong { color: #4d433d; font-size: 11px; }.review-form-heading small { color: #9b928b; font-size: 8px; }
+.review-form-stars { display: flex; gap: 3px; }.review-form-stars button { border: 0; background: transparent; color: #bdb5ae; cursor: pointer; font-size: 10px; }.review-form-stars button.selected { color: #e2b21b; }
+.review-form textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 65px; border: 1px solid #e1d8d0; border-radius: 6px; padding: 9px; outline: none; background: #fff; color: #4d433d; font-size: 9px; }.review-form textarea:focus { border-color: #c48b5b; }
+.review-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }.review-form-footer span { color: #8a603f; font-size: 8px; }.review-form-footer button { border: 0; border-radius: 5px; padding: 7px 11px; background: #5c3d24; color: #fff; font-size: 8px; font-weight: 700; cursor: pointer; }.review-form-footer button:disabled { opacity: .45; cursor: not-allowed; }
+.review-overview { display: grid; grid-template-columns: 180px 1fr; gap: 50px; align-items: center; max-width: 700px; margin: 0 auto 35px; padding-bottom: 25px; border-bottom: 1px solid #eee7e1; }.review-score { display: grid; justify-items: center; gap: 3px; }.review-score strong { color: #4d433d; font-size: 24px; }.review-score span:not(.detail-stars) { color: #999089; font-size: 8px; }.review-score small { color: #999089; font-size: 7px; }.review-bars { display: grid; gap: 5px; }.review-bar-row { display: grid; grid-template-columns: 45px 1fr 25px; gap: 6px; align-items: center; color: #817870; font-size: 8px; }.review-bar-row > div { height: 3px; background: #ece8e3; overflow: hidden; }.review-bar-row i { display: block; height: 100%; background: #e6b51e; }.review-bar-row small { color: #a09790; text-align: right; font-size: 7px; }
 .review-list-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }.review-list-heading div { display: grid; gap: 3px; }.review-list-heading strong { color: #4d433d; font-size: 11px; }.review-list-heading small { color: #9b928b; font-size: 7px; }.review-list-heading label { color: #8e857e; font-size: 8px; }.review-list-heading select { margin-left: 5px; border: 1px solid #e1d9d2; border-radius: 12px; padding: 5px 8px; background: #fff; color: #5c514a; font-size: 8px; }
 .review-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }.review-card { padding: 15px 0; border-bottom: 1px solid #eee7e1; }.review-author { display: flex; align-items: center; gap: 7px; }.review-avatar { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #eadfd5; color: #5c3d24; font-size: 7px; font-weight: 800; }.review-author > div { display: grid; gap: 2px; }.review-author strong { color: #4d433d; font-size: 8px; }.review-verified { color: #9a9089; font-size: 7px; }.review-author time { margin-left: auto; color: #9a9089; font-size: 7px; }.review-card > .detail-stars { margin: 5px 0; }.review-title { display: block; color: #554a43; font-size: 9px; }.review-card > p { margin: 4px 0 0; color: #817870; font-size: 8px; line-height: 1.6; }.supplier-reply { margin-top: 8px; padding: 7px 9px; border-left: 2px solid #c48b5b; background: #fbf7f2; }.supplier-reply strong { color: #8b6345; font-size: 7px; text-transform: uppercase; }.supplier-reply p { margin: 3px 0 0; color: #776f69; font-size: 8px; }
 @media (max-width: 1050px) {
   .shop-nav { gap: 20px; }
+  .product-search { width: 190px; min-width: 150px; }
   .shop-links { gap: 16px; }
   .shop-layout { grid-template-columns: 170px minmax(0, 1fr); gap: 25px; }
   .product-grid { gap: 18px 12px; }
@@ -892,6 +955,9 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 800px) {
+  .shop-toolbar-top { flex-wrap: wrap; }
+  .product-search { order: 3; width: 100%; min-width: 0; }
+  .view-toggle { margin-left: auto; }
   .shop-announcement { padding: 0 20px; }
   .announcement-call, .announcement-social { display: none; }
   .shop-nav { padding: 0 20px; }
@@ -907,8 +973,9 @@ onBeforeUnmount(() => {
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .shop-benefits { gap: 18px; }
   .benefit-item { align-items: flex-start; }
-  .detail-layout { grid-template-columns: 1fr; }
+  .detail-layout { grid-template-columns: 1fr; gap: 28px; }
   .detail-image-wrap { height: 70vw; max-height: 470px; }
+  .detail-review-section { margin-top: 38px; }
   .review-overview { grid-template-columns: 1fr; gap: 20px; max-width: 560px; }
 }
 
@@ -934,7 +1001,15 @@ onBeforeUnmount(() => {
   .product-price-row strong { font-size: 11px; }
   .compare-price { font-size: 8px; }
   .shop-benefits { grid-template-columns: 1fr; margin-top: 45px; }
+  .detail-image-wrap { height: 82vw; max-height: 360px; }
+  .detail-copy h1 { font-size: 22px; }
   .detail-purchase { grid-template-columns: 1fr 1fr 1fr 32px; }
+  .detail-primary, .detail-buy-now { font-size: 8px; padding: 0 5px; }
+  .detail-size-pills { flex-wrap: wrap; }
+  .detail-thumb-row { overflow-x: auto; padding-bottom: 3px; }
+  .review-form-heading { align-items: flex-start; flex-direction: column; }
+  .review-form-footer { align-items: flex-start; flex-direction: column; }
+  .review-form-footer button { width: 100%; }
   .detail-tabs { gap: 18px; overflow-x: auto; justify-content: flex-start; }
   .detail-tabs button { white-space: nowrap; }
   .detail-info-grid { grid-template-columns: 1fr 1fr; }
