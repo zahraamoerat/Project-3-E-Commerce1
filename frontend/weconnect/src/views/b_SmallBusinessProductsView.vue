@@ -264,12 +264,15 @@
           <section class="detail-gallery" aria-label="Product gallery">
             <div class="detail-image-wrap">
               <button v-if="detailImages.length > 1" type="button" class="detail-gallery-arrow detail-gallery-arrow-left" @click="activeDetailImage = activeDetailImage === 0 ? detailImages.length - 1 : activeDetailImage - 1" aria-label="Previous product image">‹</button>
-              <img :src="detailImages[activeDetailImage]" :alt="selectedProduct.title" />
+              <img :src="detailImages[activeDetailImage]" :alt="selectedProduct.title" @error="handleDetailImageError" />
               <button v-if="detailImages.length > 1" type="button" class="detail-gallery-arrow detail-gallery-arrow-right" @click="activeDetailImage = activeDetailImage === detailImages.length - 1 ? 0 : activeDetailImage + 1" aria-label="Next product image">›</button>
+            </div>
+            <div v-if="detailImages.length > 1" class="detail-image-count" aria-live="polite">
+              {{ activeDetailImage + 1 }} / {{ detailImages.length }} images
             </div>
             <div class="detail-thumb-row">
               <button v-for="(image, index) in detailImages" :key="image + index" type="button" class="detail-thumb" :class="{ active: activeDetailImage === index }" @click="activeDetailImage = index">
-                <img :src="image" :alt="selectedProduct.title + ' image ' + (index + 1)" />
+                <img :src="image" :alt="selectedProduct.title + ' image ' + (index + 1)" loading="lazy" @error="imageFallback" />
               </button>
             </div>
           </section>
@@ -600,8 +603,8 @@ const averageRating = computed(() => reviews.value.length ? reviews.value.reduce
 const detailImages = computed(() => {
   const product = selectedProduct.value
   if (!product) return []
-  const images = Array.isArray(product.images) ? product.images.filter(Boolean) : []
-  return images.length ? images : [product.image]
+  const images = normalizeProductImages(product)
+  return images.length ? images : [product.image].filter(Boolean)
 })
 const sortedReviews = computed(() => {
   const list = [...reviews.value]
@@ -617,6 +620,26 @@ const reviewBreakdown = computed(() => {
 })
 const hasActiveFilters = computed(() => selectedCategory.value !== 'All' || selectedAvailability.value !== 'All' || selectedRating.value || selectedPromotion.value !== 'all' || maxPrice.value < priceCeiling.value)
 
+function normalizeProductImages(product) {
+  const candidates = [
+    ...(Array.isArray(product.images) ? product.images : []),
+    ...(Array.isArray(product.product_images) ? product.product_images : []),
+    ...(Array.isArray(product.productImages) ? product.productImages : []),
+    ...(Array.isArray(product.gallery) ? product.gallery : []),
+    ...(Array.isArray(product.media) ? product.media.map(item => typeof item === 'string' ? item : item?.media_url || item?.url || item?.src) : []),
+    product.image,
+    product.image_url,
+    product.product_image,
+    product.productImage
+  ]
+
+  return [...new Set(
+    candidates
+      .map(item => typeof item === 'string' ? item : item?.media_url || item?.url || item?.src)
+      .filter(url => typeof url === 'string' && url.trim())
+      .map(url => url.trim())
+  )]
+}
 function normalizeProduct(product) {
   const stockQty = Number(product.stockQty ?? product.quantity ?? 0)
   const price = Number(product.price ?? 0)
@@ -636,7 +659,8 @@ function normalizeProduct(product) {
     discountPercent,
     stockQty,
     status: product.status ?? (stockQty > 0 ? 'Active' : 'Out of stock'),
-    image: product.image ?? product.image_url ?? 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=900&q=80',
+    image: product.image ?? product.image_url ?? product.product_image ?? product.productImage ?? 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=900&q=80',
+    images: normalizeProductImages(product),
     supplier: product.supplier ?? product.supplier_name ?? 'WeConnect supplier',
     unit: product.unit ?? 'Standard',
     rating: Number(product.rating ?? product.averageRating ?? 4.8),
@@ -657,6 +681,10 @@ function toggleWishlist(productId) {
 }
 function imageFallback(event) {
   event.target.src = 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=900&q=80'
+}
+
+function handleDetailImageError(event) {
+  event.target.src = 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=80'
 }
 function starsFor(rating) {
   const filled = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)))
@@ -901,6 +929,10 @@ watch(() => route.params.productId, (productId) => {
   notice.value = ''
   if (productId) {
     loadReviews(productId)
+    const current = products.value.find(product => String(product.id) === String(productId))
+    if (current && (!Array.isArray(current.images) || current.images.length === 0)) {
+      loadMarketplaceProducts({ silent: true })
+    }
     scrollToTop()
   }
 })
@@ -1106,11 +1138,12 @@ onBeforeUnmount(() => {
 
 .detail-page { padding-top: 28px; }
 .detail-layout { display: grid; grid-template-columns: minmax(330px, .95fr) minmax(330px, 1fr); gap: clamp(35px, 6vw, 72px); max-width: 1080px; margin: 0 auto; }
-.detail-gallery { min-width: 0; }
+.detail-gallery { position: relative; } min-width: 0; }
 .detail-image-wrap { position: relative; box-shadow: 0 18px 45px rgba(75, 49, 31, .10); height: 390px; overflow: hidden; border-radius: 13px; background: #eee4d8; }
 .detail-image-wrap img { width: 100%; height: 100%; object-fit: cover; }
 .detail-gallery-arrow { position: absolute; top: 50%; z-index: 2; width: 31px; height: 31px; transform: translateY(-50%); border: 0; border-radius: 50%; background: rgba(255,255,255,.95); color: #5c3d24; font-size: 25px; cursor: pointer; box-shadow: 0 3px 10px rgba(60,43,38,.12); }
 .detail-gallery-arrow-left { left: 10px; }.detail-gallery-arrow-right { right: 10px; }
+.detail-image-count { margin: 8px 0 7px; color: #8e8177; font-size: 8px; text-align: right; }
 .detail-thumb-row { display: flex; gap: 7px; margin-top: 8px; }
 .detail-thumb { width: 66px; height: 66px; padding: 2px; border: 2px solid transparent; border-radius: 7px; background: #eee4d8; cursor: pointer; overflow: hidden; }
 .detail-thumb.active { border-color: #5c3d24; }.detail-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
