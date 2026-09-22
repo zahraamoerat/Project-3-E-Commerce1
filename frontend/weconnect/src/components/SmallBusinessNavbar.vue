@@ -37,7 +37,6 @@
       <router-link to="/small-business/orders" :class="{ active: isActive('/small-business/orders') }" @click="mobileMenuOpen = false">Orders</router-link>
       <router-link to="/small-business/deliveries" :class="{ active: isActive('/small-business/deliveries') }" @click="mobileMenuOpen = false">Deliveries</router-link>
     </nav>
-    </div>
   </header>
 </template>
 
