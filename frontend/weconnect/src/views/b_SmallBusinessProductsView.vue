@@ -906,6 +906,9 @@ watch(() => route.params.productId, (productId) => {
 })
 
 let productRefreshTimer = null
+let refreshInProgress = false
+const PRODUCT_REFRESH_MS = 2000
+const PRODUCT_SYNC_KEY = "weconnect-product-catalog-updated"
 
 async function retryProducts() {
   isLoading.value = true
@@ -915,6 +918,8 @@ async function retryProducts() {
 }
 
 async function loadMarketplaceProducts({ silent = false } = {}) {
+  if (refreshInProgress) return
+  refreshInProgress = true
   try {
     const response = await fetch(`${apiUrl}/products?catalog=active&_=${Date.now()}`, { cache: 'no-store' })
     if (!response.ok) throw new Error('Products could not be loaded.')
@@ -922,6 +927,8 @@ async function loadMarketplaceProducts({ silent = false } = {}) {
     if (!silent) errorMessage.value = ''
   } catch (error) {
     if (!silent) errorMessage.value = error.message
+  } finally {
+    refreshInProgress = false
   }
 }
 
@@ -932,9 +939,21 @@ onMounted(async () => {
   await syncBasketFromCart()
   if (isDetailView.value) loadReviews(route.params.productId)
 
-  productRefreshTimer = window.setInterval(() => {
+  const refreshProductsWhenVisible = () => {
     if (!document.hidden) loadMarketplaceProducts({ silent: true })
-  }, 5000)
+  }
+  window.addEventListener("focus", refreshProductsWhenVisible)
+  window.addEventListener("storage", (event) => {
+    if (event.key === PRODUCT_SYNC_KEY) refreshProductsWhenVisible()
+  })
+  document.addEventListener("visibilitychange", refreshProductsWhenVisible)
+
+  productRefreshTimer = window.setInterval(refreshProductsWhenVisible, PRODUCT_REFRESH_MS)
+
+  onBeforeUnmount(() => {
+    window.removeEventListener("focus", refreshProductsWhenVisible)
+    document.removeEventListener("visibilitychange", refreshProductsWhenVisible)
+  })
 })
 
 onBeforeUnmount(() => {
