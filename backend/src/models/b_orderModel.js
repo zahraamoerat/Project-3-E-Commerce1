@@ -148,7 +148,7 @@ export async function createOrdersFromCart(buyerId) {
   try {
     await connection.beginTransaction();
     const [items] = await connection.query(`
-      SELECT ci.cart_item_id, ci.product_id, ci.quantity, p.supplier_id, p.unit_price
+      SELECT ci.cart_item_id, ci.product_id, ci.quantity, p.supplier_id, p.price AS unit_price
       FROM cart_items ci
       INNER JOIN products p ON p.product_id = ci.product_id
       WHERE ci.buyer_id = ?
