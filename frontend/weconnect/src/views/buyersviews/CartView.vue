@@ -494,9 +494,9 @@ export default {
 
 /* Workspace Header */
 .main-content {
-  max-width: 1280px;
+  width: min(1280px, 94%);
   margin: 0 auto;
-  padding: 34px 40px 56px;
+  padding: 34px 0 56px;
 }
 
 .cart-topbar {
@@ -820,7 +820,7 @@ export default {
 
 @media (max-width: 900px) {
   .main-content {
-    padding: 24px;
+    padding: 24px 0;
   }
 
   .cart-grid {
@@ -834,7 +834,8 @@ export default {
 
 @media (max-width: 640px) {
   .main-content {
-    padding: 20px 16px;
+    width: calc(100% - 24px);
+    padding: 20px 0;
   }
 
   .header-section {
