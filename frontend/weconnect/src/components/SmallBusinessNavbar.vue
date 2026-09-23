@@ -57,7 +57,7 @@ function goToOrders() {
 }
 
 function goToCart() {
-  router.push('/cart')
+  router.push('/small-business/cart')
 }
 
 function goToProfile() {
