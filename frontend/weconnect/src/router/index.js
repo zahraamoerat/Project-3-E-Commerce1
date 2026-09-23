@@ -187,6 +187,12 @@ const routes = [
   },
 
   {
+    path: "/small-business",
+    name: "small-business-landing",
+    component: () => import("../views/b_SmallBusinessLanding.vue"),
+  },
+
+  {
     path: "/small-business/dashboard",
     name: "small-business-dashboard",
     component: () => import("../views/b_SmallBusinessDashboard.vue"),
