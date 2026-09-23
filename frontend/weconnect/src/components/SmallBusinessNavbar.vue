@@ -25,7 +25,7 @@
       </nav>
 
       <div class="sb-nav-actions">
-        <button type="button" aria-label="View orders" @click="goToOrders">🛍</button>
+        <button type="button" aria-label="View cart" @click="goToCart">🛒</button>
         <button type="button" aria-label="Profile" @click="goToProfile">♙</button>
         <button type="button" class="sb-menu-button" :aria-expanded="mobileMenuOpen" aria-label="Open navigation menu" @click="mobileMenuOpen = !mobileMenuOpen">☰</button>
       </div>
@@ -54,6 +54,10 @@ function isActive(path) {
 
 function goToOrders() {
   router.push('/small-business/orders')
+}
+
+function goToCart() {
+  router.push('/cart')
 }
 
 function goToProfile() {
