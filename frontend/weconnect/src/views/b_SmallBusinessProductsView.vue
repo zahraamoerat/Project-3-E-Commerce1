@@ -755,42 +755,49 @@ async function syncBasketFromCart() {
 
 async function toggleBasket(product) {
   if (basketBusy.value[product.id]) return
+
   basketBusy.value = { ...basketBusy.value, [product.id]: true }
   const existing = basket.value[product.id]
+
   try {
-    if (existing) {
-      if (existing.cartItemId) await cartRequest(`/${existing.cartItemId}`, { method: 'DELETE' })
-      const next = { ...basket.value }
-      delete next[product.id]
-      basket.value = next
-      notice.value = `${product.title} removed from your order.`
+    let cartItemId = existing?.cartItemId
+    const nextQuantity = Number(existing?.quantity || 0) + 1
+
+    if (cartItemId) {
+      await cartRequest(\`/\${cartItemId}\`, {
+        method: 'PATCH',
+        body: JSON.stringify({ buyerId, quantity: nextQuantity })
+      })
     } else {
       const created = await cartRequest('', {
         method: 'POST',
         body: JSON.stringify({ buyerId, productId: product.id, quantity: 1 })
       })
-      basket.value = { ...basket.value, [product.id]: { product, quantity: 1, cartItemId: created.cartItemId } }
-      notice.value = `${product.title} added to your order.`
+      cartItemId = created.cartItemId
     }
-  } catch {
-    // Keep the page usable if the API is unavailable.
-    const next = { ...basket.value }
-    if (existing) {
-      delete next[product.id]
-      notice.value = `${product.title} removed locally. Cart service is unavailable.`
-    } else {
-      next[product.id] = { product, quantity: 1 }
-      notice.value = `${product.title} added locally. Cart service is unavailable.`
+
+    basket.value = {
+      ...basket.value,
+      [product.id]: {
+        product,
+        quantity: nextQuantity,
+        cartItemId
+      }
     }
-    basket.value = next
+
+    persistBasket()
+    notice.value = \`\${product.title} added to cart.\`
+
+    // Immediately take the small-business user to their cart.
+    router.push('/small-business/cart')
+  } catch (error) {
+    notice.value = error.message || 'The product could not be added to the cart.'
   } finally {
     const nextBusy = { ...basketBusy.value }
     delete nextBusy[product.id]
     basketBusy.value = nextBusy
-    persistBasket()
   }
 }
-
 async function addDetailToBasket({ goToCart = false } = {}) {
   const product = selectedProduct.value
   if (!product || basketBusy.value[product.id]) return
