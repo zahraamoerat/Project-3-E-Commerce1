@@ -26,7 +26,7 @@
         />
 
         <p class="connect-sb-orders-date">
-          Tuesday, September 1, 2026
+          {{ currentDate }}
         </p>
       </div>
 
@@ -595,6 +595,9 @@ const activeFilter = ref('All')
 const isLoading = ref(true)
 const errorMessage = ref('')
 
+const buyerId = computed(() => localStorage.getItem('weconnect_buyer_id') || '1')
+const currentDate = computed(() => getCurrentDate())
+
 // Filter orders based on the selected status and search text.
 const filteredOrders = computed(() => {
   const search = searchQuery.value.trim().toLowerCase()
@@ -779,7 +782,7 @@ async function confirmDeliveryMethod() {
 
   try {
     const response = await fetch(
-      `/api/orders/${order.id}/delivery-method?buyerId=1`,
+      `/api/orders/${order.id}/delivery-method?buyerId=${encodeURIComponent(buyerId.value)}`,
       {
         method: 'POST',
         headers: {
@@ -815,7 +818,7 @@ async function confirmDeliveryMethod() {
 async function loadOrderPayment(orderId) {
   try {
     const response = await fetch(
-      `/api/payments/order/${orderId}?buyerId=1`
+      `/api/payments/order/${orderId}?buyerId=${encodeURIComponent(buyerId.value)}`
     )
 
     if (!response.ok) {
@@ -852,7 +855,7 @@ async function loadOrderPayment(orderId) {
 async function loadOrderItems(orderId) {
   try {
     const response = await fetch(
-      `/api/orders/${orderId}/items`
+      `/api/orders/${orderId}/items?buyerId=${encodeURIComponent(buyerId.value)}`
     )
 
     if (!response.ok) {
