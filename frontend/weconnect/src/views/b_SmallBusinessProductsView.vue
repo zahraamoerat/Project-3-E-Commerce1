@@ -199,6 +199,12 @@
                       <strong>R {{ formatPrice(product.price) }}</strong>
                       <span v-if="product.comparePrice && Number(product.comparePrice) > Number(product.price)" class="compare-price">R {{ formatPrice(product.comparePrice) }}</span>
                     </div>
+                    <div v-if="product.discountTiers?.length" class="bulk-discount-box">
+                      <strong>Bulk savings</strong>
+                      <span v-for="tier in product.discountTiers" :key="tier.discount_tier_id || tier.minimum_quantity">
+                        {{ tier.minimum_quantity }}+ units: {{ Number(tier.discount_percent).toFixed(0) }}% off
+                      </span>
+                    </div>
                     <button
                       type="button"
                       class="product-add-button"
@@ -289,8 +295,15 @@
               <span>({{ reviews.length || 'No' }} Reviews)</span>
             </div>
             <div class="detail-price">
-              <strong>R {{ formatPrice(selectedProduct.price) }}</strong>
-              <span v-if="selectedProduct.comparePrice">R {{ formatPrice(selectedProduct.comparePrice) }}</span>
+              <strong>R {{ formatPrice(detailUnitPrice) }}</strong>
+              <span v-if="detailUnitPrice < Number(selectedProduct.price)">R {{ formatPrice(selectedProduct.price) }}</span>
+              <small v-if="activeDetailDiscount > 0">{{ activeDetailDiscount }}% bulk discount applied</small>
+            </div>
+            <div v-if="selectedProduct.discountTiers?.length" class="detail-bulk-discounts">
+              <div class="bulk-heading"><strong>Bulk Discount</strong><span>Save more when you buy more</span></div>
+              <div v-for="tier in selectedProduct.discountTiers" :key="tier.discount_tier_id || tier.minimum_quantity" class="bulk-tier" :class="{ active: quantity >= tier.minimum_quantity }">
+                <span>{{ tier.minimum_quantity }}+ units</span><strong>{{ Number(tier.discount_percent).toFixed(0) }}% off</strong>
+              </div>
             </div>
             <p class="detail-description">{{ selectedProduct.description }}</p>
 
@@ -590,6 +603,8 @@ const showingStart = computed(() => sortedProducts.value.length ? ((currentPage.
 const showingEnd = computed(() => Math.min(currentPage.value * pageSize, sortedProducts.value.length))
 const basketCount = computed(() => Object.values(basket.value).reduce((total, item) => total + Number(item.quantity || 0), 0))
 const detailActionLabel = computed(() => basket.value[selectedProduct.value?.id] ? 'Add to cart' : 'Add to cart')
+const activeDetailDiscount = computed(() => { const tiers = selectedProduct.value?.discountTiers || []; return [...tiers].reverse().find(t => quantity.value >= Number(t.minimum_quantity))?.discount_percent || 0 })
+const detailUnitPrice = computed(() => { const base = Number(selectedProduct.value?.price || 0); return base * (1 - Number(activeDetailDiscount.value || 0) / 100) })
 const relatedProducts = computed(() => {
   const current = selectedProduct.value
   if (!current) return []
@@ -658,6 +673,7 @@ function normalizeProduct(product) {
     price,
     comparePrice,
     discountPercent,
+    discountTiers: Array.isArray(product.discountTiers) ? product.discountTiers.map(t => ({ ...t, minimum_quantity: Number(t.minimum_quantity), discount_percent: Number(t.discount_percent) })).sort((a,b) => a.minimum_quantity - b.minimum_quantity) : [],
     stockQty,
     status: product.status ?? (stockQty > 0 ? 'Active' : 'Out of stock'),
     image: product.image ?? product.image_url ?? product.product_image ?? product.productImage ?? 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=900&q=80',
@@ -1504,7 +1520,8 @@ onBeforeUnmount(() => {
 .shop-main { width: min(1280px, 94%); margin: 0 auto; }
 .beauty-product-card, .filter-sidebar { border-color: #e6ddd7; box-shadow: 0 8px 24px rgba(62,43,29,.05); }
 @media (max-width: 760px) { .shop-main { width: calc(100% - 24px); } }
-</style>
+
+.bulk-discount-box,.detail-bulk-discounts{margin-top:10px;padding:10px 12px;border:1px solid rgba(120,78,45,.18);border-radius:12px;background:#faf4ec;display:flex;flex-wrap:wrap;gap:7px;align-items:center}.bulk-discount-box strong{width:100%;font-size:.78rem;color:#5b3824}.bulk-discount-box span{font-size:.72rem;padding:4px 7px;border-radius:999px;background:#fff;color:#6b4730}.detail-bulk-discounts{display:block;margin:16px 0}.bulk-heading{display:flex;justify-content:space-between;gap:12px;margin-bottom:9px}.bulk-heading span{font-size:.78rem;color:#806654}.bulk-tier{display:flex;justify-content:space-between;padding:8px 10px;border-top:1px solid rgba(120,78,45,.1);font-size:.84rem}.bulk-tier.active{font-weight:700;background:#efe1d2;border-radius:8px}.detail-price small{display:block;color:#7a4b2a;font-size:.78rem;margin-top:4px}</style>
 
 <style scoped>
 /* Shared sticky navbar supplies navigation on this page. */
