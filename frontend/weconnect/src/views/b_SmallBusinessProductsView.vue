@@ -1475,8 +1475,10 @@ onBeforeUnmount(() => {
 :global(body) { margin: 0; background: #f7f5f2; }
 :global(*) { box-sizing: border-box; }
 .shop-page { min-height: 100vh; background: #f7f5f2; color: #2f211d; }
-.shop-hero { background: #553c35; color: #fff; }
-.shop-hero h1 { font-family: Georgia, "Times New Roman", serif; }
+.shop-hero { background: #ead9cf; color: #553c35; }
+.shop-hero h1 { font-family: Georgia, "Times New Roman", serif; color: #553c35; }
+.shop-hero p { color: #6b5147; }
+.shop-hero .hero-rule { background: #e79b63; }
 .shop-main { width: min(1280px, 94%); margin: 0 auto; }
 .beauty-product-card, .filter-sidebar { border-color: #e6ddd7; box-shadow: 0 8px 24px rgba(62,43,29,.05); }
 @media (max-width: 760px) { .shop-main { width: calc(100% - 24px); } }
