@@ -194,15 +194,15 @@ function goBack() {
 <style scoped>
 .profile-page {
   min-height: 100vh;
-  background: #f7f9fc;
-  color: #344054;
+  background: #f7f5f2;
+  color: #4d3933;
 }
 
 .profile-cover {
   position: relative;
   height: 185px;
   overflow: hidden;
-  background: linear-gradient(135deg, #355bd4 0%, #4169e1 52%, #3153c8 100%);
+  background: linear-gradient(135deg, #5b4037 0%, #684b41 52%, #4f352e 100%);
 }
 
 .cover-pattern {
@@ -220,10 +220,10 @@ function goBack() {
   top: 18px;
   left: 24px;
   z-index: 3;
-  border: 1px solid rgba(255,255,255,.4);
+  border: 1px solid rgba(255,255,255,.38);
   border-radius: 7px;
   padding: 7px 12px;
-  background: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.10);
   color: #fff;
   cursor: pointer;
 }
@@ -246,10 +246,10 @@ function goBack() {
 }
 
 .change-cover {
-  border: 1px solid rgba(255,255,255,.45);
+  border: 1px solid rgba(255,255,255,.42);
   border-radius: 5px;
   padding: 7px 11px;
-  background: rgba(47,77,183,.35);
+  background: rgba(76,52,45,.45);
   color: #fff;
   font-size: 10px;
   cursor: pointer;
@@ -270,7 +270,7 @@ function goBack() {
   position: relative;
   align-self: start;
   padding: 16px 14px 15px;
-  border: 1px solid #e2e7ef;
+  border: 1px solid #e6dfda;
   border-radius: 3px;
   background: #fff;
   box-shadow: 0 4px 16px rgba(31,41,55,.06);
@@ -285,8 +285,8 @@ function goBack() {
   margin: -2px auto 11px;
   border: 5px solid #fff;
   border-radius: 50%;
-  background: #d9dee8;
-  color: #52606d;
+  background: #eadfd8;
+  color: #684b41;
   font-size: 27px;
   font-weight: 800;
   box-shadow: 0 2px 8px rgba(31,41,55,.12);
@@ -300,7 +300,7 @@ function goBack() {
   height: 22px;
   border: 2px solid #fff;
   border-radius: 50%;
-  background: #4169e1;
+  background: #684b41;
   color: #fff;
   font-size: 10px;
   cursor: pointer;
@@ -308,27 +308,27 @@ function goBack() {
 
 .profile-summary h1 {
   margin: 0;
-  color: #344054;
+  color: #4d3933;
   font-size: 14px;
   font-weight: 800;
 }
 
 .company-name {
   margin: 4px 0 14px;
-  color: #98a2b3;
+  color: #98857c;
   font-size: 10px;
 }
 
 .summary-stats {
-  border-top: 1px solid #edf0f4;
-  border-bottom: 1px solid #edf0f4;
+  border-top: 1px solid #eee8e3;
+  border-bottom: 1px solid #eee8e3;
 }
 
 .summary-stats div {
   display: flex;
   justify-content: space-between;
   padding: 10px 1px;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid #f1eeeb;
   font-size: 10px;
 }
 
@@ -337,37 +337,37 @@ function goBack() {
 }
 
 .summary-stats span {
-  color: #667085;
+  color: #806c63;
 }
 
 .summary-stats strong {
-  color: #344054;
+  color: #4d3933;
 }
 
 .active-text {
-  color: #4b9b61 !important;
+  color: #55865d !important;
 }
 
 .public-profile {
   width: 100%;
   margin-top: 13px;
   padding: 8px;
-  border: 1px solid #e1e6ef;
+  border: 1px solid #e6dfda;
   background: #fff;
-  color: #667085;
+  color: #806c63;
   font-size: 9px;
   cursor: pointer;
 }
 
 .profile-id {
   margin-top: 9px;
-  color: #98a2b3;
+  color: #98857c;
   font-size: 8px;
 }
 
 .profile-editor {
   min-width: 0;
-  border: 1px solid #e1e6ef;
+  border: 1px solid #e6dfda;
   border-radius: 3px;
   background: #fff;
   box-shadow: 0 4px 16px rgba(31,41,55,.04);
@@ -379,7 +379,7 @@ function goBack() {
   gap: 23px;
   min-height: 45px;
   padding: 0 16px;
-  border-bottom: 1px solid #e7eaf0;
+  border-bottom: 1px solid #e6dfda;
   overflow-x: auto;
 }
 
@@ -389,13 +389,13 @@ function goBack() {
   flex: 0 0 auto;
   border: 0;
   background: transparent;
-  color: #98a2b3;
+  color: #98857c;
   font-size: 9px;
   cursor: pointer;
 }
 
 .profile-tabs button.active {
-  color: #344054;
+  color: #4d3933;
   font-weight: 800;
 }
 
@@ -406,7 +406,7 @@ function goBack() {
   bottom: -1px;
   height: 2px;
   content: "";
-  background: #4169e1;
+  background: #684b41;
 }
 
 .profile-form {
@@ -427,7 +427,7 @@ function goBack() {
 .form-grid label > span {
   display: block;
   margin-bottom: 6px;
-  color: #667085;
+  color: #806c63;
   font-size: 8px;
   font-weight: 700;
 }
@@ -438,18 +438,18 @@ function goBack() {
   min-height: 31px;
   box-sizing: border-box;
   padding: 7px 9px;
-  border: 1px solid #e4e8ee;
+  border: 1px solid #e6dfda;
   border-radius: 2px;
   outline: 0;
   background: #fff;
-  color: #344054;
+  color: #4d3933;
   font-size: 9px;
 }
 
 .form-grid input:focus,
 .form-grid select:focus {
-  border-color: #4169e1;
-  box-shadow: 0 0 0 2px rgba(65,105,225,.08);
+  border-color: #684b41;
+  box-shadow: 0 0 0 2px rgba(104,75,65,.10);
 }
 
 .form-footer {
@@ -459,7 +459,7 @@ function goBack() {
   min-height: 66px;
   margin: 0 -16px;
   padding: 0 16px;
-  border-top: 1px solid #edf0f4;
+  border-top: 1px solid #eee8e3;
 }
 
 .update-button {
@@ -467,7 +467,7 @@ function goBack() {
   padding: 8px 15px;
   border: 0;
   border-radius: 3px;
-  background: #4169e1;
+  background: #684b41;
   color: #fff;
   font-size: 9px;
   font-weight: 800;
@@ -475,11 +475,11 @@ function goBack() {
 }
 
 .update-button:hover {
-  background: #3155c8;
+  background: #4f352e;
 }
 
 .save-message {
-  color: #4b9b61;
+  color: #55865d;
   font-size: 9px;
 }
 
@@ -487,10 +487,10 @@ function goBack() {
   width: min(1040px, calc(100% - 36px));
   margin: -25px auto 30px;
   padding: 9px 12px;
-  border: 1px solid #dbe4fa;
+  border: 1px solid #eadfd8;
   border-radius: 5px;
-  background: #f4f7ff;
-  color: #52648c;
+  background: #fbf7f3;
+  color: #806c63;
   font-size: 10px;
 }
 
