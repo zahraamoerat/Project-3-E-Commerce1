@@ -443,6 +443,8 @@ onMounted(loadDashboard);
 
 <style scoped>
 .dashboard-page {
+  width: min(1280px, 94%);
+  margin: 0 auto;
   --dashboard-green: #5c3d24;
   --dashboard-green-dark: #4e342e;
   --dashboard-green-soft: #f3e7d9;
@@ -452,9 +454,7 @@ onMounted(loadDashboard);
   --dashboard-border: #e2d7cf;
   --dashboard-white: #fffefa;
   color: var(--dashboard-ink);
-  max-width: 1420px;
-  margin: 0 auto;
-  padding: 6px 4px 40px;
+  padding: 6px 0 40px;
 }
 
 .hero-card {
@@ -1110,5 +1110,5 @@ onMounted(loadDashboard);
 .dashboard-page { min-height: 100vh; background: #f7f5f2; color: #2f211d; }
 .dashboard-page h1, .dashboard-page h2 { font-family: Georgia, "Times New Roman", serif; color: #2f211d; }
 .hero-card, .metric-card, .panel { border-color: #e6ddd7; box-shadow: 0 8px 24px rgba(62,43,29,.05); }
-@media (max-width: 760px) { .dashboard-page { width: 100%; } }
+@media (max-width: 760px) { .dashboard-page { width: calc(100% - 24px); } }
 </style>
