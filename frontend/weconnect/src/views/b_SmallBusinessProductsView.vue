@@ -1470,6 +1470,16 @@ onBeforeUnmount(() => {
   .related-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 10px; }
   .related-product-image-wrap { height: 150px; }
 }
+
+/* Shared small-business visual system */
+:global(body) { margin: 0; background: #f7f5f2; }
+:global(*) { box-sizing: border-box; }
+.shop-page { min-height: 100vh; background: #f7f5f2; color: #2f211d; }
+.shop-hero { background: #553c35; color: #fff; }
+.shop-hero h1 { font-family: Georgia, "Times New Roman", serif; }
+.shop-main { width: min(1280px, 94%); margin: 0 auto; }
+.beauty-product-card, .filter-sidebar { border-color: #e6ddd7; box-shadow: 0 8px 24px rgba(62,43,29,.05); }
+@media (max-width: 760px) { .shop-main { width: calc(100% - 24px); } }
 </style>
 
 <style scoped>
