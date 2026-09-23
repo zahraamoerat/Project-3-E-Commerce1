@@ -13,6 +13,7 @@ import supplierRoutes from "./routes/supplierRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 // ===============================
 // SMALL BUSINESS ROUTES
@@ -64,6 +65,12 @@ app.get("/", (_req, res) => {
     message: "WeConnect backend is running",
   });
 });
+
+// ===============================
+// AUTHENTICATION APIs
+// ===============================
+
+app.use("/api/auth", authRoutes);
 
 // ===============================
 // SUPPLIER APIs
