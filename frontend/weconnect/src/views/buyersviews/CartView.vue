@@ -1,5 +1,6 @@
 <template>
   <div class="cart-page">
+    <SmallBusinessNavbar />
     <main class="main-content">
       <p v-if="error" class="error-message">{{ error }}</p>
       <p v-if="isLoading" class="loading-message">Loading your cart...</p>
@@ -185,6 +186,7 @@
 
 <script>
 import { api } from "@/services/api";
+import SmallBusinessNavbar from "@/components/SmallBusinessNavbar.vue";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 
