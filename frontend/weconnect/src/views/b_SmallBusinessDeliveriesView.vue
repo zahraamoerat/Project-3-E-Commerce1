@@ -185,7 +185,7 @@
 
               <div>
                 <span>FROM</span>
-                <strong>{{ delivery.supplier }}</strong>
+                <strong>{{ delivery.pickupLabel || delivery.supplier }}</strong>
               </div>
             </div>
 
@@ -196,7 +196,7 @@
                 class="connect-sb-deliveries-route-progress"
                 :class="{
                   complete:
-                    delivery.deliveryStatus.toLowerCase() === 'completed'
+                    journeyComplete(delivery.deliveryStatus)
                 }"
               ></span>
 
@@ -213,7 +213,7 @@
 
               <div>
                 <span>TO</span>
-                <strong>Your Business</strong>
+                <strong>{{ delivery.destinationLabel || 'Your Business' }}</strong>
               </div>
 
             </div>
@@ -233,6 +233,14 @@
             </div>
 
             <div>
+              <span>METHOD</span>
+
+              <strong>
+                {{ delivery.deliveryMethod }}
+              </strong>
+            </div>
+
+            <div>
               <span>PAYMENT</span>
 
               <strong
@@ -243,10 +251,12 @@
             </div>
 
             <div>
-              <span>DELIVERY FEE</span>
+              <span>ROUTE SETUP</span>
 
-              <strong>
-                R {{ Number(delivery.deliveryFee).toFixed(2) }}
+              <strong
+                :class="delivery.setupConfirmedAt ? 'setup-done' : 'setup-missing'"
+              >
+                {{ delivery.setupConfirmedAt ? 'Confirmed' : 'Not set up' }}
               </strong>
             </div>
 
@@ -448,8 +458,7 @@
               <span
                 :class="{
                   active:
-                    selectedDelivery.deliveryStatus.toLowerCase() !==
-                    'pending'
+                    journeyOnRoad(selectedDelivery.deliveryStatus)
                 }"
               ></span>
             </div>
@@ -460,12 +469,7 @@
               class="connect-sb-deliveries-journey-step"
               :class="{
                 complete:
-                  selectedDelivery.deliveryStatus.toLowerCase() ===
-                    'in transit' ||
-                  selectedDelivery.deliveryStatus.toLowerCase() ===
-                    'out for delivery' ||
-                  selectedDelivery.deliveryStatus.toLowerCase() ===
-                    'completed'
+                  journeyTransit(selectedDelivery.deliveryStatus)
               }"
             >
 
@@ -492,10 +496,7 @@
               <span
                 :class="{
                   active:
-                    selectedDelivery.deliveryStatus.toLowerCase() ===
-                      'out for delivery' ||
-                    selectedDelivery.deliveryStatus.toLowerCase() ===
-                      'completed'
+                    journeyFinal(selectedDelivery.deliveryStatus)
                 }"
               ></span>
 
@@ -507,8 +508,7 @@
               class="connect-sb-deliveries-journey-step"
               :class="{
                 complete:
-                  selectedDelivery.deliveryStatus.toLowerCase() ===
-                  'completed'
+                  journeyComplete(selectedDelivery.deliveryStatus)
               }"
             >
 
@@ -562,6 +562,13 @@
               </div>
 
               <div class="connect-sb-deliveries-detail-item">
+                <span>Delivery Method</span>
+                <strong>
+                  {{ selectedDelivery.deliveryMethod }}
+                </strong>
+              </div>
+
+              <div class="connect-sb-deliveries-detail-item">
                 <span>Supplier</span>
                 <strong>
                   {{ selectedDelivery.supplier }}
@@ -572,6 +579,20 @@
                 <span>Payment Status</span>
                 <strong>
                   {{ selectedDelivery.paymentStatus }}
+                </strong>
+              </div>
+
+              <div class="connect-sb-deliveries-detail-item">
+                <span>Pickup Location</span>
+                <strong>
+                  {{ selectedDelivery.pickupLabel || 'Not set up' }}
+                </strong>
+              </div>
+
+              <div class="connect-sb-deliveries-detail-item">
+                <span>Delivery Destination</span>
+                <strong>
+                  {{ selectedDelivery.destinationLabel || 'Not set up' }}
                 </strong>
               </div>
 
@@ -646,25 +667,43 @@
           <div class="connect-sb-deliveries-live-banner-content">
 
             <span>
-              LIVE DELIVERY TRACKING
+              DELIVERY ROUTE
             </span>
 
-            <strong>
-              Follow this shipment on the map
-            </strong>
+            <template v-if="selectedDelivery.setupConfirmedAt">
 
-            <p>
-              View the current delivery route and vehicle location through WeConnect tracking.
-            </p>
+              <strong>
+                Route confirmed
+              </strong>
+
+              <p>
+                {{ routeSummary(selectedDelivery) }}
+              </p>
+
+            </template>
+
+            <template v-else>
+
+              <strong>
+                Route not prepared yet
+              </strong>
+
+              <p>
+                Set the pickup and destination first so the courier route can be prepared honestly.
+              </p>
+
+            </template>
 
           </div>
 
 
           <router-link
-            :to="`/tracking/${selectedDelivery.deliveryId}`"
+            :to="selectedDelivery.setupConfirmedAt
+              ? `/tracking/${selectedDelivery.deliveryId}`
+              : `/small-business/deliveries/location/${selectedDelivery.deliveryId}`"
             class="connect-sb-deliveries-open-tracking"
           >
-            Open Tracking
+            {{ selectedDelivery.setupConfirmedAt ? 'Track Delivery' : 'Set Up Location' }}
 
             <FontAwesomeIcon :icon="faArrowRight" />
           </router-link>
@@ -721,11 +760,19 @@ async function loadDeliveries() {
       supplier: delivery.supplier_name,
       courier: delivery.courier_name,
       trackingReference: delivery.tracking_reference,
+      deliveryMethod: delivery.delivery_method || 'Not chosen',
       deliveryStatus: delivery.current_status || 'Pending',
       paymentStatus: delivery.payment_status || 'Pending',
       deliveryFee: 0,
       total: Number(delivery.total_amount || 0),
-      estimatedArrival: delivery.estimated_arrival
+      estimatedArrival: delivery.estimated_arrival,
+
+      // Prepared route details persisted during location setup.
+      pickupLabel: delivery.pickup_label || null,
+      destinationLabel: delivery.destination_label || null,
+      routeDistanceM: Number(delivery.route_distance_m || 0),
+      routeDurationS: Number(delivery.route_duration_s || 0),
+      setupConfirmedAt: delivery.setup_confirmed_at || null
     }))
   } catch (error) {
     console.error('Error loading deliveries:', error)
@@ -740,7 +787,8 @@ const activeDeliveries = computed(() => {
     const status = delivery.deliveryStatus.toLowerCase()
 
     return status !== 'completed' &&
-      status !== 'delivered'
+      status !== 'delivered' &&
+      status !== 'cancelled'
   }).length
 })
 
@@ -753,6 +801,58 @@ const completedDeliveries = computed(() => {
       status === 'delivered'
   }).length
 })
+
+// A courier has the parcel once it is dispatched or further along.
+function journeyOnRoad(status) {
+  return [
+    'Dispatched',
+    'In Transit',
+    'Out for Delivery',
+    'Delayed',
+    'Delivered'
+  ].includes(status)
+}
+
+// The parcel is only actually in transit once the status says so.
+// Being dispatched is not the same as being in transit.
+function journeyTransit(status) {
+  return [
+    'In Transit',
+    'Out for Delivery',
+    'Delayed',
+    'Delivered'
+  ].includes(status)
+}
+
+// The delivery reaches its final leg only when it is out for delivery.
+function journeyFinal(status) {
+  return ['Out for Delivery', 'Delivered'].includes(status)
+}
+
+// The journey is complete only when the delivery actually arrives.
+function journeyComplete(status) {
+  return status === 'Delivered'
+}
+
+// Describe the prepared route in a way the buyer can read back.
+function routeSummary(delivery) {
+  const distance = Number(delivery.routeDistanceM || 0)
+  const duration = Number(delivery.routeDurationS || 0)
+
+  if (!distance && !duration) {
+    return 'Pickup and destination confirmed with no route recorded.'
+  }
+
+  const km = (distance / 1000).toFixed(1)
+  const hours = Math.floor(duration / 3600)
+  const minutes = Math.round((duration % 3600) / 60)
+
+  const time = hours > 0
+    ? `${hours}h ${minutes}m`
+    : `${minutes}m drive`
+
+  return `${km} km · approx ${time} · ${delivery.pickupLabel || 'Pickup'} to ${delivery.destinationLabel || 'your business'}.`
+}
 
 // Open the selected delivery.
 function trackDelivery(delivery) {
@@ -1136,6 +1236,7 @@ onMounted(() => {
 }
 
 .connect-sb-deliveries-status.completed,
+.connect-sb-deliveries-status.delivered,
 .connect-sb-deliveries-status.paid {
   background: #E6F0E8;
   color: #3F6847;
@@ -1145,9 +1246,21 @@ onMounted(() => {
 .connect-sb-deliveries-status.pending,
 .connect-sb-deliveries-status.in-progress,
 .connect-sb-deliveries-status.in-transit,
-.connect-sb-deliveries-status.out-for-delivery {
+.connect-sb-deliveries-status.out-for-delivery,
+.connect-sb-deliveries-status.preparing-dispatch,
+.connect-sb-deliveries-status.dispatched {
   background: #F3E7D9;
   color: #8A5A32;
+}
+
+.connect-sb-deliveries-status.delayed {
+  background: #F8E2DD;
+  color: #9A4938;
+}
+
+.connect-sb-deliveries-status.cancelled {
+  background: #EEE7E2;
+  color: #7A665B;
 }
 
 .connect-sb-deliveries-status.unpaid {
@@ -1236,8 +1349,8 @@ onMounted(() => {
 /* Card information */
 .connect-sb-deliveries-card-info {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 7px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 9px 7px;
   padding: 15px 0;
   border-bottom: 1px solid #E8E2DD;
 }
@@ -1266,11 +1379,13 @@ onMounted(() => {
 }
 
 .connect-sb-deliveries-card-info strong.paid,
-.connect-sb-deliveries-card-info strong.completed {
+.connect-sb-deliveries-card-info strong.completed,
+.connect-sb-deliveries-card-info strong.setup-done {
   color: #3F6847;
 }
 
-.connect-sb-deliveries-card-info strong.unpaid {
+.connect-sb-deliveries-card-info strong.unpaid,
+.connect-sb-deliveries-card-info strong.setup-missing {
   color: #9A4938;
 }
 
