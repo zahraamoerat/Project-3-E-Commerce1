@@ -86,6 +86,20 @@ function productData(body, category_id, supplier_id) {
   }
   if (String(body.description || "").length > 2000)
     throw fail("Description must be 2000 characters or fewer.");
+  const rawBulkDiscount = body.bulkDiscount ?? body.bulk_discount ?? null;
+  let bulk_discount = null;
+  if (rawBulkDiscount !== null && rawBulkDiscount !== undefined && rawBulkDiscount !== "") {
+    const minimum_quantity = Number(rawBulkDiscount.minimum_quantity ?? rawBulkDiscount.minQuantity);
+    const discount_percent = Number(rawBulkDiscount.discount_percent ?? rawBulkDiscount.discountPercent);
+    if (!Number.isInteger(minimum_quantity) || minimum_quantity < 2) {
+      throw fail("Bulk discount minimum quantity must be a whole number of at least 2.");
+    }
+    if (!Number.isFinite(discount_percent) || discount_percent <= 0 || discount_percent > 100) {
+      throw fail("Bulk discount percentage must be greater than 0 and no more than 100.");
+    }
+    bulk_discount = { minimum_quantity, discount_percent };
+  }
+
   const images = Array.isArray(body.images)
     ? [...new Set(body.images.map((u) => String(u).trim()).filter(Boolean))]
     : [];
