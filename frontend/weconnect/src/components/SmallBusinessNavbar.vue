@@ -65,7 +65,7 @@ function goToCart() {
 
 function goToProfile() {
   mobileMenuOpen.value = false
-  router.push('/profile')
+  router.push('/small-business/profile')
 }
 </script>
 
