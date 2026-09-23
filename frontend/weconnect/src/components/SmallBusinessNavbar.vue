@@ -71,7 +71,7 @@ function goToProfile() {
   top: 0;
   z-index: 1000;
   width: 100%;
-  background: #5c3d24;
+  background: #553c35;
   color: #fff;
   border-bottom: 1px solid rgba(255,255,255,.12);
   box-shadow: 0 4px 18px rgba(62, 43, 29, .16);
@@ -101,7 +101,7 @@ function goToProfile() {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #f1d2b3;
+  background: #e79b63;
   color: #5c3d24;
   font-size: 18px;
   font-weight: 800;
@@ -120,7 +120,7 @@ function goToProfile() {
 
 .sb-brand-copy small {
   margin-top: 4px;
-  color: #e9d6c4;
+  color: #ead9cf;
   font-size: 7px;
   font-weight: 800;
   letter-spacing: 1.3px;
@@ -157,7 +157,7 @@ function goToProfile() {
   bottom: 17px;
   height: 2px;
   border-radius: 2px;
-  background: #e0a56f;
+  background: #e79b63;
 }
 
 .sb-nav-actions {
@@ -181,7 +181,7 @@ function goToProfile() {
 }
 
 .sb-nav-actions button:hover {
-  background: #755036;
+  background: #68483f;
   transform: translateY(-1px);
 }
 
