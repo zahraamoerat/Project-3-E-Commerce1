@@ -13,7 +13,7 @@ export async function getSupplierOverview(req, res, next) {
       `
       SELECT o.order_number AS id, b.business_name AS buyer,
         DATE_FORMAT(o.ordered_at, '%d %b %Y') AS date,
-        o.total_amount AS total, o.order_status AS status,
+        o.total_amount AS total, o.status AS order_status,
         GROUP_CONCAT(DISTINCT p.product_name ORDER BY p.product_name SEPARATOR ', ') AS items
       FROM orders o
       JOIN buyers b ON b.buyer_id = o.buyer_id
@@ -66,7 +66,7 @@ export async function getSupplierOverview(req, res, next) {
       orders: orders.map((order) => ({
         ...order,
         total: Number(order.total),
-        status: orderStatus(order.status),
+        status: orderStatus(order.order_status),
       })),
       deliveries: deliveries.map((delivery) => ({
         ...delivery,
@@ -102,7 +102,7 @@ export async function updateOrder(req, res, next) {
     const id = supplierId();
     await connection.beginTransaction();
     const [[order]] = await connection.execute(
-      "SELECT order_id, order_status FROM orders WHERE order_number = ? AND supplier_id = ? FOR UPDATE",
+      "SELECT order_id, status AS order_status FROM orders WHERE order_number = ? AND supplier_id = ? FOR UPDATE",
       [req.params.id, id],
     );
     if (!order) {
@@ -150,7 +150,7 @@ export async function updateOrder(req, res, next) {
       }
     }
     await connection.execute(
-      "UPDATE orders SET order_status = ? WHERE order_id = ?",
+      "UPDATE orders SET status = ? WHERE order_id = ?",
       [req.body.status, order.order_id],
     );
     await connection.commit();

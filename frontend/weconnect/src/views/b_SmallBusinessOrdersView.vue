@@ -2,6 +2,7 @@
 
   <!-- Small Business Orders page -->
   <div class="connect-sb-orders-page">
+    <SmallBusinessNavbar />
 
     <!-- Main page heading -->
     <header class="connect-sb-orders-header">
@@ -190,7 +191,7 @@
 
             <span>
               <FontAwesomeIcon :icon="faTruck" />
-              {{ order.deliveryStatus }}
+              {{ cardDeliveryLine(order) }}
             </span>
 
           </div>
@@ -274,11 +275,11 @@
               <!-- Only show tracking when a delivery has been assigned. -->
               <router-link
                 v-if="order.deliveryId"
-                :to="`/tracking/${order.deliveryId}`"
+                :to="deliveryNextLink(order)"
                 class="connect-sb-orders-track-button"
               >
                 <FontAwesomeIcon :icon="faLocationDot" />
-                Track Delivery
+                {{ deliveryNextLabel(order) }}
               </router-link>
 
             </div>
@@ -373,13 +374,18 @@
           </div>
 
           <div class="connect-sb-orders-detail-item">
+            <span>Delivery Method</span>
+            <strong>{{ selectedOrder.deliveryMethod || 'Not chosen' }}</strong>
+          </div>
+
+          <div class="connect-sb-orders-detail-item">
             <span>Delivery ID</span>
-            <strong>{{ selectedOrder.deliveryId }}</strong>
+            <strong>{{ selectedOrder.deliveryId || '—' }}</strong>
           </div>
 
           <div class="connect-sb-orders-detail-item">
             <span>Delivery Status</span>
-            <strong>{{ selectedOrder.deliveryStatus }}</strong>
+            <strong>{{ selectedOrder.deliveryStatus || 'Not assigned' }}</strong>
           </div>
 
           <div class="connect-sb-orders-detail-item">
@@ -426,15 +432,109 @@
         </div>
 
 
+        <!-- Delivery method choice -->
+        <div class="connect-sb-orders-delivery-choice">
+
+          <div class="connect-sb-orders-delivery-choice-head">
+
+            <p class="connect-sb-orders-delivery-eyebrow">
+              DELIVERY METHOD
+            </p>
+
+            <h3>
+              How will you receive this order?
+            </h3>
+
+          </div>
+
+
+          <p
+            v-if="deliveryMethodLocked(selectedOrder)"
+            class="connect-sb-orders-delivery-locked"
+          >
+            Delivery is {{ selectedOrder.deliveryStatus || 'complete' }} and can no longer be changed to self collection.
+          </p>
+
+
+          <template v-else>
+
+            <div class="connect-sb-orders-delivery-options">
+
+              <button
+                type="button"
+                class="connect-sb-orders-delivery-option"
+                :class="{ active: selectedMethod === 'Self Collection' }"
+                @click="selectedMethod = 'Self Collection'"
+              >
+                <strong>Self Collection</strong>
+                <span>Pick up this order yourself. No WeConnect delivery is dispatched.</span>
+              </button>
+
+              <button
+                type="button"
+                class="connect-sb-orders-delivery-option"
+                :class="{ active: selectedMethod === 'WeConnect Delivery' }"
+                @click="selectedMethod = 'WeConnect Delivery'"
+              >
+                <strong>WeConnect Delivery</strong>
+                <span>A driver collects from the supplier warehouse and delivers to your business.</span>
+              </button>
+
+            </div>
+
+
+            <div class="connect-sb-orders-delivery-confirm">
+
+              <button
+                type="button"
+                class="connect-sb-orders-delivery-confirm-button"
+                :disabled="!deliveryMethodDirty || methodSaving"
+                @click="confirmDeliveryMethod()"
+              >
+                {{ methodSaving ? 'Saving…' : 'Confirm Delivery Method' }}
+              </button>
+
+              <p
+                v-if="methodNotice"
+                class="connect-sb-orders-delivery-notice"
+              >
+                {{ methodNotice }}
+              </p>
+
+              <p
+                v-if="methodError"
+                class="connect-sb-orders-delivery-error"
+              >
+                {{ methodError }}
+              </p>
+
+            </div>
+
+          </template>
+
+
+          <router-link
+            v-if="deliverySetupLink(selectedOrder)"
+            :to="deliverySetupLink(selectedOrder)"
+            class="connect-sb-orders-setup-button"
+          >
+            <FontAwesomeIcon :icon="faLocationDot" />
+            Continue to Delivery Setup
+          </router-link>
+
+        </div>
+
+
         <!-- Detail actions -->
         <div class="connect-sb-orders-detail-actions">
 
           <router-link
-            :to="`/tracking?order=${selectedOrder.id}`"
+            v-if="selectedOrder.deliveryId"
+            :to="deliveryNextLink(selectedOrder)"
             class="connect-sb-orders-track-button"
           >
             <FontAwesomeIcon :icon="faTruckFast" />
-            Track Delivery
+            {{ deliveryNextLabel(selectedOrder) }}
           </router-link>
 
 
@@ -460,6 +560,7 @@
 
 
 <script setup>
+import SmallBusinessNavbar from '../components/SmallBusinessNavbar.vue'
 import { computed, onMounted, ref } from 'vue'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -479,6 +580,12 @@ const orders = ref([])
 
 // Store the order currently being viewed.
 const selectedOrder = ref(null)
+
+// Delivery method choice state.
+const selectedMethod = ref(null)
+const methodSaving = ref(false)
+const methodNotice = ref('')
+const methodError = ref('')
 
 // Search and filter controls.
 const searchQuery = ref('')
@@ -515,6 +622,17 @@ const activeOrdersCount = computed(() => {
   return orders.value.filter(order => {
     return !['Completed', 'Cancelled'].includes(order.status)
   }).length
+})
+
+// True when the selected method differs from the currently saved method.
+const deliveryMethodDirty = computed(() => {
+  const order = selectedOrder.value
+
+  if (!order || !selectedMethod.value) {
+    return false
+  }
+
+  return selectedMethod.value !== order.deliveryMethod
 })
 
 // Calculate the total including the delivery fee.
@@ -572,6 +690,67 @@ function getStatusClass(status) {
     .replace(/\s+/g, '-')
 }
 
+// A short delivery line for the order card.
+function cardDeliveryLine(order) {
+  if (!order.deliveryMethod) {
+    return 'Choose delivery method'
+  }
+
+  if (order.deliveryMethod === 'WeConnect Delivery' && order.deliveryId) {
+    return `${order.deliveryMethod} — ${order.deliveryStatus}`
+  }
+
+  return order.deliveryMethod
+}
+
+// The delivery method can no longer be changed once the order is done or
+// the courier has started moving the delivery.
+function deliveryMethodLocked(order) {
+  if (!order) {
+    return true
+  }
+
+  if (['Delivered', 'Cancelled'].includes(order.status)) {
+    return true
+  }
+
+  return [
+    'Dispatched',
+    'In Transit',
+    'Out for Delivery',
+    'Delayed',
+    'Delivered'
+  ].includes(order.deliveryStatus)
+}
+
+// Where the "delivery" card and detail action should lead next. A route
+// must be prepared before the buyer can start tracking the courier.
+function deliveryNextLink(order) {
+  if (order.setupConfirmedAt) {
+    return `/tracking/${order.deliveryId}`
+  }
+
+  return `/small-business/deliveries/location/${order.deliveryId}`
+}
+
+function deliveryNextLabel(order) {
+  return order.setupConfirmedAt ? 'Track Delivery' : 'Set Up Location'
+}
+
+// Show the location setup step only for a WeConnect delivery that has not
+// already moved beyond the preparation stage.
+function deliverySetupLink(order) {
+  if (!order || order.deliveryMethod !== 'WeConnect Delivery') {
+    return null
+  }
+
+  if (deliveryMethodLocked(order) || !order.deliveryId) {
+    return null
+  }
+
+  return `/small-business/deliveries/location/${order.deliveryId}`
+}
+
 // Get the items already loaded for an order.
 function getOrderItems(order) {
   return order.items || []
@@ -580,6 +759,57 @@ function getOrderItems(order) {
 // Open the selected order.
 function viewOrder(order) {
   selectedOrder.value = order
+  selectedMethod.value =
+    order.deliveryMethod || (order.deliveryId ? 'WeConnect Delivery' : 'Self Collection')
+  methodNotice.value = ''
+  methodError.value = ''
+}
+
+// Save the chosen delivery method for the order.
+async function confirmDeliveryMethod() {
+  const order = selectedOrder.value
+
+  if (!order || !selectedMethod.value) {
+    return
+  }
+
+  methodSaving.value = true
+  methodError.value = ''
+  methodNotice.value = ''
+
+  try {
+    const response = await fetch(
+      `/api/orders/${order.id}/delivery-method?buyerId=1`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ method: selectedMethod.value })
+      }
+    )
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      methodError.value =
+        data.message || 'Could not update the delivery method.'
+      return
+    }
+
+    order.deliveryMethod = data.delivery_method
+    order.deliveryId = data.delivery_id || order.deliveryId
+    order.deliveryStatus = data.delivery_status || order.deliveryStatus
+    order.setupConfirmedAt = null
+
+    methodNotice.value = data.message
+  } catch (error) {
+    console.error('Error updating delivery method:', error)
+
+    methodError.value = 'Could not reach the server. Please try again.'
+  } finally {
+    methodSaving.value = false
+  }
 }
 
 async function loadOrderPayment(orderId) {
@@ -677,6 +907,8 @@ async function loadOrders() {
 
           // Delivery information comes from the related delivery record.
           deliveryId: order.delivery_id || null,
+          deliveryMethod: order.delivery_method || null,
+          setupConfirmedAt: order.setup_confirmed_at || null,
           trackingReference: order.tracking_reference || null,
           deliveryStatus: order.delivery_status || 'Not assigned',
           estimatedArrival: order.estimated_arrival || null,
@@ -717,7 +949,7 @@ onMounted(() => {
   min-height: 100vh;
   padding: 34px;
   box-sizing: border-box;
-  background: #E8E2DD;
+  background: #f5f0eb;
   color: #5C3D24;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -1553,6 +1785,188 @@ onMounted(() => {
 }
 
 
+/* Delivery method choice */
+.connect-sb-orders-delivery-choice {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border: 1px solid #E7DDD5;
+  border-radius: 13px;
+  background: #FFFCF8;
+}
+
+.connect-sb-orders-delivery-choice-head {
+  margin-bottom: 13px;
+}
+
+.connect-sb-orders-delivery-eyebrow {
+  margin: 0 0 4px;
+  color: #D17A4A;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.connect-sb-orders-delivery-choice-head h3 {
+  margin: 0;
+  color: #4E342E;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.connect-sb-orders-delivery-locked {
+  margin: 0;
+  padding: 10px 13px;
+  border-radius: 9px;
+  background: #F8E2DD;
+  color: #9A4938;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.connect-sb-orders-delivery-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.connect-sb-orders-delivery-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+  padding: 13px 15px;
+  box-sizing: border-box;
+  border: 1px solid #D8CCC4;
+  border-radius: 11px;
+  background: #FFFEFC;
+  color: #5C3D24;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.connect-sb-orders-delivery-option:hover {
+  transform: translateY(-1px);
+  border-color: #BFAF96;
+  box-shadow: 0 4px 12px rgba(78, 52, 46, 0.07);
+}
+
+.connect-sb-orders-delivery-option.active {
+  border-color: #8A5A32;
+  background: #F3E7D9;
+  box-shadow: inset 0 0 0 1px #8A5A32;
+}
+
+.connect-sb-orders-delivery-option strong {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.connect-sb-orders-delivery-option span {
+  color: #8A766B;
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.connect-sb-orders-delivery-option.active span {
+  color: #5C3D24;
+}
+
+.connect-sb-orders-delivery-confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.connect-sb-orders-delivery-confirm-button {
+  min-height: 38px;
+  padding: 9px 16px;
+  box-sizing: border-box;
+  border: 1px solid #5C3D24;
+  border-radius: 9px;
+  background: #5C3D24;
+  color: #FFFEFC;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.connect-sb-orders-delivery-confirm-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #4E342E;
+  box-shadow: 0 4px 12px rgba(92, 61, 36, 0.22);
+}
+
+.connect-sb-orders-delivery-confirm-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.connect-sb-orders-delivery-notice {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #E6F0E8;
+  color: #3F6847;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.connect-sb-orders-delivery-error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #F8E2DD;
+  color: #9A4938;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.connect-sb-orders-setup-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  margin-top: 14px;
+  padding: 10px 17px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  background: #4E342E;
+  color: #FFFEFC;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.connect-sb-orders-setup-button:hover {
+  transform: translateY(-2px);
+  background: #3C2823;
+  box-shadow: 0 6px 16px rgba(78, 52, 46, 0.24);
+}
+
+
 /* Tablet */
 @media (max-width: 1050px) {
 
@@ -1672,6 +2086,20 @@ onMounted(() => {
     padding: 20px 16px;
   }
 
+  .connect-sb-orders-delivery-options {
+    grid-template-columns: 1fr;
+  }
+
+  .connect-sb-orders-delivery-confirm {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .connect-sb-orders-delivery-confirm-button {
+    width: 100%;
+  }
+
   .connect-sb-orders-details-grid {
     grid-template-columns: 1fr;
   }
@@ -1687,4 +2115,14 @@ onMounted(() => {
 
 }
 
+</style>
+<style scoped>
+/* Shared WeConnect brown theme refinements */
+.connect-sb-orders-page { --sb-brown: #5c3d24; --sb-brown-dark: #4e342e; --sb-brown-soft: #eadfd5; --sb-accent: #c48b5b; }
+.connect-sb-orders-page h1, .connect-sb-orders-page h2, .connect-sb-orders-page h3 { color: var(--sb-brown); }
+.connect-sb-orders-page .connect-sb-orders-card { border-color: #dfd1c5; }
+.connect-sb-orders-page .connect-sb-orders-tab.active,
+.connect-sb-orders-page .connect-sb-orders-view-button.active,
+.connect-sb-orders-page .connect-sb-orders-pay-button { background: var(--sb-brown); color: #fff; border-color: var(--sb-brown); }
+.connect-sb-orders-page .connect-sb-orders-tab { color: var(--sb-brown); }
 </style>

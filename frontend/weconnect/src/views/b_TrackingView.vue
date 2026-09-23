@@ -28,7 +28,10 @@
           {{ delivery?.order_number || 'Order' }}
         </div>
 
-        <div class="connect-tracking-order-status">
+        <div
+          class="connect-tracking-order-status"
+          :class="{ 'status-cancelled': isCancelled() }"
+        >
           <span class="connect-tracking-status-dot"></span>
           {{ isCancelled() ? 'Cancelled' : (delivery?.current_status || trackingStatus) }}
         </div>
@@ -41,22 +44,30 @@
     <section class="connect-tracking-journey-strip">
 
       <div class="connect-tracking-party">
+
         <div class="connect-tracking-party-icon">
           <font-awesome-icon :icon="faWarehouse" />
         </div>
 
         <div>
-          <span>DISPATCHED FROM</span>
+          <span>PICKUP</span>
           <strong>{{ delivery?.supplier_name || 'Supplier' }}</strong>
-          <small>{{ delivery?.supplier_city || 'Location unavailable' }}</small>
+          <small>{{ delivery?.pickup_label || delivery?.supplier_city || 'Pickup not set up yet' }}</small>
         </div>
+
       </div>
 
 
       <div class="connect-tracking-journey-line">
-        <div class="connect-tracking-journey-progress"></div>
+        <div
+          class="connect-tracking-journey-progress"
+          :style="{ width: `${journeyProgress}%` }"
+        ></div>
 
-        <div class="connect-tracking-truck-icon">
+        <div
+          class="connect-tracking-truck-icon"
+          :style="{ left: `${journeyProgress}%` }"
+        >
           <font-awesome-icon :icon="faTruckFast" />
         </div>
       </div>
@@ -68,9 +79,9 @@
         </div>
 
         <div>
-          <span>DELIVERING TO</span>
+          <span>DESTINATION</span>
           <strong>{{ delivery?.buyer_name || 'Small Business' }}</strong>
-          <small>{{ delivery?.buyer_city || 'Location unavailable' }}</small>
+          <small>{{ delivery?.destination_label || delivery?.buyer_city || 'Destination not set up yet' }}</small>
         </div>
       </div>
 
@@ -87,7 +98,7 @@
 
           <div>
             <div class="connect-tracking-section-eyebrow">
-              LIVE LOCATION
+              COURIER LOCATION
             </div>
 
             <h2>
@@ -95,14 +106,14 @@
             </h2>
 
             <p>
-              The vehicle location updates automatically while the shipment is in transit.
+              The vehicle position appears once the courier shares a GPS location while in transit.
             </p>
           </div>
 
           <!-- Live indicator -->
           <div class="connect-tracking-live-badge">
             <span></span>
-            LIVE
+            {{ hasGps ? 'GPS ACTIVE' : 'WAITING GPS' }}
           </div>
 
         </div>
@@ -191,7 +202,7 @@
           </strong>
 
           <p>
-            Based on the vehicle's current simulated location.
+            Based on the prepared route. An arrival time appears once the courier shares GPS updates.
           </p>
 
         </div>
@@ -228,6 +239,24 @@
             <div
               class="connect-tracking-status-row"
               :class="{
+                active: isCurrentStatus('Preparing Dispatch'),
+                completed: isStatusReached('Preparing Dispatch')
+              }"
+            >
+              <div class="connect-tracking-status-marker">
+                <span></span>
+              </div>
+
+              <div>
+                <strong>Preparing dispatch</strong>
+                <span>Pickup and route ready at the supplier</span>
+              </div>
+            </div>
+
+
+            <div
+              class="connect-tracking-status-row"
+              :class="{
                 active: isCurrentStatus('Dispatched'),
                 completed: isStatusReached('Dispatched')
               }"
@@ -246,12 +275,8 @@
             <div
               class="connect-tracking-status-row"
               :class="{
-                active:
-                  isCurrentStatus('Out for delivery') ||
-                  isCurrentStatus('Shipped'),
-                completed:
-                  isStatusReached('Out for delivery') ||
-                  isStatusReached('Shipped')
+                active: isCurrentStatus('In Transit'),
+                completed: isStatusReached('In Transit')
               }"
             >
               <div class="connect-tracking-status-marker">
@@ -259,8 +284,26 @@
               </div>
 
               <div>
-                <strong>{{ trackingStatus }}</strong>
-                <span>Vehicle is travelling to destination</span>
+                <strong>In transit</strong>
+                <span>Vehicle travelling towards the destination</span>
+              </div>
+            </div>
+
+
+            <div
+              class="connect-tracking-status-row"
+              :class="{
+                active: isCurrentStatus('Out for Delivery'),
+                completed: isStatusReached('Out for Delivery')
+              }"
+            >
+              <div class="connect-tracking-status-marker">
+                <span></span>
+              </div>
+
+              <div>
+                <strong>Out for delivery</strong>
+                <span>Final leg of the journey</span>
               </div>
             </div>
 
@@ -278,7 +321,7 @@
 
               <div>
                 <strong>Delivered</strong>
-                <span>Awaiting arrival</span>
+                <span>Shipment received by the business</span>
               </div>
             </div>
 
@@ -303,7 +346,12 @@
 
           <div class="connect-tracking-detail-row">
             <span>Delivery</span>
-            <strong>{{ delivery?.delivery_id || 'Not assigned' }}</strong>
+            <strong>{{ delivery?.delivery_id ?? 'Not assigned' }}</strong>
+          </div>
+
+          <div class="connect-tracking-detail-row">
+            <span>Delivery method</span>
+            <strong>{{ delivery?.delivery_method || 'Self Collection' }}</strong>
           </div>
 
           <div class="connect-tracking-detail-row">
@@ -313,12 +361,17 @@
 
           <div class="connect-tracking-detail-row">
             <span>From</span>
-            <strong>{{ delivery?.supplier_name || 'Supplier' }}</strong>
+            <strong>{{ delivery?.pickup_label || delivery?.supplier_name || 'Supplier' }}</strong>
           </div>
 
           <div class="connect-tracking-detail-row">
             <span>To</span>
-            <strong>{{ delivery?.buyer_name || 'Small Business' }}</strong>
+            <strong>{{ delivery?.destination_label || delivery?.buyer_name || 'Small Business' }}</strong>
+          </div>
+
+          <div v-if="routeSummary" class="connect-tracking-detail-row">
+            <span>Route</span>
+            <strong>{{ routeSummary }}</strong>
           </div>
 
         </div>
@@ -378,9 +431,9 @@
           </div>
 
           <div>
-            <span>ORIGIN</span>
-            <strong>{{ delivery?.supplier_name || 'Supplier' }}</strong>
-            <small>{{ delivery?.supplier_city || 'Location unavailable' }}</small>
+            <span>PICKUP</span>
+            <strong>{{ delivery?.pickup_label || delivery?.supplier_name || 'Supplier' }}</strong>
+            <small>{{ delivery?.supplier_city || 'Pickup not set up yet' }}</small>
           </div>
 
         </div>
@@ -395,7 +448,7 @@
             ></div>
           </div>
 
-          <div class="connect-tracking-route-truck">
+          <div class="connect-tracking-route-truck" :style="{ left: `${trackingProgress}%` }">
             <font-awesome-icon :icon="faTruckFast" />
           </div>
 
@@ -410,8 +463,8 @@
 
           <div>
             <span>DESTINATION</span>
-            <strong>{{ delivery?.buyer_name || 'Small Business' }}</strong>
-            <small>{{ delivery?.buyer_city || 'Location unavailable' }}</small>
+            <strong>{{ delivery?.destination_label || delivery?.buyer_name || 'Small Business' }}</strong>
+            <small>{{ delivery?.buyer_city || 'Destination not set up yet' }}</small>
           </div>
 
         </div>
@@ -425,7 +478,7 @@
 
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import TrackingMap from '../components/tracking/TrackingMap.vue'
@@ -581,9 +634,10 @@ function isStatusReached(status) {
     'Pending',
     'Confirmed',
     'Processing',
+    'Preparing Dispatch',
     'Dispatched',
-    'Out for delivery',
-    'Shipped',
+    'In Transit',
+    'Out for Delivery',
     'Delivered'
   ]
 
@@ -596,6 +650,55 @@ function isStatusReached(status) {
 
   return currentIndex >= statusIndex
 }
+
+// Whether a real courier GPS position is available yet.
+const hasGps = computed(() => {
+  return Boolean(
+    latestLocation.value?.latitude &&
+    latestLocation.value?.longitude
+  )
+})
+
+// Honest journey progress: nothing is filled until the shipment is
+// actually delivered, and no percentage is invented in between.
+const journeyProgress = computed(() => {
+  if (
+    delivery.value &&
+    isStatusReached('Delivered')
+  ) {
+    return 100
+  }
+
+  return 0
+})
+
+// Human-readable summary of the prepared route, if one exists.
+const routeSummary = computed(() => {
+  const deliveryData = delivery.value
+
+  if (!deliveryData) {
+    return ''
+  }
+
+  if (
+    !deliveryData.route_distance_m &&
+    !deliveryData.route_duration_s
+  ) {
+    return ''
+  }
+
+  const parts = []
+
+  if (deliveryData.route_distance_m) {
+    parts.push(`${(deliveryData.route_distance_m / 1000).toFixed(1)} km`)
+  }
+
+  if (deliveryData.route_duration_s) {
+    parts.push(`${Math.round(deliveryData.route_duration_s / 60)} min`)
+  }
+
+  return parts.join(' · ')
+})
 
 // Check whether the delivery has been cancelled.
 function isCancelled() {
@@ -728,6 +831,14 @@ onBeforeUnmount(() => {
   background: #5C8A60;
 }
 
+.connect-tracking-order-status.status-cancelled {
+  color: #A94442;
+}
+
+.connect-tracking-order-status.status-cancelled .connect-tracking-status-dot {
+  background: #A94442;
+}
+
 
 /* Shared journey */
 .connect-tracking-journey-strip {
@@ -788,7 +899,7 @@ onBeforeUnmount(() => {
 }
 
 .connect-tracking-journey-progress {
-  width: 68%;
+  width: 0;
   height: 100%;
   background: #D17A4A;
 }
@@ -796,7 +907,7 @@ onBeforeUnmount(() => {
 .connect-tracking-truck-icon {
   position: absolute;
   top: 50%;
-  left: 68%;
+  left: 0;
   transform: translate(-50%, -50%);
   width: 31px;
   height: 31px;
@@ -1274,7 +1385,7 @@ onBeforeUnmount(() => {
 .connect-tracking-route-truck {
   position: absolute;
   top: 50%;
-  left: 68%;
+  left: 0;
   transform: translate(-50%, -50%);
   width: 28px;
   height: 28px;

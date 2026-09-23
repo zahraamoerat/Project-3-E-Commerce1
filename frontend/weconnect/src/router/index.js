@@ -144,6 +144,13 @@ const routes = [
   },
 
   {
+    path: "/small-business/deliveries/location/:deliveryId",
+    name: "small-business-delivery-location-setup",
+    component: () =>
+      import("../views/b_DeliveryLocationSetupView.vue"),
+  },
+
+  {
     path: "/supplier/deliveries",
     name: "supplier-deliveries",
     component: () => import("../views/b_SupplierDeliveriesView.vue"),

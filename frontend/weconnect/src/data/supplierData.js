@@ -59,7 +59,7 @@ export async function loadCategories(force = false) {
 
 export async function refreshSupplierProducts() {
   try {
-    await refreshSupplierProducts();
+    await loadSupplierData(true);
     error.value = "";
     return products.value;
   } catch (requestError) {
