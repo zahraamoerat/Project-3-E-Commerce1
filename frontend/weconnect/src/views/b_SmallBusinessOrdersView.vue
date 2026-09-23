@@ -950,7 +950,7 @@ onMounted(() => {
 /* Main page */
 .connect-sb-orders-page {
   min-height: 100vh;
-  padding: 34px;
+  padding: 0 0 34px;
   box-sizing: border-box;
   background: #f5f0eb;
   color: #5C3D24;
