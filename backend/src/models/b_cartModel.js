@@ -11,6 +11,7 @@ export async function getCartItems(buyerId) {
       p.price,
       p.product_image AS image,
       p.unit,
+      p.sku,
       COALESCE(i.quantity, 0) AS stockQty,
       s.business_name AS supplier,
       CASE
@@ -33,13 +34,21 @@ export async function getCartItems(buyerId) {
 }
 
 export async function addCartItem(buyerId, productId, quantity) {
-  const [result] = await pool.query(`
+  await pool.query(`
     INSERT INTO cart_items (buyer_id, product_id, quantity)
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)
   `, [buyerId, productId, quantity]);
 
-  return { cartItemId: result.insertId, buyerId, productId, quantity };
+  const [rows] = await pool.query(`
+    SELECT cart_item_id AS cartItemId, buyer_id AS buyerId,
+           product_id AS productId, quantity
+    FROM cart_items
+    WHERE buyer_id = ? AND product_id = ?
+    LIMIT 1
+  `, [buyerId, productId]);
+
+  return rows[0];
 }
 
 export async function updateCartItem(cartItemId, quantity) {
