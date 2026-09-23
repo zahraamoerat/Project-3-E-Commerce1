@@ -1072,23 +1072,35 @@ onBeforeUnmount(() => {
 .sort-control select { appearance: none; min-width: 145px; padding: 8px 27px 8px 12px; border: 1px solid #e6e1dc; border-radius: 3px; background: #fff; color: #514b47; outline: none; font-size: 10px; }
 .sort-control svg { position: absolute; right: 9px; pointer-events: none; font-size: 8px; }
 
-.shop-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 35px; }
-.filter-sidebar { border-right: 1px solid #eeeae6; padding-right: 20px; }
-.filter-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #eeeae6; }
+.shop-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; align-items: start; }
+.filter-sidebar { position: sticky; top: 18px; max-height: calc(100vh - 36px); overflow-y: auto; padding: 0 16px 10px 0; border-right: 1px solid #e7dfd8; scrollbar-width: thin; scrollbar-color: #cdb8a7 transparent; }
+.filter-sidebar::-webkit-scrollbar { width: 5px; }
+.filter-sidebar::-webkit-scrollbar-thumb { background: #cdb8a7; border-radius: 10px; }
+.filter-heading { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0 0 13px; border-bottom: 1px solid #e7dfd8; background: #fff; }
 .filter-heading h2 { margin: 0; color: #403c39; font-size: 14px; }
-.filter-heading button { border: 0; padding: 0; background: transparent; color: #a36f48; font-size: 9px; cursor: pointer; }
+.filter-heading button { border: 1px solid #dccabc; border-radius: 999px; padding: 5px 9px; background: #faf6f2; color: #8a5d3c; font-size: 9px; font-weight: 700; cursor: pointer; }
+.filter-heading button:hover { background: #5c3d24; color: #fff; }
 .filter-group { padding: 17px 0; border-bottom: 1px solid #eeeae6; }
-.filter-group h3 { margin: 0 0 10px; color: #494440; font-size: 11px; }
-.check-row, .rating-row { display: flex; align-items: center; gap: 7px; min-height: 21px; color: #77716c; font-size: 9px; cursor: pointer; }
-.check-row input, .rating-row input { width: 10px; height: 10px; margin: 0; accent-color: #214b2d; }
-.rating-row { gap: 6px; }
+.filter-group:last-child { border-bottom: 0; }
+.filter-group h3 { margin: 0 0 11px; color: #494440; font-size: 11px; font-weight: 800; }
+.check-row, .rating-row { display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 4px 6px; border-radius: 7px; color: #77716c; font-size: 9px; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.check-row:hover, .rating-row:hover { background: #faf5f0; color: #5c3d24; }
+.check-row input, .rating-row input { flex: 0 0 auto; width: 13px; height: 13px; margin: 0; accent-color: #5c3d24; }
+.check-row span, .rating-row small, .all-rating { line-height: 1.35; }
+.rating-row { gap: 7px; }
 .rating-row small { color: #77716c; font-size: 9px; }
 .stars { color: #e2b11d; letter-spacing: 1px; white-space: nowrap; }
 .stars .muted { color: #d8d4cf; }
 .all-rating { color: #77716c; font-size: 9px; }
-.price-values { display: flex; justify-content: space-between; color: #8b8580; font-size: 8px; margin-bottom: 7px; }
-.price-range { width: 100%; accent-color: #5c3d24; }
-.selected-price { margin-top: 5px; color: #4d4743; font-size: 9px; }
+.price-values { display: flex; justify-content: space-between; color: #8b8580; font-size: 8px; margin-bottom: 8px; }
+.price-range { width: 100%; height: 5px; accent-color: #5c3d24; cursor: pointer; }
+.selected-price { margin-top: 8px; padding: 7px 8px; border-radius: 6px; background: #faf5f0; color: #5c3d24; font-size: 9px; font-weight: 700; text-align: center; }
+@media (max-width: 900px) {
+  .shop-layout { grid-template-columns: 1fr; }
+  .filter-sidebar { position: static; max-height: none; overflow: visible; padding: 16px; border: 1px solid #e7dfd8; border-radius: 12px; background: #fff; }
+  .filter-heading { position: static; }
+}
+
 
 .active-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 30px; margin-bottom: 15px; }
 .active-label { color: #807a75; font-size: 10px; }
