@@ -1110,5 +1110,5 @@ onMounted(loadDashboard);
 .dashboard-page { min-height: 100vh; background: #f7f5f2; color: #2f211d; }
 .dashboard-page h1, .dashboard-page h2 { font-family: Georgia, "Times New Roman", serif; color: #2f211d; }
 .hero-card, .metric-card, .panel { border-color: #e6ddd7; box-shadow: 0 8px 24px rgba(62,43,29,.05); }
-@media (max-width: 760px) { .dashboard-page { width: calc(100% - 24px); } }
+@media (max-width: 760px) { .dashboard-page { width: 100%; } }
 </style>
