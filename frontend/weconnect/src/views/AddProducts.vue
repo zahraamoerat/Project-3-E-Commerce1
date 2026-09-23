@@ -66,39 +66,27 @@
           </div>
         </section>
 
-        <section class="supplier_add_products_form-section supplier_add_products_selling-type">
-          <div class="supplier_add_products_section-heading"><span
-              class="supplier_add_products_section-number">04</span>
-            <div>
-              <h2>Selling Type</h2>
-              <p>Choose where buyers can purchase this item.</p>
-            </div>
+        <section class="supplier_add_products_form-section supplier_add_products_bulk-discount-section">
+          <div class="supplier_add_products_section-heading"><span class="supplier_add_products_section-number">04</span>
+            <div><h2>Bulk Discount Tier</h2><p>Reward buyers with a discount when they order in larger quantities.</p></div>
           </div>
-          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="online"
-              type="radio" /> In-store selling only</label>
-          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="online-only"
-              type="radio" /> Online selling only</label>
-          <label class="supplier_add_products_check-label"><input v-model="form.sellingType" value="both"
-              type="radio" /> Available both in-store and online</label>
+          <div class="supplier_add_products_bulk-discount-intro">
+            <span class="supplier_add_products_discount-icon">%</span>
+            <div><strong>Offer a quantity-based discount</strong><small>Leave these fields blank if this product does not have a bulk discount.</small></div>
+          </div>
+          <div class="supplier_add_products_two-columns">
+            <label>Minimum Quantity<input v-model.number="form.bulkDiscount.minQuantity" type="number" min="2" step="1" placeholder="10" /><small class="supplier_add_products_validation-hint">Minimum units required for the discount.</small></label>
+            <label>Discount<div class="supplier_add_products_input-suffix"><input v-model.number="form.bulkDiscount.discountPercent" type="number" min="0" max="100" step="0.5" placeholder="10" /><span>% off</span></div><small class="supplier_add_products_validation-hint">Enter a percentage from 0–100.</small></label>
+          </div>
+          <div v-if="bulkDiscountPreview" class="supplier_add_products_discount-preview"><span>Bulk price preview</span><strong>{{ money(bulkDiscountPreview) }}</strong><small>per unit when the minimum quantity is reached</small></div>
         </section>
 
-        <section class="supplier_add_products_form-section supplier_add_products_variant-section">
-          <div class="supplier_add_products_section-heading"><span
-              class="supplier_add_products_section-number">05</span>
-            <div>
-              <h2>Variant</h2>
-              <p>Offer different versions of the same product.</p>
-            </div>
-          </div>
-          <div class="supplier_add_products_variant-row"><span>Product variants</span><button type="button"
-              class="supplier_add_products_add-variant">+ Add Variant</button></div>
-        </section>
       </div>
 
       <div class="supplier_add_products_form-column">
         <section class="supplier_add_products_form-section supplier_add_products_image-section">
           <div class="supplier_add_products_section-heading"><span
-              class="supplier_add_products_section-number">06</span>
+              class="supplier_add_products_section-number">04</span>
             <div>
               <h2>Product Images <span class="supplier_add_products_info-icon" title="Add clear product images">i</span>
               </h2>
@@ -122,7 +110,7 @@
 
         <section class="supplier_add_products_form-section">
           <div class="supplier_add_products_section-heading"><span
-              class="supplier_add_products_section-number">07</span>
+              class="supplier_add_products_section-number">05</span>
             <div>
               <h2>Shipping and Delivery</h2>
               <p>Help buyers estimate handling and delivery requirements.</p>
@@ -144,7 +132,7 @@
 
         <section class="supplier_add_products_form-section supplier_add_products_pricing-section">
           <div class="supplier_add_products_section-heading"><span
-              class="supplier_add_products_section-number">08</span>
+              class="supplier_add_products_section-number">06</span>
             <div>
               <h2>Pricing</h2>
               <p>Set your wholesale price and comparison price.</p>
@@ -176,11 +164,15 @@ import { useSupplierData } from "@/data/supplierData";
 const router=useRouter(); const {addProduct,uploadProductImages,cleanupProductImages,imagePlaceholders,categories,categoriesLoading,categoriesError,loadCategories}=useSupplierData();
 loadCategories();
 const message=ref(""); const error=ref(""); const saving=ref(false);
-const form=reactive({product_name:"",category_name:"",subcategory:"",sku:"",description:"",price:null,comparePrice:null,quantity:0,low_stock_threshold:10,unit:"pack",sellingType:"online",weight:null,length:null,breadth:null,width:null,images:[]});
+const form=reactive({product_name:"",category_name:"",subcategory:"",sku:"",description:"",price:null,comparePrice:null,quantity:0,low_stock_threshold:10,unit:"pack",bulkDiscount:{minQuantity:null,discountPercent:null},weight:null,length:null,breadth:null,width:null,images:[]});
 function imageKey(source){ return `${source}-${Math.random()}`; }
 function selectImages(event){const files=[...(event.target.files||[])];const rejected=[];for(const file of files){if(form.images.length >= 8){rejected.push("Maximum of 8 product images allowed.");break;}if(!["image/png","image/jpeg"].includes(file.type))rejected.push(`${file.name}: PNG/JPEG only`);else if(file.size>10*1024*1024)rejected.push(`${file.name}: larger than 10MB`);else form.images.push(URL.createObjectURL(file));}if(rejected.length)error.value=rejected.join(" • ");event.target.value="";}
 function removeImage(index){const image=form.images[index];if(image?.startsWith("blob:"))URL.revokeObjectURL(image);form.images.splice(index,1);}
-function validate(){if(form.description.length>2000)return"Description must be 2000 characters or fewer.";if([form.weight,form.length,form.breadth,form.width].some(v=>v!==null&&v!==""&&(!Number.isFinite(Number(v))||Number(v)<0)))return"Weight and package dimensions must be non-negative numbers.";if(form.product_name.trim().length<3)return"Product name must be at least 3 characters.";if(!form.category_name)return"Select a product category.";if(!Number.isFinite(Number(form.price))||Number(form.price)<=0)return"Price must be greater than zero.";if(form.comparePrice!==null&&form.comparePrice!==""&&Number(form.comparePrice)<Number(form.price))return"Compare at price must be greater than or equal to the selling price.";if(!Number.isInteger(Number(form.quantity))||Number(form.quantity)<0)return"Quantity must be a non-negative whole number.";if(!Number.isInteger(Number(form.low_stock_threshold))||Number(form.low_stock_threshold)<0)return"Low-stock threshold must be a non-negative whole number.";if(form.sku&&!/^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/.test(form.sku))return"SKU must be 3–40 characters and use only letters, numbers, dots, underscores or hyphens.";return"";}
+const bulkDiscountPreview=ref(null);
+function money(value){return new Intl.NumberFormat("en-ZA",{style:"currency",currency:"ZAR",maximumFractionDigits:2}).format(Number(value)||0)}
+function updateBulkDiscountPreview(){const quantity=Number(form.bulkDiscount.minQuantity);const percent=Number(form.bulkDiscount.discountPercent);bulkDiscountPreview.value=Number.isFinite(quantity)&&quantity>=2&&Number.isFinite(percent)&&percent>0&&percent<=100&&Number(form.price)>0?Number(form.price)*(1-percent/100):null}
+function validate(){if(form.description.length>2000)return"Description must be 2000 characters or fewer.";if([form.weight,form.length,form.breadth,form.width].some(v=>v!==null&&v!==""&&(!Number.isFinite(Number(v))||Number(v)<0)))return"Weight and package dimensions must be non-negative numbers.";if(form.product_name.trim().length<3)return"Product name must be at least 3 characters.";if(!form.category_name)return"Select a product category.";if(!Number.isFinite(Number(form.price))||Number(form.price)<=0)return"Price must be greater than zero.";if(form.comparePrice!==null&&form.comparePrice!==""&&Number(form.comparePrice)<Number(form.price))return"Compare at price must be greater than or equal to the selling price.";if(!Number.isInteger(Number(form.quantity))||Number(form.quantity)<0)return"Quantity must be a non-negative whole number.";if(!Number.isInteger(Number(form.low_stock_threshold))||Number(form.low_stock_threshold)<0)return"Low-stock threshold must be a non-negative whole number.";if((form.bulkDiscount.minQuantity!==null&&form.bulkDiscount.minQuantity!==""||form.bulkDiscount.discountPercent!==null&&form.bulkDiscount.discountPercent!=="")&&(!Number.isInteger(Number(form.bulkDiscount.minQuantity))||Number(form.bulkDiscount.minQuantity)<2||!Number.isFinite(Number(form.bulkDiscount.discountPercent))||Number(form.bulkDiscount.discountPercent)<=0||Number(form.bulkDiscount.discountPercent)>100))return"Bulk discount requires a minimum quantity of at least 2 and a discount between 0 and 100%.";
+if(form.sku&&!/^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$/.test(form.sku))return"SKU must be 3–40 characters and use only letters, numbers, dots, underscores or hyphens.";return"";}
 async function publish(){
   error.value="";
   const validation=validate();
@@ -522,6 +514,11 @@ input:disabled, select:disabled { cursor: not-allowed; opacity: .65; background:
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(50,30,20,.12);
 }
+
+.supplier_add_products_bulk-discount-intro{display:flex;align-items:center;gap:11px;margin:-4px 0 17px;padding:11px 12px;border:1px solid #ead8cc;border-radius:10px;background:#fff7f2}
+.supplier_add_products_discount-icon{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:9px;background:#f4ddcf;color:#b96032;font-size:15px;font-weight:900}
+.supplier_add_products_bulk-discount-intro strong,.supplier_add_products_bulk-discount-intro small{display:block}.supplier_add_products_bulk-discount-intro strong{color:#63483d;font-size:11px}.supplier_add_products_bulk-discount-intro small{margin-top:3px;color:#9b887f;font-size:9px}
+.supplier_add_products_discount-preview{display:flex;align-items:baseline;gap:8px;margin-top:2px;padding:11px 12px;border-radius:9px;background:#f5f0eb;color:#806d64}.supplier_add_products_discount-preview span{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.7px}.supplier_add_products_discount-preview strong{color:#4d382f;font-size:17px}.supplier_add_products_discount-preview small{color:#99877f;font-size:9px}
 
 .supplier_add_products_check-label {
   flex-direction: row !important;
