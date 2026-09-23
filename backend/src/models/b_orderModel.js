@@ -148,7 +148,7 @@ export async function createOrdersFromCart(buyerId) {
   try {
     await connection.beginTransaction();
     const [items] = await connection.query(`
-      SELECT ci.cart_item_id, ci.product_id, ci.quantity, p.supplier_id, p.price AS unit_price
+      SELECT ci.cart_item_id, ci.product_id, ci.quantity, p.supplier_id, p.price AS base_unit_price, COALESCE((SELECT MAX(t.discount_percent) FROM product_discount_tiers t WHERE t.product_id=p.product_id AND ci.quantity >= t.minimum_quantity), 0) AS discount_percent, ROUND(p.price * (1 - COALESCE((SELECT MAX(t.discount_percent) FROM product_discount_tiers t WHERE t.product_id=p.product_id AND ci.quantity >= t.minimum_quantity), 0) / 100), 2) AS unit_price
       FROM cart_items ci
       INNER JOIN products p ON p.product_id = ci.product_id
       WHERE ci.buyer_id = ?
