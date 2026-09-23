@@ -67,10 +67,10 @@ export const api = {
       body: JSON.stringify({ buyerId, quantity }),
     }),
 
-  checkoutCart: (buyerId) =>
+  checkoutCart: (buyerId, paymentMethod = "invoice") =>
     request("/orders/checkout", {
       method: "POST",
-      body: JSON.stringify({ buyerId }),
+      body: JSON.stringify({ buyerId, paymentMethod }),
     }),
 
   removeCartItem: (buyerId, cartItemId) =>
