@@ -764,7 +764,7 @@ async function toggleBasket(product) {
     const nextQuantity = Number(existing?.quantity || 0) + 1
 
     if (cartItemId) {
-      await cartRequest(\`/\${cartItemId}\`, {
+      await cartRequest(`/${cartItemId}`, {
         method: 'PATCH',
         body: JSON.stringify({ buyerId, quantity: nextQuantity })
       })
@@ -786,7 +786,7 @@ async function toggleBasket(product) {
     }
 
     persistBasket()
-    notice.value = \`\${product.title} added to cart.\`
+    notice.value = `${product.title} added to cart.`
 
     // Immediately take the small-business user to their cart.
     router.push('/small-business/cart')
