@@ -64,7 +64,8 @@ export async function getAllProducts() {
         s.business_name AS supplier,
         p.description AS description,
         p.unit AS unit,
-        p.compare_price AS comparePrice
+        p.compare_price AS comparePrice,
+        COALESCE((SELECT JSON_ARRAYAGG(JSON_OBJECT('minimum_quantity', t.minimum_quantity, 'discount_percent', t.discount_percent)) FROM product_discount_tiers t WHERE t.product_id=p.product_id), JSON_ARRAY()) AS discountTiers
       FROM products p
       LEFT JOIN categories c
         ON p.category_id = c.category_id
@@ -113,6 +114,7 @@ export async function getAllProducts() {
       return {
         ...product,
         image: allImages[0] || '',
+        discountTiers: typeof product.discountTiers === "string" ? JSON.parse(product.discountTiers || "[]") : (product.discountTiers || []),
         images: allImages
       };
     });
