@@ -22,6 +22,9 @@
         <router-link to="/small-business/deliveries" :class="{ active: isActive('/small-business/deliveries') }">
           Deliveries
         </router-link>
+        <router-link to="/small-business/suppliers" :class="{ active: isActive('/small-business/suppliers') }">
+          Suppliers
+        </router-link>
       </nav>
 
       <div class="sb-nav-actions">
@@ -36,6 +39,7 @@
       <router-link to="/small-business/products" :class="{ active: isActive('/small-business/products') }" @click="mobileMenuOpen = false">Shop</router-link>
       <router-link to="/small-business/orders" :class="{ active: isActive('/small-business/orders') }" @click="mobileMenuOpen = false">Orders</router-link>
       <router-link to="/small-business/deliveries" :class="{ active: isActive('/small-business/deliveries') }" @click="mobileMenuOpen = false">Deliveries</router-link>
+      <router-link to="/small-business/suppliers" :class="{ active: isActive('/small-business/suppliers') }" @click="mobileMenuOpen = false">Suppliers</router-link>
     </nav>
   </header>
 </template>
