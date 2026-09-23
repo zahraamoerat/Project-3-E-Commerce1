@@ -389,14 +389,18 @@ export default {
 </script>
 
 <style scoped>
+/* Shared small-business visual system */
+:global(body) { margin: 0; background: #f7f5f2; font-family: "Plus Jakarta Sans", sans-serif; }
+:global(*) { box-sizing: border-box; }
+
 @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 
 /* Main Container Layout */
 .cart-page {
   min-height: 100vh;
-  background-color: #f9f6f0;
+  background-color: #f7f5f2;
   font-family: "Plus Jakarta Sans", sans-serif;
-  color: #2d1810;
+  color: #2f211d;
 }
 
 /* Sidebar styling matching mockups */
@@ -492,7 +496,7 @@ export default {
 .main-content {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 32px 40px;
+  padding: 34px 40px 56px;
 }
 
 .cart-topbar {
