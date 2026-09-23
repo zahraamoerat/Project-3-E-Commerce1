@@ -1,7 +1,7 @@
 <template>
   <header class="sb-navbar">
     <div class="sb-navbar-inner">
-      <router-link to="/small-business/dashboard" class="sb-brand" aria-label="WeConnect small business dashboard">
+      <router-link to="/small-business" class="sb-brand" aria-label="WeConnect small business home">
         <span class="sb-brand-mark">↗</span>
         <span class="sb-brand-copy">
           <strong>WeConnect</strong>
@@ -10,8 +10,11 @@
       </router-link>
 
       <nav class="sb-nav-links" aria-label="Small business navigation">
-        <router-link to="/small-business/dashboard" :class="{ active: isActive('/small-business/dashboard') }">
+        <router-link to="/small-business" :class="{ active: isActive('/small-business') }">
           Home
+        </router-link>
+        <router-link to="/small-business/dashboard" :class="{ active: isActive('/small-business/dashboard') }">
+          Dashboard
         </router-link>
         <router-link to="/small-business/products" :class="{ active: isActive('/small-business/products') }">
           Shop
@@ -35,7 +38,8 @@
     </div>
 
     <nav v-if="mobileMenuOpen" class="sb-mobile-menu" aria-label="Mobile navigation">
-      <router-link to="/small-business/dashboard" :class="{ active: isActive('/small-business/dashboard') }" @click="mobileMenuOpen = false">Home</router-link>
+      <router-link to="/small-business" :class="{ active: route.path === '/small-business' }" @click="mobileMenuOpen = false">Home</router-link>
+      <router-link to="/small-business/dashboard" :class="{ active: isActive('/small-business/dashboard') }" @click="mobileMenuOpen = false">Dashboard</router-link>
       <router-link to="/small-business/products" :class="{ active: isActive('/small-business/products') }" @click="mobileMenuOpen = false">Shop</router-link>
       <router-link to="/small-business/orders" :class="{ active: isActive('/small-business/orders') }" @click="mobileMenuOpen = false">Orders</router-link>
       <router-link to="/small-business/deliveries" :class="{ active: isActive('/small-business/deliveries') }" @click="mobileMenuOpen = false">Deliveries</router-link>
