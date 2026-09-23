@@ -589,7 +589,7 @@ const pageNumbers = computed(() => Array.from({ length: totalPages.value }, (_, 
 const showingStart = computed(() => sortedProducts.value.length ? ((currentPage.value - 1) * pageSize) + 1 : 0)
 const showingEnd = computed(() => Math.min(currentPage.value * pageSize, sortedProducts.value.length))
 const basketCount = computed(() => Object.values(basket.value).reduce((total, item) => total + Number(item.quantity || 0), 0))
-const detailActionLabel = computed(() => basket.value[selectedProduct.value?.id] ? 'Update order' : 'Add to order')
+const detailActionLabel = computed(() => basket.value[selectedProduct.value?.id] ? 'Add to cart' : 'Add to cart')
 const relatedProducts = computed(() => {
   const current = selectedProduct.value
   if (!current) return []
@@ -791,7 +791,7 @@ async function toggleBasket(product) {
   }
 }
 
-async function addDetailToBasket() {
+async function addDetailToBasket({ goToCart = false } = {}) {
   const product = selectedProduct.value
   if (!product || basketBusy.value[product.id]) return
   basketBusy.value = { ...basketBusy.value, [product.id]: true }
@@ -813,10 +813,11 @@ async function addDetailToBasket() {
     basket.value = { ...basket.value, [product.id]: { product, quantity: nextQuantity } }
   }
   persistBasket()
-  notice.value = `${product.title} added to your order.`
+  notice.value = `${product.title} added to cart.`
   const nextBusy = { ...basketBusy.value }
   delete nextBusy[product.id]
   basketBusy.value = nextBusy
+  if (goToCart) router.push('/cart')
 }
 
 async function loadReviews(productId) {
@@ -864,8 +865,7 @@ async function submitReview() {
 }
 
 async function orderNow() {
-  await addDetailToBasket()
-  router.push({ name: 'small-business-orders' })
+  await addDetailToBasket({ goToCart: true })
 }
 
 async function shareProduct(platform) {
