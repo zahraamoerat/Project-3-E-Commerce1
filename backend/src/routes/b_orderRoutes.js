@@ -2,7 +2,8 @@ import express from 'express';
 import {
 	fetchOrders,
 	fetchOrderById,
-	chooseDeliveryMethod
+	chooseDeliveryMethod,
+	checkoutCart
 } from '../controllers/b_orderController.js';
 
 const router = express.Router();
