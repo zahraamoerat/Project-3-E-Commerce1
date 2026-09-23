@@ -1,5 +1,5 @@
 // Keep the API URL configurable for different environments.
-const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:28794/api";
+const apiBaseUrl = import.meta.env.VITE_API_URL || "/api";
 
 const getToken = () => localStorage.getItem("weconnect_token");
 
@@ -65,6 +65,12 @@ export const api = {
     request(`/cart/${cartItemId}`, {
       method: "PATCH",
       body: JSON.stringify({ buyerId, quantity }),
+    }),
+
+  checkoutCart: (buyerId) =>
+    request("/orders/checkout", {
+      method: "POST",
+      body: JSON.stringify({ buyerId }),
     }),
 
   removeCartItem: (buyerId, cartItemId) =>
