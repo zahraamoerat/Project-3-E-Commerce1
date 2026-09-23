@@ -454,7 +454,7 @@ onMounted(loadDashboard);
   --dashboard-border: #e2d7cf;
   --dashboard-white: #fffefa;
   color: var(--dashboard-ink);
-  padding: 6px 0 40px;
+  padding: 0 0 40px;
 }
 
 .hero-card {
