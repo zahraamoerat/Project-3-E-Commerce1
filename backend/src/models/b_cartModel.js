@@ -12,6 +12,8 @@ export async function getCartItems(buyerId) {
       p.product_image AS image,
       p.unit,
       p.sku,
+      COALESCE((SELECT MAX(t.discount_percent) FROM product_discount_tiers t WHERE t.product_id=p.product_id AND ci.quantity >= t.minimum_quantity), 0) AS discountPercent,
+      ROUND(p.price * (1 - COALESCE((SELECT MAX(t.discount_percent) FROM product_discount_tiers t WHERE t.product_id=p.product_id AND ci.quantity >= t.minimum_quantity), 0) / 100), 2) AS effectivePrice,
       COALESCE(i.quantity, 0) AS stockQty,
       s.business_name AS supplier,
       CASE
