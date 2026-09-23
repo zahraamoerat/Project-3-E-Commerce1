@@ -51,6 +51,14 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  getProfile: () => request("/profile"),
+
+  updateProfile: (data) =>
+    request("/profile", {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
   getProducts: () => request("/products"),
 
   getSuppliers: () => request("/suppliers"),
