@@ -131,6 +131,7 @@ function productData(body, category_id, supplier_id) {
     images,
     quantity,
     low_stock_threshold: threshold,
+    bulk_discount,
   };
 }
 export async function fetchProducts(req, res, next) {
