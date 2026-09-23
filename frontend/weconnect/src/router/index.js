@@ -97,6 +97,80 @@ const routes = [
   },
 
   // ============================================================
+  // ZAHRAA1 / BUYER ROUTES
+  // Added without replacing the existing development routes.
+  // ============================================================
+
+  {
+    path: "/landing",
+    name: "LandingPage",
+    component: () => import("../views/landingpage/LandingPage.vue"),
+  },
+
+  {
+    path: "/login",
+    name: "LoginPage",
+    component: () => import("../views/loginpage/LoginPage.vue"),
+  },
+
+  {
+    path: "/signup",
+    name: "SignUpPage",
+    component: () => import("../views/signuppage/SignUpPage.vue"),
+  },
+
+  {
+    path: "/marketplace",
+    name: "Marketplace",
+    component: () => import("../views/buyersviews/MarketplaceView.vue"),
+  },
+
+  {
+    path: "/cart",
+    name: "Cart",
+    component: () => import("../views/buyersviews/CartView.vue"),
+  },
+
+  {
+    path: "/buyer/product/:id",
+    name: "BuyerViewProduct",
+    component: () => import("../views/buyersviews/ViewProduct.vue"),
+  },
+
+  // Zahraa1 supplier-page aliases. The existing /products routes remain unchanged.
+  {
+    path: "/supplier/products",
+    name: "SupplierProductsAlias",
+    redirect: "/products",
+  },
+
+  {
+    path: "/supplier/products/add",
+    name: "SupplierAddProductZahraa1",
+    component: () => import("../views/suppliersviews/AddProducts.vue"),
+  },
+
+  {
+    path: "/supplier/products/edit/:id",
+    name: "SupplierEditProductZahraa1",
+    component: () => import("../views/suppliersviews/EditProduct.vue"),
+  },
+
+  {
+    path: "/supplier/products/view/:id",
+    name: "SupplierViewProductZahraa1",
+    component: () => import("../views/buyersviews/ViewProduct.vue"),
+  },
+
+  // LoginPage.vue uses /supplier-dashboard for supplier login.
+  // Keep the existing /dashboard route intact and provide an alias.
+  {
+    path: "/supplier-dashboard",
+    name: "SupplierDashboardAlias",
+    redirect: "/dashboard",
+  },
+
+  // ============================================================
   // SMALL BUSINESS ROUTES
   // ============================================================
 
