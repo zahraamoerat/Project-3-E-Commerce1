@@ -1,154 +1,143 @@
 <template>
-  <aside class="sidebar" :class="{ 'sidebar--collapsed': collapsed }">
+  <aside class="sidebar" :class="{ 'sidebar--collapsed': collapsed }"> <!-- ========================= LOGO / BRAND ========================== -->
     <div class="sidebar_brand">
-      <button class="sidebar_toggle" type="button" @click="toggleSidebar"
-        :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-        :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'">
-        <span>{{ collapsed ? "›" : "‹" }}</span>
-      </button>
-
-      <div class="sidebar_brand-icon">
-        <img :src="logo" alt="WeConnect logo" class="sidebar_brand-logo" />
-      </div>
-
+      <button class="sidebar_toggle" type="button" @click="toggleSidebar" :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'" :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"><span>{{ collapsed ? "›" : "‹" }}</span></button>
+      <div class="sidebar_brand-icon"> <img :src="logo" alt="WeConnect logo" class="sidebar_brand-logo" /> </div>
       <div class="sidebar_brand-text">
-        <h2>WeConnect</h2>
-        <span>SUPPLIER NETWORK</span>
+        <h2>WeConnect</h2> <span>SUPPLIER NETWORK</span>
       </div>
-    </div>
-
-    <nav class="sidebar_navigation" aria-label="Supplier navigation">
-      <RouterLink to="/dashboard" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active">
-        <span class="sidebar_nav-icon"><FontAwesomeIcon :icon="faChartLine" /></span>
-        <span class="sidebar_nav-label">Dashboard</span>
-        <span class="sidebar_notification-dot"></span>
-      </RouterLink>
-
-      <RouterLink to="/products" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active">
-        <span class="sidebar_nav-icon"><FontAwesomeIcon :icon="faShoppingBag" /></span>
-        <span class="sidebar_nav-label">Products</span>
-        <span class="sidebar_notification-dot"></span>
-      </RouterLink>
-
-      <RouterLink to="/orders" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active">
-        <span class="sidebar_nav-icon"><FontAwesomeIcon :icon="faList" /></span>
-        <span class="sidebar_nav-label">Orders</span>
-        <span class="sidebar_notification-dot"></span>
-      </RouterLink>
-
-      <RouterLink to="/stockmanagement" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active">
-        <span class="sidebar_nav-icon"><FontAwesomeIcon :icon="faWarehouse" /></span>
-        <span class="sidebar_nav-label">Stock Management</span>
-        <span class="sidebar_notification-dot"></span>
-      </RouterLink>
-
-      <RouterLink to="/deliveries" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active">
-        <span class="sidebar_nav-icon"><FontAwesomeIcon :icon="faTruck" /></span>
-        <span class="sidebar_nav-label">Deliveries</span>
-        <span class="sidebar_notification-dot"></span>
-      </RouterLink>
-
-      <RouterLink to="/reviews" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active">
-        <span class="sidebar_nav-icon"><FontAwesomeIcon :icon="faStar" /></span>
-        <span class="sidebar_nav-label">Reviews</span>
-        <span class="sidebar_notification-dot"></span>
-      </RouterLink>
-
-      <RouterLink to="/profile" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active">
-        <span class="sidebar_nav-icon"><FontAwesomeIcon :icon="faAddressCard" /></span>
-        <span class="sidebar_nav-label">Business Profile</span>
-        <span class="sidebar_notification-dot"></span>
-      </RouterLink>
-    </nav>
-
-    <button class="sidebar_logout" type="button" @click="logout">
-      <span class="sidebar_logout-icon"><FontAwesomeIcon :icon="faUser" /></span>
-      <span class="sidebar_nav-label">Log out</span>
-    </button>
+    </div> <!-- ========================= NAVIGATION ========================== -->
+    <nav class="sidebar_navigation"> <!-- Dashboard -->
+      <RouterLink to="/dashboard" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
+          class="sidebar_nav-icon">
+          <FontAwesomeIcon :icon="faChartLine" />
+        </span> <span class="sidebar_nav-label">Dashboard</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Products -->
+      <RouterLink to="/products" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
+          class="sidebar_nav-icon">
+          <FontAwesomeIcon :icon="faShoppingBag" />
+        </span> <span class="sidebar_nav-label">Products</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Orders -->
+      <RouterLink to="/orders" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
+          class="sidebar_nav-icon">
+          <FontAwesomeIcon :icon="faList" />
+        </span> <span class="sidebar_nav-label">Orders</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+      <!-- Stock Management -->
+      <RouterLink to="/stockmanagement" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
+          class="sidebar_nav-icon">
+          <FontAwesomeIcon :icon="faWarehouse" />
+        </span> <span class="sidebar_nav-label">Stock Management</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+      <!-- Deliveries -->
+      <RouterLink to="/deliveries" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
+          class="sidebar_nav-icon">
+          <FontAwesomeIcon :icon="faTruck" />
+        </span> <span class="sidebar_nav-label">Deliveries</span> <span class="sidebar_notification-dot"></span> </RouterLink> <!-- Reviews -->
+      <RouterLink to="/reviews" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
+          class="sidebar_nav-icon">
+          <FontAwesomeIcon :icon="faStar" />
+        </span> <span class="sidebar_nav-label">Reviews</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+      <!-- Business Profile -->
+      <RouterLink to="/profile" class="sidebar_nav-item" exact-active-class="sidebar_nav-item--active"> <span
+          class="sidebar_nav-icon">
+          <FontAwesomeIcon :icon="faAddressCard" />
+        </span> <span class="sidebar_nav-label">Business Profile</span> <span class="sidebar_notification-dot"></span> </RouterLink>
+    </nav> <!-- ========================= LOGOUT ========================== --> <button class="sidebar_logout"
+      @click="logout"> <span class="sidebar_logout-icon">
+        <FontAwesomeIcon :icon="faUser" />
+      </span> <span class="sidebar_nav-label">Log out</span> </button>
   </aside>
 </template>
-
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import logo from "../assets/link-icon-white.png";
-import { faChartLine, faShoppingBag, faList, faWarehouse, faTruck, faStar, faUser, faAddressCard } from "@fortawesome/free-solid-svg-icons";
-
-const router = useRouter();
-const collapsed = ref(localStorage.getItem("weconnect_sidebar_collapsed") === "true");
+import logo from "../assets/link-icon-white.png"
+import { ref } from "vue"
+import { useRouter } from "vue-router"
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
+import { faChartLine } from "@fortawesome/free-solid-svg-icons"
+import { faShoppingBag } from "@fortawesome/free-solid-svg-icons"
+import { faList } from "@fortawesome/free-solid-svg-icons"
+import { faWarehouse } from "@fortawesome/free-solid-svg-icons"
+import { faTruck } from "@fortawesome/free-solid-svg-icons"
+import { faStar } from "@fortawesome/free-solid-svg-icons"
+import { faUser } from "@fortawesome/free-solid-svg-icons"
+import { faAddressCard } from "@fortawesome/free-solid-svg-icons"
+/* ========================= ROUTER ========================= */
+const router = useRouter()
+const collapsed = ref(localStorage.getItem("weconnect_sidebar_collapsed") === "true")
 
 function toggleSidebar() {
-  collapsed.value = !collapsed.value;
-  localStorage.setItem("weconnect_sidebar_collapsed", String(collapsed.value));
+  collapsed.value = !collapsed.value
+  localStorage.setItem("weconnect_sidebar_collapsed", String(collapsed.value))
 }
-
+/* ========================= LOGOUT ========================= */
 function logout() {
-  [
-    "weconnect_token",
-    "weconnect_role",
-    "weconnect_user_id",
-    "weconnect_buyer_id",
-    "weconnect_supplier_id",
-    "weconnect_email",
-  ].forEach((key) => localStorage.removeItem(key));
-
-  router.push("/login");
+  localStorage.removeItem("token")
+  localStorage.removeItem("user")
+  router.push("/products")
 }
-</script>
 
+</script>
 <style scoped>
 .sidebar {
-  --sidebar-bg: #ffffff;
-  --sidebar-text: #344054;
-  --sidebar-muted: #667085;
-  --sidebar-active: #4169e1;
-  --sidebar-active-soft: #eef3ff;
-  --sidebar-border: #e7eaf0;
-
+  --sidebar-bg: #3f2c25;
+  --sidebar-text: #f4e9e2;
+  --sidebar-muted: #cdbbb0;
+  --sidebar-active: #d58a5a;
+  --sidebar-active-soft: #5a4034;
+  --sidebar-border: #5a4034;
   position: sticky;
   top: 0;
-  width: 238px;
+  width: 248px;
   height: 100vh;
   min-height: 620px;
   flex-shrink: 0;
   z-index: 1000;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  padding: 22px 13px 18px;
-  box-sizing: border-box;
+  padding: 22px 14px 18px;
   overflow: visible;
   color: var(--sidebar-text);
   background: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
-  box-shadow: 4px 0 18px rgba(31, 41, 55, .05);
-  transition: width .25s ease, padding .25s ease;
+  box-shadow: 6px 0 24px rgba(40, 25, 18, .14);
+  transition: width .25s ease, padding .25s ease, box-shadow .25s ease;
+}
+
+.sidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #d89a70 0%, #a9633f 50%, #e1b08d 100%);
+  opacity: .8;
 }
 
 .sidebar_brand {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 11px;
-  min-height: 50px;
-  margin: 0 7px 32px;
+  gap: 12px;
+  min-height: 48px;
+  margin: 0 6px 34px;
   padding: 0 4px;
 }
 
 .sidebar_brand-icon {
-  width: 39px;
-  height: 39px;
-  flex: 0 0 39px;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
   display: grid;
   place-items: center;
-  border-radius: 11px;
-  background: #4169e1;
+  border-radius: 13px;
+  background: #4b342b;
+  border: 1px solid #65493d;
+  box-shadow: 0 5px 14px rgba(20, 12, 8, .16);
   overflow: hidden;
 }
 
 .sidebar_brand-logo {
-  width: 25px;
-  height: 25px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
 }
 
@@ -163,40 +152,48 @@ function logout() {
 
 .sidebar_brand-text h2 {
   margin: 0;
-  color: #1f2937;
-  font: 750 16px/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: -.2px;
+  color: #fff8f2;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -.25px;
+  line-height: 1.2;
 }
 
 .sidebar_brand-text span {
   margin-top: 4px;
-  color: #98a2b3;
-  font: 700 8px/1 Inter, ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: 1.2px;
+  color: #cdbbb0;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.35px;
 }
 
 .sidebar_toggle {
   position: absolute;
-  top: 7px;
-  right: -28px;
+  top: 8px;
+  right: -29px;
   width: 25px;
   height: 25px;
   z-index: 5;
   display: grid;
   place-items: center;
-  border: 1px solid #dfe4ec;
+  border: 1px solid #694b3d;
   border-radius: 50%;
-  background: #fff;
-  color: #667085;
-  box-shadow: 0 3px 10px rgba(31, 41, 55, .12);
+  background: #fffaf7;
+  color: #d9c4b7;
+  box-shadow: 0 4px 13px rgba(30, 18, 12, .22);
   font-size: 17px;
   font-weight: 700;
+  line-height: 1;
   cursor: pointer;
+  transition: transform .2s ease, color .2s ease, box-shadow .2s ease;
 }
 
 .sidebar_toggle:hover {
-  color: var(--sidebar-active);
-  border-color: #b8c7f5;
+  transform: scale(1.08);
+  color: #e0a078;
+  box-shadow: 0 6px 18px rgba(55, 32, 22, .24);
 }
 
 .sidebar_navigation {
@@ -211,33 +208,35 @@ function logout() {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 13px;
   width: 100%;
-  min-height: 42px;
-  padding: 0 12px;
+  min-height: 43px;
+  padding: 0 13px;
   box-sizing: border-box;
-  border-radius: 9px;
+  border-radius: 11px;
   color: var(--sidebar-muted);
   text-decoration: none;
-  font: 600 12px/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
   transition: background .18s ease, color .18s ease, transform .18s ease;
 }
 
 .sidebar_nav-item:hover {
-  color: #344054;
-  background: #f5f7fb;
-  transform: translateX(1px);
+  color: #fff0e7;
+  background: #523a30;
+  transform: translateX(2px);
 }
 
 .sidebar_nav-item--active {
-  color: var(--sidebar-active);
-  background: var(--sidebar-active-soft);
-  font-weight: 750;
+  color: #fff;
+  background: linear-gradient(135deg, #b86f47 0%, #925237 100%);
+  box-shadow: 0 7px 16px rgba(45, 25, 16, .25);
 }
 
 .sidebar_nav-item--active:hover {
-  color: var(--sidebar-active);
-  background: var(--sidebar-active-soft);
+  color: #fff;
+  background: linear-gradient(135deg, #b86f47 0%, #925237 100%);
   transform: none;
 }
 
@@ -247,22 +246,23 @@ function logout() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #98a2b3;
-  font-size: 14px;
+  color: #c9b4a8;
+  font-size: 15px;
+  transition: color .18s ease;
 }
 
 .sidebar_nav-item--active .sidebar_nav-icon {
-  color: var(--sidebar-active);
+  color: #fff;
 }
 
 .sidebar_notification-dot {
   display: none;
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   margin-left: auto;
-  flex: 0 0 5px;
+  flex: 0 0 6px;
   border-radius: 50%;
-  background: var(--sidebar-active);
+  background: #fffaf7;
 }
 
 .sidebar_nav-item--active .sidebar_notification-dot {
@@ -271,23 +271,26 @@ function logout() {
 
 .sidebar_logout {
   width: 100%;
-  min-height: 42px;
+  min-height: 43px;
   margin-top: auto;
-  padding: 12px;
+  padding: 12px 13px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 13px;
   border: 0;
   border-top: 1px solid var(--sidebar-border);
   background: transparent;
   color: var(--sidebar-muted);
-  font: 600 12px/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
   cursor: pointer;
+  transition: color .18s ease, background .18s ease;
 }
 
 .sidebar_logout:hover {
-  color: #344054;
-  background: #f5f7fb;
+  color: #fff0e7;
+  background: #523a30;
 }
 
 .sidebar_logout-icon {
@@ -296,6 +299,7 @@ function logout() {
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 15px;
 }
 
 .sidebar_nav-label {
@@ -306,7 +310,7 @@ function logout() {
 }
 
 .sidebar--collapsed {
-  width: 72px;
+  width: 76px;
   padding-left: 10px;
   padding-right: 10px;
 }
@@ -317,7 +321,6 @@ function logout() {
   margin-right: 0;
   padding-left: 0;
   padding-right: 0;
-  gap: 0;
 }
 
 .sidebar--collapsed .sidebar_brand-text,
@@ -325,6 +328,10 @@ function logout() {
   width: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+.sidebar--collapsed .sidebar_brand {
+  gap: 0;
 }
 
 .sidebar--collapsed .sidebar_nav-item {
@@ -337,13 +344,13 @@ function logout() {
 .sidebar--collapsed .sidebar_nav-icon {
   width: 24px;
   flex-basis: 24px;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .sidebar--collapsed .sidebar_notification-dot {
   position: absolute;
-  top: 7px;
-  right: 9px;
+  top: 8px;
+  right: 11px;
   margin: 0;
 }
 
@@ -359,9 +366,18 @@ function logout() {
   flex-basis: 24px;
 }
 
+.sidebar--collapsed .sidebar_toggle {
+  right: -29px;
+}
+
 @media (max-width: 900px) and (min-width: 701px) {
-  .sidebar { width: 210px; }
-  .sidebar--collapsed { width: 68px; }
+  .sidebar {
+    width: 220px;
+  }
+
+  .sidebar--collapsed {
+    width: 70px;
+  }
 }
 
 @media (max-width: 700px) {
@@ -370,36 +386,81 @@ function logout() {
     width: 100%;
     height: auto;
     min-height: 0;
-    padding: 12px 14px;
+    padding: 14px 16px;
     overflow: hidden;
     border-right: 0;
     border-bottom: 1px solid var(--sidebar-border);
   }
 
-  .sidebar_brand { margin-bottom: 14px; }
-  .sidebar_toggle { top: 7px; right: 7px; }
+  .sidebar::before {
+    width: 100%;
+    height: 3px;
+    bottom: auto;
+  }
+
+  .sidebar_brand {
+    margin-bottom: 16px;
+  }
+
+  .sidebar_toggle {
+    top: 8px;
+    right: 8px;
+  }
 
   .sidebar_navigation {
     flex-direction: row;
     overflow-x: auto;
-    gap: 6px;
-    padding-bottom: 2px;
+    gap: 7px;
+    padding-bottom: 3px;
     flex: none;
     scrollbar-width: none;
   }
 
-  .sidebar_navigation::-webkit-scrollbar { display: none; }
+  .sidebar_navigation::-webkit-scrollbar {
+    display: none;
+  }
 
   .sidebar_nav-item {
     width: auto;
     min-width: max-content;
-    min-height: 38px;
-    padding: 0 11px;
+    min-height: 40px;
+    padding: 0 12px;
   }
 
-  .sidebar_logout { display: none; }
-  .sidebar--collapsed { width: 100%; }
-  .sidebar--collapsed .sidebar_brand { justify-content: flex-start; }
-  .sidebar--collapsed .sidebar_navigation { justify-content: flex-start; }
+  .sidebar_logout {
+    display: none;
+  }
+
+  .sidebar--collapsed {
+    width: 100%;
+  }
+
+  .sidebar--collapsed .sidebar_brand {
+    justify-content: flex-start;
+  }
+
+  .sidebar--collapsed .sidebar_navigation {
+    justify-content: flex-start;
+  }
+
+  .sidebar--collapsed .sidebar_nav-item {
+    width: 42px;
+    min-width: 42px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 450px) {
+  .sidebar {
+    padding: 12px;
+  }
+
+  .sidebar_brand-text h2 {
+    font-size: 15px;
+  }
+
+  .sidebar_nav-item {
+    min-height: 38px;
+  }
 }
 </style>
