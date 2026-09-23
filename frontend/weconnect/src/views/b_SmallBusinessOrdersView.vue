@@ -61,6 +61,15 @@
     </header>
 
 
+    <div v-if="errorMessage" class="connect-sb-orders-error" role="alert">
+      <span>{{ errorMessage }}</span>
+      <button type="button" @click="loadOrders">Retry</button>
+    </div>
+
+    <div v-if="isLoading" class="connect-sb-orders-loading" role="status" aria-live="polite">
+      Loading your orders…
+    </div>
+
     <!-- Order filters -->
     <section class="connect-sb-orders-toolbar">
 
@@ -112,7 +121,7 @@
 
 
     <!-- Orders -->
-    <section class="connect-sb-orders-content">
+    <section v-if="!isLoading" class="connect-sb-orders-content">
 
       <div class="connect-sb-orders-section-heading">
 
@@ -607,44 +616,47 @@ const showOrderHistory = ref(false)
 const isLoading = ref(true)
 const errorMessage = ref('')
 
-const buyerId = computed(() => localStorage.getItem('weconnect_buyer_id') || '1')
+const buyerId = computed(() => localStorage.getItem('weconnect_buyer_id') || '')
 const currentDate = computed(() => getCurrentDate())
 
 // Filter orders based on the selected status and search text.
+const HISTORY_STATUSES = ['Delivered', 'Cancelled']
+
 const filteredOrders = computed(() => {
   const search = searchQuery.value.trim().toLowerCase()
 
   return orders.value.filter(order => {
+    const isHistoryOrder = HISTORY_STATUSES.includes(order.status)
+
+    if (showOrderHistory.value && !isHistoryOrder) return false
+    if (!showOrderHistory.value && isHistoryOrder) return false
+
     const matchesFilter =
       activeFilter.value === 'All' ||
-      (activeFilter.value === 'On Process' &&
-        !['Completed', 'Cancelled'].includes(order.status)) ||
-      (activeFilter.value === 'Completed' &&
-        order.status === 'Completed')
+      (activeFilter.value === 'On Process' && !isHistoryOrder) ||
+      (activeFilter.value === 'Completed' && order.status === 'Delivered')
 
-    const matchesSearch =
-      !search ||
-      order.orderNumber.toLowerCase().includes(search) ||
-      order.supplier.toLowerCase().includes(search) ||
-      order.status.toLowerCase().includes(search)
+    const searchable = [
+      order.orderNumber,
+      order.supplier,
+      order.status,
+      order.business
+    ].filter(Boolean).join(' ').toLowerCase()
 
-    return matchesFilter && matchesSearch
+    return matchesFilter && (!search || searchable.includes(search))
   })
 })
 
 function toggleOrderHistory() {
   showOrderHistory.value = !showOrderHistory.value
-
-  if (showOrderHistory.value) {
-    activeFilter.value = 'All'
-  }
+  activeFilter.value = 'All'
+  selectedOrder.value = null
+  searchQuery.value = ''
 }
 
 // Count orders that are currently active.
 const activeOrdersCount = computed(() => {
-  return orders.value.filter(order => {
-    return !['Completed', 'Cancelled'].includes(order.status)
-  }).length
+  return orders.value.filter(order => !HISTORY_STATUSES.includes(order.status)).length
 })
 
 // True when the selected method differs from the currently saved method.
@@ -806,7 +818,8 @@ async function confirmDeliveryMethod() {
       {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('weconnect_token') || ''}`
         },
         body: JSON.stringify({ method: selectedMethod.value })
       }
@@ -904,7 +917,18 @@ async function loadOrders() {
     isLoading.value = true
     errorMessage.value = ''
 
-    const response = await fetch('/api/orders?buyerId=1')
+    if (!buyerId.value) {
+      throw new Error('No buyer account is selected. Please sign in again.')
+    }
+
+    const response = await fetch(
+      `/api/orders?buyerId=${encodeURIComponent(buyerId.value)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('weconnect_token') || ''}`
+        }
+      }
+    )
 
     if (!response.ok) {
       throw new Error('Failed to load orders')
@@ -926,7 +950,7 @@ async function loadOrders() {
           date: order.order_date
             ? new Date(order.order_date).toLocaleDateString('en-ZA')
             : 'N/A',
-          status: order.order_status || 'Pending',
+          status: order.order_status || order.status || 'Pending',
 
           // Delivery information comes from the related delivery record.
           deliveryId: order.delivery_id || null,
@@ -952,7 +976,8 @@ async function loadOrders() {
   } catch (error) {
     console.error('Error loading orders:', error)
 
-    errorMessage.value = 'Unable to load orders.'
+    errorMessage.value =
+      error.message || 'Unable to load orders. Please try again.'
     orders.value = []
   } finally {
     isLoading.value = false
@@ -2192,4 +2217,49 @@ onMounted(() => {
 .connect-sb-orders-page .connect-sb-orders-view-button.active,
 .connect-sb-orders-page .connect-sb-orders-pay-button { background: var(--sb-brown); color: #fff; border-color: var(--sb-brown); }
 .connect-sb-orders-page .connect-sb-orders-tab { color: var(--sb-brown); }
+</style>
+
+<style scoped>
+.connect-sb-orders-error {
+  width: min(1280px, 94%);
+  margin: 0 auto 18px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #e6c7bf;
+  border-radius: 10px;
+  background: #fff4f1;
+  color: #8f4035;
+  font-size: 13px;
+}
+.connect-sb-orders-error button {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 13px;
+  background: #5c3d24;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.connect-sb-orders-loading {
+  width: min(1280px, 94%);
+  margin: 0 auto 20px;
+  padding: 32px;
+  border: 1px solid #dfd1c5;
+  border-radius: 14px;
+  background: #fffdfb;
+  color: #6f5a4d;
+  text-align: center;
+}
+@media (max-width: 640px) {
+  .connect-sb-orders-error,
+  .connect-sb-orders-loading { width: calc(100% - 24px); }
+  .connect-sb-orders-error { align-items: stretch; flex-direction: column; }
+  .connect-sb-orders-error button { width: 100%; }
+  .connect-sb-orders-card-top { flex-direction: column; }
+  .connect-sb-orders-status { align-self: flex-start; }
+  .connect-sb-orders-card-actions { flex-wrap: wrap; }
+}
 </style>
