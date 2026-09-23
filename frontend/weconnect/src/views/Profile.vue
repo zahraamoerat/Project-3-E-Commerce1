@@ -1,489 +1,561 @@
 <template>
   <main class="profile-page">
-    <div class="profile-shell">
-      <header class="profile-header">
-        <button type="button" class="back-button" @click="goBack">← Back</button>
+    <section class="profile-cover">
+      <button type="button" class="cover-button" @click="goBack">← Back</button>
+      <div class="cover-pattern"></div>
+      <div class="cover-actions">
+        <span class="cover-role">{{ isBuyer ? "SMALL BUSINESS" : "SUPPLIER" }}</span>
+        <button type="button" class="change-cover" @click="coverMessage = 'Cover image can be connected to your profile image storage later.'">
+          ▣ Change Cover
+        </button>
+      </div>
+    </section>
 
-        <div class="header-copy">
-          <span class="eyebrow">{{ isBuyer ? "SMALL BUSINESS" : "SUPPLIER" }}</span>
-          <h1>My Profile</h1>
-          <p>
-            {{ isBuyer
-              ? "Manage your small business account and shopping preferences."
-              : "Manage your supplier account information." }}
-          </p>
+    <section class="profile-layout">
+      <aside class="profile-summary">
+        <div class="profile-avatar">{{ initials }}</div>
+        <button type="button" class="avatar-edit" @click="coverMessage = 'Profile photo upload can be connected to your image storage.'">✎</button>
+
+        <h1>{{ displayName }}</h1>
+        <p class="company-name">{{ isBuyer ? "Small Business" : "Supplier Account" }}</p>
+
+        <div class="summary-stats">
+          <div>
+            <span>{{ isBuyer ? "Orders" : "Products" }}</span>
+            <strong>{{ isBuyer ? "—" : "—" }}</strong>
+          </div>
+          <div>
+            <span>{{ isBuyer ? "Suppliers" : "Orders" }}</span>
+            <strong>—</strong>
+          </div>
+          <div>
+            <span>Status</span>
+            <strong class="active-text">Active</strong>
+          </div>
         </div>
-      </header>
 
-      <section class="profile-grid">
-        <article class="profile-card identity-card">
-          <div class="avatar" aria-hidden="true">{{ initials }}</div>
+        <button type="button" class="public-profile" @click="coverMessage = 'Public profile preview will use these saved details.'">
+          View Public Profile
+        </button>
 
-          <div class="identity-copy">
-            <span class="role-badge">{{ isBuyer ? "Buyer" : "Supplier" }}</span>
-            <h2>{{ displayName }}</h2>
-            <p>{{ email || "No email address saved" }}</p>
-            <span v-if="businessId" class="account-id">
-              {{ isBuyer ? "Buyer" : "Supplier" }} ID: {{ businessId }}
-            </span>
-          </div>
-        </article>
+        <div v-if="businessId" class="profile-id">
+          {{ isBuyer ? "Buyer" : "Supplier" }} ID: {{ businessId }}
+        </div>
+      </aside>
 
-        <article class="profile-card">
-          <div class="section-heading">
-            <div>
-              <span class="section-kicker">ACCOUNT</span>
-              <h2>Account details</h2>
-            </div>
-          </div>
+      <section class="profile-editor">
+        <nav class="profile-tabs" aria-label="Profile sections">
+          <button class="active" type="button">Account Settings</button>
+          <button type="button" @click="coverMessage = 'Company Settings are ready for the next profile section.'">Company Settings</button>
+          <button type="button" @click="coverMessage = 'Documents will appear here when document storage is connected.'">Documents</button>
+          <button type="button" @click="coverMessage = 'Billing settings can be added here.'">Billing</button>
+          <button type="button" @click="coverMessage = 'Notification preferences can be added here.'">Notifications</button>
+        </nav>
 
-          <div class="details-grid">
-            <div class="detail-item">
+        <form class="profile-form" @submit.prevent="saveProfile">
+          <div class="form-grid">
+            <label>
+              <span>First Name</span>
+              <input v-model="form.firstName" type="text" placeholder="First name" />
+            </label>
+
+            <label>
+              <span>Last Name</span>
+              <input v-model="form.lastName" type="text" placeholder="Last name" />
+            </label>
+
+            <label>
+              <span>Phone Number</span>
+              <input v-model="form.phone" type="tel" placeholder="+27..." />
+            </label>
+
+            <label>
               <span>Email address</span>
-              <strong>{{ email || "Not available" }}</strong>
-            </div>
-            <div class="detail-item">
-              <span>Account type</span>
-              <strong>{{ isBuyer ? "Small Business Buyer" : "Supplier" }}</strong>
-            </div>
-            <div class="detail-item">
-              <span>User ID</span>
-              <strong>{{ userId || "Not available" }}</strong>
-            </div>
-            <div class="detail-item">
-              <span>Account status</span>
-              <strong class="status"><i></i> Active</strong>
-            </div>
-          </div>
-        </article>
+              <input v-model="form.email" type="email" placeholder="name@company.com" />
+            </label>
 
-        <article v-if="isBuyer" class="profile-card quick-card">
-          <div class="section-heading">
-            <div>
-              <span class="section-kicker">QUICK ACCESS</span>
-              <h2>Small Business</h2>
-            </div>
-          </div>
+            <label>
+              <span>City</span>
+              <input v-model="form.city" type="text" placeholder="Cape Town" />
+            </label>
 
-          <div class="quick-actions">
-            <button type="button" @click="goTo('/small-business/dashboard')">
-              <span>▦</span>
-              <div>
-                <strong>Dashboard</strong>
-                <small>View your business overview</small>
-              </div>
-              <b>→</b>
-            </button>
+            <label>
+              <span>State/County</span>
+              <input v-model="form.province" type="text" placeholder="Western Cape" />
+            </label>
 
-            <button type="button" @click="goTo('/small-business/orders')">
-              <span>▤</span>
-              <div>
-                <strong>Order history</strong>
-                <small>View and track your orders</small>
-              </div>
-              <b>→</b>
-            </button>
+            <label>
+              <span>Postcode</span>
+              <input v-model="form.postalCode" type="text" placeholder="8000" />
+            </label>
 
-            <button type="button" @click="goTo('/small-business/cart')">
-              <span>🛒</span>
-              <div>
-                <strong>Shopping cart</strong>
-                <small>Review items before checkout</small>
-              </div>
-              <b>→</b>
-            </button>
-
-            <button type="button" @click="goTo('/small-business/suppliers')">
-              <span>♧</span>
-              <div>
-                <strong>View suppliers</strong>
-                <small>Explore available suppliers</small>
-              </div>
-              <b>→</b>
-            </button>
-          </div>
-        </article>
-
-        <article class="profile-card security-card">
-          <div class="section-heading">
-            <div>
-              <span class="section-kicker">SESSION</span>
-              <h2>Account actions</h2>
-            </div>
+            <label>
+              <span>Country</span>
+              <select v-model="form.country">
+                <option value="">Select country</option>
+                <option>South Africa</option>
+                <option>Namibia</option>
+                <option>Botswana</option>
+                <option>Zimbabwe</option>
+                <option>Other</option>
+              </select>
+            </label>
           </div>
 
-          <p class="security-copy">
-            Your profile uses the account currently signed in on this device.
-          </p>
-
-          <button type="button" class="logout-button" @click="logout">
-            Sign out
-          </button>
-        </article>
+          <div class="form-footer">
+            <span v-if="saveMessage" class="save-message">{{ saveMessage }}</span>
+            <button type="submit" class="update-button">Update</button>
+          </div>
+        </form>
       </section>
-    </div>
+    </section>
+
+    <p v-if="coverMessage" class="profile-notice">{{ coverMessage }}</p>
   </main>
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
-const role = ref(localStorage.getItem("weconnect_role") || "buyer");
+
+const role = ref(localStorage.getItem("weconnect_role") || "supplier");
 const email = ref(localStorage.getItem("weconnect_email") || "");
 const userId = ref(localStorage.getItem("weconnect_user_id") || "");
 const buyerId = ref(localStorage.getItem("weconnect_buyer_id") || "");
 const supplierId = ref(localStorage.getItem("weconnect_supplier_id") || "");
 
 const isBuyer = computed(() => role.value === "buyer");
-const businessId = computed(() => (isBuyer.value ? buyerId.value : supplierId.value));
+const businessId = computed(() => isBuyer.value ? buyerId.value : supplierId.value);
+
+const savedFirstName = localStorage.getItem("weconnect_first_name") || "";
+const savedLastName = localStorage.getItem("weconnect_last_name") || "";
+
+const form = reactive({
+  firstName: savedFirstName,
+  lastName: savedLastName,
+  phone: localStorage.getItem("weconnect_phone") || "",
+  email: email.value,
+  city: localStorage.getItem("weconnect_city") || "",
+  province: localStorage.getItem("weconnect_province") || "",
+  postalCode: localStorage.getItem("weconnect_postal_code") || "",
+  country: localStorage.getItem("weconnect_country") || "South Africa",
+});
+
+const saveMessage = ref("");
+const coverMessage = ref("");
 
 const displayName = computed(() => {
-  if (email.value) {
-    return email.value.split("@")[0]
+  const fullName = `${form.firstName} ${form.lastName}`.trim();
+  if (fullName) return fullName;
+
+  if (form.email) {
+    return form.email.split("@")[0]
       .replace(/[._-]+/g, " ")
       .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
-  return isBuyer.value ? "Small Business Account" : "Supplier Account";
+  return isBuyer.value ? "Small Business" : "Supplier";
 });
 
 const initials = computed(() => {
-  const words = displayName.value.trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return "W";
-  return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+  const parts = displayName.value.split(/\s+/).filter(Boolean);
+  return (parts.slice(0, 2).map((part) => part[0]).join("") || "W").toUpperCase();
 });
 
-function goTo(path) {
-  router.push(path);
+function saveProfile() {
+  const values = {
+    weconnect_first_name: form.firstName,
+    weconnect_last_name: form.lastName,
+    weconnect_phone: form.phone,
+    weconnect_email: form.email,
+    weconnect_city: form.city,
+    weconnect_province: form.province,
+    weconnect_postal_code: form.postalCode,
+    weconnect_country: form.country,
+  };
+
+  Object.entries(values).forEach(([key, value]) => localStorage.setItem(key, value));
+
+  email.value = form.email;
+  saveMessage.value = "Profile details saved on this device.";
+
+  window.setTimeout(() => {
+    saveMessage.value = "";
+  }, 3000);
 }
 
 function goBack() {
   router.back();
-}
-
-function logout() {
-  [
-    "weconnect_token",
-    "weconnect_role",
-    "weconnect_user_id",
-    "weconnect_buyer_id",
-    "weconnect_supplier_id",
-    "weconnect_email",
-  ].forEach((key) => localStorage.removeItem(key));
-
-  router.push("/login");
 }
 </script>
 
 <style scoped>
 .profile-page {
   min-height: 100vh;
-  padding: 32px 20px 56px;
-  background: #f5efe7;
-  color: #3f2b24;
+  background: #f7f9fc;
+  color: #344054;
 }
 
-.profile-shell {
-  width: min(1100px, 100%);
-  margin: 0 auto;
+.profile-cover {
+  position: relative;
+  height: 185px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #355bd4 0%, #4169e1 52%, #3153c8 100%);
 }
 
-.profile-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
-  margin-bottom: 28px;
+.cover-pattern {
+  position: absolute;
+  inset: -40px;
+  opacity: .18;
+  background:
+    linear-gradient(135deg, transparent 0 25%, #fff 25% 34%, transparent 34% 100%),
+    linear-gradient(45deg, transparent 0 48%, #fff 48% 58%, transparent 58% 100%);
+  transform: rotate(-7deg) scale(1.2);
 }
 
-.back-button {
-  border: 1px solid #d9c8b9;
-  background: #fffaf5;
-  color: #63473a;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-weight: 700;
+.cover-button {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  z-index: 3;
+  border: 1px solid rgba(255,255,255,.4);
+  border-radius: 7px;
+  padding: 7px 12px;
+  background: rgba(255,255,255,.12);
+  color: #fff;
   cursor: pointer;
 }
 
-.back-button:hover {
-  background: #eadbce;
-}
-
-.header-copy {
-  flex: 1;
-}
-
-.eyebrow,
-.section-kicker {
-  display: block;
-  margin: 0 0 7px;
-  color: #9a6248;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.7px;
-}
-
-.profile-header h1 {
-  margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(30px, 5vw, 46px);
-  line-height: 1.05;
-  color: #4b3128;
-}
-
-.profile-header p {
-  margin: 9px 0 0;
-  color: #806f65;
-  font-size: 15px;
-}
-
-.profile-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.profile-card {
-  min-width: 0;
-  padding: 24px;
-  border: 1px solid #e4d7cc;
-  border-radius: 18px;
-  background: rgba(255, 252, 248, 0.94);
-  box-shadow: 0 8px 25px rgba(83, 55, 40, 0.07);
-}
-
-.identity-card {
-  grid-column: 1 / -1;
+.cover-actions {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  z-index: 3;
   display: flex;
   align-items: center;
-  gap: 20px;
-  background: #5a3d32;
-  color: #fffaf5;
-  border-color: #5a3d32;
+  gap: 12px;
 }
 
-.avatar {
+.cover-role {
+  color: rgba(255,255,255,.82);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+
+.change-cover {
+  border: 1px solid rgba(255,255,255,.45);
+  border-radius: 5px;
+  padding: 7px 11px;
+  background: rgba(47,77,183,.35);
+  color: #fff;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.profile-layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: 245px minmax(0, 1fr);
+  gap: 18px;
+  width: min(1040px, calc(100% - 36px));
+  margin: -45px auto 0;
+  padding-bottom: 45px;
+  z-index: 4;
+}
+
+.profile-summary {
+  position: relative;
+  align-self: start;
+  padding: 16px 14px 15px;
+  border: 1px solid #e2e7ef;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(31,41,55,.06);
+  text-align: center;
+}
+
+.profile-avatar {
   display: grid;
   place-items: center;
-  width: 82px;
-  height: 82px;
-  flex: 0 0 82px;
+  width: 92px;
+  height: 92px;
+  margin: -2px auto 11px;
+  border: 5px solid #fff;
   border-radius: 50%;
-  background: #d39a73;
-  color: #fff;
+  background: #d9dee8;
+  color: #52606d;
   font-size: 27px;
   font-weight: 800;
+  box-shadow: 0 2px 8px rgba(31,41,55,.12);
 }
 
-.identity-copy {
+.avatar-edit {
+  position: absolute;
+  top: 77px;
+  right: calc(50% - 48px);
+  width: 22px;
+  height: 22px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #4169e1;
+  color: #fff;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.profile-summary h1 {
+  margin: 0;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.company-name {
+  margin: 4px 0 14px;
+  color: #98a2b3;
+  font-size: 10px;
+}
+
+.summary-stats {
+  border-top: 1px solid #edf0f4;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.summary-stats div {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 1px;
+  border-bottom: 1px solid #f0f2f5;
+  font-size: 10px;
+}
+
+.summary-stats div:last-child {
+  border-bottom: 0;
+}
+
+.summary-stats span {
+  color: #667085;
+}
+
+.summary-stats strong {
+  color: #344054;
+}
+
+.active-text {
+  color: #4b9b61 !important;
+}
+
+.public-profile {
+  width: 100%;
+  margin-top: 13px;
+  padding: 8px;
+  border: 1px solid #e1e6ef;
+  background: #fff;
+  color: #667085;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.profile-id {
+  margin-top: 9px;
+  color: #98a2b3;
+  font-size: 8px;
+}
+
+.profile-editor {
+  min-width: 0;
+  border: 1px solid #e1e6ef;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(31,41,55,.04);
+}
+
+.profile-tabs {
+  display: flex;
+  align-items: center;
+  gap: 23px;
+  min-height: 45px;
+  padding: 0 16px;
+  border-bottom: 1px solid #e7eaf0;
+  overflow-x: auto;
+}
+
+.profile-tabs button {
+  position: relative;
+  height: 45px;
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: #98a2b3;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.profile-tabs button.active {
+  color: #344054;
+  font-weight: 800;
+}
+
+.profile-tabs button.active::after {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  content: "";
+  background: #4169e1;
+}
+
+.profile-form {
+  padding: 19px 16px 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 13px;
+  padding-bottom: 20px;
+}
+
+.form-grid label {
   min-width: 0;
 }
 
-.identity-copy h2 {
-  margin: 8px 0 5px;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 28px;
-}
-
-.identity-copy p {
-  margin: 0;
-  color: #eadbd1;
-  overflow-wrap: anywhere;
-}
-
-.role-badge {
-  display: inline-flex;
-  padding: 5px 9px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.13);
-  color: #f8e9df;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.account-id {
-  display: inline-block;
-  margin-top: 10px;
-  color: #d9c1b1;
-  font-size: 12px;
-}
-
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.section-heading h2 {
-  margin: 0;
-  color: #4b3128;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 23px;
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 13px;
-}
-
-.detail-item {
-  padding: 15px;
-  border-radius: 12px;
-  background: #f7f0e9;
-}
-
-.detail-item span {
+.form-grid label > span {
   display: block;
-  margin-bottom: 5px;
-  color: #8b776b;
-  font-size: 11px;
+  margin-bottom: 6px;
+  color: #667085;
+  font-size: 8px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .7px;
 }
 
-.detail-item strong {
-  display: block;
-  color: #51372c;
-  font-size: 14px;
-  overflow-wrap: anywhere;
-}
-
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.status i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #5f8a61;
-}
-
-.quick-actions {
-  display: grid;
-  gap: 9px;
-}
-
-.quick-actions button {
+.form-grid input,
+.form-grid select {
   width: 100%;
-  display: grid;
-  grid-template-columns: 34px 1fr auto;
-  align-items: center;
-  gap: 11px;
-  padding: 13px;
-  border: 1px solid #e5d8ce;
-  border-radius: 12px;
-  background: #fffaf6;
-  color: #52372c;
-  text-align: left;
-  cursor: pointer;
+  min-height: 31px;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid #e4e8ee;
+  border-radius: 2px;
+  outline: 0;
+  background: #fff;
+  color: #344054;
+  font-size: 9px;
 }
 
-.quick-actions button:hover {
-  border-color: #c58a68;
-  background: #f8eee7;
+.form-grid input:focus,
+.form-grid select:focus {
+  border-color: #4169e1;
+  box-shadow: 0 0 0 2px rgba(65,105,225,.08);
 }
 
-.quick-actions button > span {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: #ead8ca;
-}
-
-.quick-actions strong,
-.quick-actions small {
-  display: block;
-}
-
-.quick-actions small {
-  margin-top: 2px;
-  color: #8a766b;
-}
-
-.quick-actions b {
-  color: #a06a50;
-}
-
-.security-card {
+.form-footer {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 66px;
+  margin: 0 -16px;
+  padding: 0 16px;
+  border-top: 1px solid #edf0f4;
 }
 
-.security-copy {
-  margin: 0 0 20px;
-  color: #806f65;
-  line-height: 1.6;
-}
-
-.logout-button {
-  align-self: flex-start;
-  padding: 11px 18px;
-  border: 1px solid #b75f4c;
-  border-radius: 10px;
-  background: transparent;
-  color: #a84f3d;
+.update-button {
+  min-width: 64px;
+  padding: 8px 15px;
+  border: 0;
+  border-radius: 3px;
+  background: #4169e1;
+  color: #fff;
+  font-size: 9px;
   font-weight: 800;
   cursor: pointer;
 }
 
-.logout-button:hover {
-  background: #a84f3d;
-  color: white;
+.update-button:hover {
+  background: #3155c8;
+}
+
+.save-message {
+  color: #4b9b61;
+  font-size: 9px;
+}
+
+.profile-notice {
+  width: min(1040px, calc(100% - 36px));
+  margin: -25px auto 30px;
+  padding: 9px 12px;
+  border: 1px solid #dbe4fa;
+  border-radius: 5px;
+  background: #f4f7ff;
+  color: #52648c;
+  font-size: 10px;
 }
 
 @media (max-width: 760px) {
-  .profile-page {
-    padding: 22px 14px 40px;
+  .profile-cover {
+    height: 145px;
   }
 
-  .profile-header {
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .profile-grid {
+  .profile-layout {
     grid-template-columns: 1fr;
+    width: calc(100% - 24px);
+    margin-top: -35px;
   }
 
-  .identity-card {
-    grid-column: auto;
-    align-items: flex-start;
+  .profile-summary {
+    display: grid;
+    grid-template-columns: 78px 1fr;
+    gap: 0 13px;
+    text-align: left;
+    padding: 13px;
   }
 
-  .details-grid {
-    grid-template-columns: 1fr;
+  .profile-avatar {
+    grid-row: span 3;
+    width: 68px;
+    height: 68px;
+    margin: 0;
+  }
+
+  .avatar-edit {
+    top: 58px;
+    left: 66px;
+    right: auto;
+  }
+
+  .summary-stats,
+  .public-profile,
+  .profile-id {
+    grid-column: 1 / -1;
+  }
+
+  .profile-summary h1 {
+    align-self: end;
+  }
+
+  .company-name {
+    margin-bottom: 5px;
   }
 }
 
-@media (max-width: 480px) {
-  .profile-card {
-    padding: 18px;
-    border-radius: 15px;
+@media (max-width: 520px) {
+  .cover-actions {
+    right: 12px;
   }
 
-  .identity-card {
-    flex-direction: column;
+  .cover-role {
+    display: none;
   }
 
-  .avatar {
-    width: 70px;
-    height: 70px;
-    flex-basis: 70px;
+  .profile-tabs {
+    gap: 16px;
   }
 
-  .identity-copy h2 {
-    font-size: 24px;
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
