@@ -29,16 +29,16 @@
           >
             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
-          <input type="text" placeholder="Search suppliers or products..." />
+          <input v-model="searchQuery" type="text" placeholder="Search suppliers or products..." />
         </div>
       </header>
 
       <!-- Cart Workspace Grid -->
-      <div v-if="cartGroups.length > 0" class="cart-grid">
+      <div v-if="filteredCartGroups.length > 0" class="cart-grid">
         <!-- Left: Supplier Items List -->
         <div class="items-column">
           <div
-            v-for="group in cartGroups"
+            v-for="group in filteredCartGroups"
             :key="group.supplierId"
             class="supplier-card"
           >
@@ -150,8 +150,8 @@
               </select>
             </div>
 
-            <button @click="handleCheckout" class="checkout-button">
-              Proceed to checkout
+            <button @click="handleCheckout" class="checkout-button" :disabled="checkoutBusy">
+              {{ checkoutBusy ? "Placing order..." : "Proceed to checkout" }}
             </button>
 
             <p class="security-note">
@@ -178,7 +178,7 @@
         <div class="empty-icon">🛒</div>
         <h3>Your cart is empty</h3>
         <p>Explore suppliers and add wholesale products to your order.</p>
-        <button class="checkout-button browse-btn">Browse suppliers</button>
+        <button type="button" class="checkout-button browse-btn" @click="$router.push('/small-business/products')">Browse suppliers</button>
       </div>
     </main>
   </div>
@@ -197,6 +197,8 @@ export default {
       selectedPaymentMethod: "invoice",
       deliveryFee: 150.0,
       cartGroups: [],
+      searchQuery: "",
+      checkoutBusy: false,
       isLoading: false,
       error: "",
     };
@@ -229,6 +231,20 @@ export default {
         ? this.subtotal + this.deliveryFee + this.vatAmount
         : 0;
     },
+    filteredCartGroups() {
+      const query = this.searchQuery.trim().toLowerCase();
+      if (!query) return this.cartGroups;
+      return this.cartGroups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) =>
+            [item.productName, item.sku, group.supplierName]
+              .filter(Boolean)
+              .some((value) => String(value).toLowerCase().includes(query))
+          ),
+        }))
+        .filter((group) => group.items.length > 0);
+    },
   },
   async mounted() {
     await this.loadCart();
@@ -246,21 +262,30 @@ export default {
 
         items.forEach((item) => {
           if (!groups.has(item.supplier_id)) {
-            groups.set(item.supplier_id, {
-              supplierId: item.supplier_id,
-              supplierName: item.supplier_name,
-              supplierLocation: "",
+            groups.set(item.supplierId, {
+              supplierId: item.supplierId,
+              supplierName: item.supplier || "Supplier",
+              supplierInitials: String(item.supplier || "Supplier")
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((part) => part[0].toUpperCase())
+                .join(""),
+              location: "Wholesale supplier",
+              estimatedDelivery: "2–5 days",
               items: [],
             });
           }
 
-          groups.get(item.supplier_id).items.push({
-            cartItemId: item.cart_item_id,
-            productId: item.product_id,
-            name: item.product_name,
-            unitPrice: Number(item.unit_price),
+          groups.get(item.supplierId).items.push({
+            cartItemId: item.cartItemId,
+            productId: item.productId,
+            productName: item.title,
+            sku: item.sku || "Wholesale product",
+            packageUnit: item.unit || "unit",
+            unitPrice: Number(item.price),
             quantity: Number(item.quantity),
-            imageUrl: item.image_url,
+            imageUrl: item.image,
           });
         });
 
@@ -280,7 +305,11 @@ export default {
         const item = group.items.find((i) => i.cartItemId === cartItemId);
         if (!item) continue;
 
-        const newQuantity = Math.max(1, item.quantity + delta);
+        const newQuantity = item.quantity + delta;
+        if (newQuantity <= 0) {
+          await this.removeItem(cartItemId);
+          return;
+        }
 
         try {
           await api.updateCartItem(buyerId, cartItemId, newQuantity);
@@ -321,15 +350,39 @@ export default {
       });
     },
 
-    handleCheckout() {
-      if (!this.cartGroups.length) return;
-      // Checkout is currently a confirmation message until payment is connected.
-      Swal.fire({
-        title: "Checkout ready",
-        text: `Payment method: ${this.selectedPaymentMethod.toUpperCase()}. Total: R ${this.formatCurrency(this.grandTotal)}`,
-        icon: "info",
-        confirmButtonText: "Continue",
-      });
+    async handleCheckout() {
+      if (!this.cartGroups.length || this.checkoutBusy) return;
+
+      const buyerId = localStorage.getItem("weconnect_buyer_id") || "1";
+      this.checkoutBusy = true;
+      this.error = "";
+
+      try {
+        const result = await api.checkoutCart(
+          buyerId,
+          this.selectedPaymentMethod
+        );
+
+        await Swal.fire({
+          title: "Order placed",
+          text: `Your ${result.orders?.length || 1} supplier order(s) were created successfully.`,
+          icon: "success",
+          confirmButtonText: "View orders",
+        });
+
+        this.cartGroups = [];
+        this.$router.push("/small-business/orders");
+      } catch (error) {
+        this.error = error.message || "Checkout failed. Please try again.";
+        await Swal.fire({
+          title: "Checkout failed",
+          text: this.error,
+          icon: "error",
+          confirmButtonText: "Close",
+        });
+      } finally {
+        this.checkoutBusy = false;
+      }
     },
   },
 };
