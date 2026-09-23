@@ -126,9 +126,15 @@ const routes = [
   },
 
   {
-    path: "/cart",
-    name: "Cart",
+    path: "/small-business/cart",
+    name: "small-business-cart",
     component: () => import("../views/buyersviews/CartView.vue"),
+  },
+
+  // Backwards-compatible alias for existing cart links.
+  {
+    path: "/cart",
+    redirect: "/small-business/cart",
   },
 
   {
