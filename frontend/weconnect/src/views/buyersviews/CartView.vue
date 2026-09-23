@@ -261,7 +261,7 @@ export default {
         const groups = new Map();
 
         items.forEach((item) => {
-          if (!groups.has(item.supplier_id)) {
+          if (!groups.has(item.supplierId)) {
             groups.set(item.supplierId, {
               supplierId: item.supplierId,
               supplierName: item.supplier || "Supplier",
