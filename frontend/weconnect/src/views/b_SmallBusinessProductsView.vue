@@ -765,7 +765,7 @@ async function toggleBasket(product) {
 
     if (cartItemId) {
       await cartRequest(`/${cartItemId}`, {
-        method: 'PATCH',
+        method: 'PUT',
         body: JSON.stringify({ buyerId, quantity: nextQuantity })
       })
     } else {
