@@ -1,6 +1,7 @@
 <template>
   <div class="dashboard-page">
     <SmallBusinessNavbar />
+    <main class="dashboard-main">
     <section class="hero-card">
       <div class="hero-copy">
         <span class="eyebrow">Small Business Hub</span>
@@ -172,6 +173,7 @@
       <div class="promo-stat"><strong>{{ stats.inTransit }}</strong><span>deliveries in transit</span></div>
       <div class="promo-leaf">✦</div>
     </section>
+    </main>
   </div>
 </template>
 
@@ -455,6 +457,12 @@ onMounted(loadDashboard);
   --dashboard-white: #fffefa;
   color: var(--dashboard-ink);
   padding: 0 0 40px;
+}
+
+.dashboard-main {
+  width: min(1280px, 94%);
+  margin: 0 auto;
+  padding: 6px 0 40px;
 }
 
 .hero-card {
@@ -1110,5 +1118,7 @@ onMounted(loadDashboard);
 .dashboard-page { min-height: 100vh; background: #f7f5f2; color: #2f211d; }
 .dashboard-page h1, .dashboard-page h2 { font-family: Georgia, "Times New Roman", serif; color: #2f211d; }
 .hero-card, .metric-card, .panel { border-color: #e6ddd7; box-shadow: 0 8px 24px rgba(62,43,29,.05); }
-@media (max-width: 760px) { .dashboard-page { width: 100%; } }
+@media (max-width: 760px) {
+  .dashboard-main { width: calc(100% - 24px); }
+ .dashboard-page { width: 100%; } }
 </style>
