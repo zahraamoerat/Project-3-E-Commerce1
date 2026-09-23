@@ -1,191 +1,268 @@
 <template>
   <main class="profile-page">
-    <section class="profile-cover">
+    <section class="profile-cover" :style="coverStyle">
       <button type="button" class="cover-button" @click="goBack">← Back</button>
       <div class="cover-pattern"></div>
       <div class="cover-actions">
         <span class="cover-role">{{ isBuyer ? "SMALL BUSINESS" : "SUPPLIER" }}</span>
-        <button type="button" class="change-cover" @click="coverMessage = 'Cover image can be connected to your profile image storage later.'">
-          ▣ Change Cover
-        </button>
+        <label class="change-cover">▣ Change Cover<input type="file" accept="image/*" class="hidden-input" @change="changeCover" /></label>
       </div>
     </section>
 
-    <section class="profile-layout">
-      <aside class="profile-summary">
-        <div class="profile-avatar">{{ initials }}</div>
-        <button type="button" class="avatar-edit" @click="coverMessage = 'Profile photo upload can be connected to your image storage.'">✎</button>
+    <section class="profile-layout"><aside class="profile-summary">
+        <div class="profile-avatar">
+          <img v-if="avatarUrl" :src="avatarUrl" alt="Profile photo" />
+          <span v-else>{{ initials }}</span>
+        </div>
+        <label class="avatar-edit" title="Change profile photo">
+          ✎<input type="file" accept="image/*" class="hidden-input" @change="changeAvatar" />
+        </label>
 
         <h1>{{ displayName }}</h1>
-        <p class="company-name">{{ isBuyer ? "Small Business" : "Supplier Account" }}</p>
+        <p class="company-name">{{ form.businessName || (isBuyer ? "Small Business" : "Supplier Account") }}</p>
 
         <div class="summary-stats">
-          <div>
-            <span>{{ isBuyer ? "Orders" : "Products" }}</span>
-            <strong>{{ isBuyer ? "—" : "—" }}</strong>
-          </div>
-          <div>
-            <span>{{ isBuyer ? "Suppliers" : "Orders" }}</span>
-            <strong>—</strong>
-          </div>
-          <div>
-            <span>Status</span>
-            <strong class="active-text">Active</strong>
-          </div>
+          <div><span>{{ isBuyer ? "Orders" : "Products" }}</span><strong>{{ stats.primary }}</strong></div>
+          <div><span>{{ isBuyer ? "Suppliers" : "Orders" }}</span><strong>{{ stats.secondary }}</strong></div>
+          <div><span>Status</span><strong class="active-text">{{ profileStatus }}</strong></div>
         </div>
 
-        <button type="button" class="public-profile" @click="coverMessage = 'Public profile preview will use these saved details.'">
-          View Public Profile
+        <button type="button" class="public-profile" @click="showPublicProfile = !showPublicProfile">
+          {{ showPublicProfile ? "Close Public Profile" : "View Public Profile" }}
         </button>
-
-        <div v-if="businessId" class="profile-id">
-          {{ isBuyer ? "Buyer" : "Supplier" }} ID: {{ businessId }}
-        </div>
-      </aside>
-
-      <section class="profile-editor">
+        <div v-if="businessId" class="profile-id">{{ isBuyer ? "Buyer" : "Supplier" }} ID: {{ businessId }}</div>
+      </aside><section class="profile-editor">
         <nav class="profile-tabs" aria-label="Profile sections">
-          <button class="active" type="button">Account Settings</button>
-          <button type="button" @click="coverMessage = 'Company Settings are ready for the next profile section.'">Company Settings</button>
-          <button type="button" @click="coverMessage = 'Documents will appear here when document storage is connected.'">Documents</button>
-          <button type="button" @click="coverMessage = 'Billing settings can be added here.'">Billing</button>
-          <button type="button" @click="coverMessage = 'Notification preferences can be added here.'">Notifications</button>
+          <button v-for="tab in tabs" :key="tab.id" type="button" :class="{ active: activeTab === tab.id }" @click="activeTab = tab.id">
+            {{ tab.label }}
+          </button>
         </nav>
 
-        <form class="profile-form" @submit.prevent="saveProfile">
+        <form v-if="activeTab === 'account'" class="profile-form" @submit.prevent="saveProfile">
           <div class="form-grid">
-            <label>
-              <span>First Name</span>
-              <input v-model="form.firstName" type="text" placeholder="First name" />
-            </label>
-
-            <label>
-              <span>Last Name</span>
-              <input v-model="form.lastName" type="text" placeholder="Last name" />
-            </label>
-
-            <label>
-              <span>Phone Number</span>
-              <input v-model="form.phone" type="tel" placeholder="+27..." />
-            </label>
-
-            <label>
-              <span>Email address</span>
-              <input v-model="form.email" type="email" placeholder="name@company.com" />
-            </label>
-
-            <label>
-              <span>City</span>
-              <input v-model="form.city" type="text" placeholder="Cape Town" />
-            </label>
-
-            <label>
-              <span>State/County</span>
-              <input v-model="form.province" type="text" placeholder="Western Cape" />
-            </label>
-
-            <label>
-              <span>Postcode</span>
-              <input v-model="form.postalCode" type="text" placeholder="8000" />
-            </label>
-
-            <label>
-              <span>Country</span>
-              <select v-model="form.country">
-                <option value="">Select country</option>
-                <option>South Africa</option>
-                <option>Namibia</option>
-                <option>Botswana</option>
-                <option>Zimbabwe</option>
-                <option>Other</option>
-              </select>
-            </label>
+            <label><span>First Name</span><input v-model.trim="form.firstName" type="text" required /></label>
+            <label><span>Last Name</span><input v-model.trim="form.lastName" type="text" required /></label>
+            <label><span>Phone Number</span><input v-model.trim="form.phone" type="tel" placeholder="+27..." /></label>
+            <label><span>Email address</span><input v-model.trim="form.email" type="email" required /></label>
+            <label><span>City</span><input v-model.trim="form.city" type="text" /></label>
+            <label><span>Province</span><input v-model.trim="form.province" type="text" /></label>
+            <label><span>Postcode</span><input v-model.trim="form.postalCode" type="text" /></label>
+            <label><span>Country</span><select v-model="form.country"><option>South Africa</option><option>Namibia</option><option>Botswana</option><option>Zimbabwe</option><option>Other</option></select></label>
           </div>
-
           <div class="form-footer">
             <span v-if="saveMessage" class="save-message">{{ saveMessage }}</span>
-            <button type="submit" class="update-button">Update</button>
+            <span v-if="errorMessage" class="error-message">{{ errorMessage }}</span>
+            <button type="submit" class="update-button" :disabled="saving">{{ saving ? "Saving..." : "Update" }}</button>
           </div>
         </form>
-      </section>
-    </section>
 
-    <p v-if="coverMessage" class="profile-notice">{{ coverMessage }}</p>
+        <form v-else-if="activeTab === 'company'" class="profile-form" @submit.prevent="saveProfile">
+          <div class="form-grid">
+            <label class="form-full"><span>Business Name</span><input v-model.trim="form.businessName" type="text" required /></label>
+            <label class="form-full"><span>Business Address</span><input v-model.trim="form.address" type="text" placeholder="Street address" /></label>
+            <label><span>City</span><input v-model.trim="form.city" type="text" /></label>
+            <label><span>Province</span><input v-model.trim="form.province" type="text" /></label>
+            <label><span>Postcode</span><input v-model.trim="form.postalCode" type="text" /></label>
+            <label><span>Country</span><select v-model="form.country"><option>South Africa</option><option>Namibia</option><option>Botswana</option><option>Zimbabwe</option><option>Other</option></select></label>
+          </div>
+          <div class="form-footer">
+            <span v-if="saveMessage" class="save-message">{{ saveMessage }}</span>
+            <span v-if="errorMessage" class="error-message">{{ errorMessage }}</span>
+            <button type="submit" class="update-button" :disabled="saving">{{ saving ? "Saving..." : "Save Company" }}</button>
+          </div>
+        </form>
+
+        <section v-else-if="activeTab === 'documents'" class="settings-panel">
+          <h2>Documents</h2>
+          <p>Keep your business documents available on this device.</p>
+          <input ref="documentInput" type="file" class="hidden-input" @change="addDocument" />
+          <button type="button" class="secondary-button" @click="$refs.documentInput.click()">Add Document</button>
+          <ul v-if="documents.length" class="document-list">
+            <li v-for="(document, index) in documents" :key="document.name + index">
+              <span>{{ document.name }}</span><button type="button" @click="removeDocument(index)">Remove</button>
+            </li>
+          </ul>
+          <p v-else class="empty-state">No documents added yet.</p>
+        </section>
+
+        <section v-else-if="activeTab === 'billing'" class="settings-panel">
+          <h2>Billing</h2>
+          <p>{{ isBuyer ? "Small Business accounts can manage billing details when an order requires payment." : "Supplier subscription information is shown here." }}</p>
+          <div class="billing-card">
+            <strong>{{ isBuyer ? "Buyer account" : "Supplier account" }}</strong>
+            <span>{{ isBuyer ? "Pay per order through the checkout flow." : "Subscription status is managed from your supplier account." }}</span>
+          </div>
+        </section>
+
+        <section v-else class="settings-panel">
+          <h2>Notifications</h2>
+          <label class="notification-option"><input v-model="notifications.orders" type="checkbox" @change="saveNotifications" /> Order updates</label>
+          <label class="notification-option"><input v-model="notifications.deliveries" type="checkbox" @change="saveNotifications" /> Delivery updates</label>
+          <label class="notification-option"><input v-model="notifications.reviews" type="checkbox" @change="saveNotifications" /> Reviews and messages</label>
+          <span v-if="notificationMessage" class="save-message">{{ notificationMessage }}</span>
+        </section>
+      </section></section><section v-if="showPublicProfile" class="public-preview">
+      <div><strong>{{ displayName }}</strong><span>{{ form.businessName }}</span></div>
+      <p>{{ form.address || "Business address not provided" }}</p>
+      <p>{{ [form.city, form.province, form.postalCode, form.country].filter(Boolean).join(", ") }}</p>
+      <p>{{ form.email }} · {{ form.phone || "Phone not provided" }}</p>
+    </section>
   </main>
 </template>
 
 <script setup>
-import { computed, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
+import { api } from "@/services/api";
 
 const router = useRouter();
-
-const role = ref("buyer");
-const email = ref(localStorage.getItem("weconnect_email") || "");
-const userId = ref(localStorage.getItem("weconnect_user_id") || "");
-const buyerId = ref(localStorage.getItem("weconnect_buyer_id") || "");
-const supplierId = ref("");
-
-const isBuyer = computed(() => role.value === "buyer");
-const businessId = computed(() => isBuyer.value ? buyerId.value : supplierId.value);
-
-const savedFirstName = localStorage.getItem("weconnect_first_name") || "";
-const savedLastName = localStorage.getItem("weconnect_last_name") || "";
+const isBuyer = true;
+const businessId = ref(localStorage.getItem(isBuyer ? "weconnect_buyer_id" : "weconnect_supplier_id") || "");
+const activeTab = ref("account");
+const saving = ref(false);
+const saveMessage = ref("");
+const errorMessage = ref("");
+const notificationMessage = ref("");
+const showPublicProfile = ref(false);
+const avatarUrl = ref(localStorage.getItem("weconnect_avatar") || "");
+const coverUrl = ref(localStorage.getItem("weconnect_cover") || "");
+const documents = ref(JSON.parse(localStorage.getItem("weconnect_documents") || "[]"));
+const stats = reactive({ primary: "—", secondary: "—" });
+const notifications = reactive(JSON.parse(localStorage.getItem("weconnect_notifications") || '{"orders":true,"deliveries":true,"reviews":true}'));
 
 const form = reactive({
-  firstName: savedFirstName,
-  lastName: savedLastName,
-  phone: localStorage.getItem("weconnect_phone") || "",
-  email: email.value,
-  city: localStorage.getItem("weconnect_city") || "",
-  province: localStorage.getItem("weconnect_province") || "",
-  postalCode: localStorage.getItem("weconnect_postal_code") || "",
-  country: localStorage.getItem("weconnect_country") || "South Africa",
+  firstName: "", lastName: "", businessName: "", email: "",
+  phone: "", address: "", city: "", province: "", postalCode: "",
+  country: "South Africa",
 });
 
-const saveMessage = ref("");
-const coverMessage = ref("");
+const tabs = [
+  { id: "account", label: "Account Settings" },
+  { id: "company", label: "Company Settings" },
+  { id: "documents", label: "Documents" },
+  { id: "billing", label: "Billing" },
+  { id: "notifications", label: "Notifications" },
+];
 
 const displayName = computed(() => {
-  const fullName = `${form.firstName} ${form.lastName}`.trim();
-  if (fullName) return fullName;
+  const name = `${form.firstName} ${form.lastName}`.trim();
+  return name || form.businessName || (isBuyer ? "Small Business" : "Supplier");
+});
+const initials = computed(() => displayName.value.split(/\s+/).filter(Boolean).slice(0,2).map(p => p[0]).join("").toUpperCase() || "W");
+const profileStatus = ref("Active");
+const coverStyle = computed(() => coverUrl.value ? { backgroundImage: `url("${coverUrl.value}")`, backgroundSize: "cover", backgroundPosition: "center" } : {});
 
-  if (form.email) {
-    return form.email.split("@")[0]
-      .replace(/[._-]+/g, " ")
-      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+onMounted(async () => {
+  if (!localStorage.getItem("weconnect_token")) {
+    errorMessage.value = "Please sign in to edit your profile.";
+    return;
   }
-
-  return isBuyer.value ? "Small Business" : "Supplier";
+  try {
+    const result = await api.getProfile();
+    const p = result.profile || {};
+    Object.assign(form, {
+      firstName: p.firstName || "",
+      lastName: p.lastName || "",
+      businessName: p.businessName || "",
+      email: p.email || localStorage.getItem("weconnect_email") || "",
+      phone: p.phone || "",
+      address: p.address || "",
+      city: p.city || "",
+      province: p.province || "",
+      postalCode: p.postalCode || "",
+      country: localStorage.getItem("weconnect_country") || "South Africa",
+    });
+    businessId.value = p.businessId ? String(p.businessId) : businessId.value;
+    localStorage.setItem(isBuyer ? "weconnect_buyer_id" : "weconnect_supplier_id", businessId.value);
+    localStorage.setItem("weconnect_email", form.email);
+    stats.primary = isBuyer ? result.stats?.orders ?? 0 : result.stats?.products ?? 0;
+    stats.secondary = isBuyer ? result.stats?.suppliers ?? 0 : result.stats?.orders ?? 0;
+    profileStatus.value = isBuyer ? "Active" : (p.approvalStatus || (p.isVerified ? "Verified" : "Active"));
+  } catch (error) {
+    errorMessage.value = error.message || "Could not load your profile.";
+  }
 });
 
-const initials = computed(() => {
-  const parts = displayName.value.split(/\s+/).filter(Boolean);
-  return (parts.slice(0, 2).map((part) => part[0]).join("") || "W").toUpperCase();
-});
-
-function saveProfile() {
-  const values = {
-    weconnect_first_name: form.firstName,
-    weconnect_last_name: form.lastName,
-    weconnect_phone: form.phone,
-    weconnect_email: form.email,
-    weconnect_city: form.city,
-    weconnect_province: form.province,
-    weconnect_postal_code: form.postalCode,
-    weconnect_country: form.country,
-  };
-
-  Object.entries(values).forEach(([key, value]) => localStorage.setItem(key, value));
-
-  email.value = form.email;
-  saveMessage.value = "Profile details saved on this device.";
-
-  window.setTimeout(() => {
-    saveMessage.value = "";
-  }, 3000);
+async function saveProfile() {
+  if (!form.firstName || !form.lastName || !form.businessName || !form.email) {
+    errorMessage.value = "Please complete the required fields.";
+    return;
+  }
+  saving.value = true;
+  errorMessage.value = "";
+  saveMessage.value = "";
+  try {
+    const result = await api.updateProfile({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      businessName: form.businessName,
+      email: form.email,
+      phone: form.phone,
+      address: form.address,
+      city: form.city,
+      province: form.province,
+      postalCode: form.postalCode,
+    });
+    const p = result.profile || result;
+    Object.assign(form, {
+      firstName: p.firstName || form.firstName,
+      lastName: p.lastName || form.lastName,
+      businessName: p.businessName || form.businessName,
+      email: p.email || form.email,
+      phone: p.phone || form.phone,
+      address: p.address || form.address,
+      city: p.city || form.city,
+      province: p.province || form.province,
+      postalCode: p.postalCode || form.postalCode,
+    });
+    Object.entries({
+      weconnect_first_name: form.firstName, weconnect_last_name: form.lastName,
+      weconnect_email: form.email, weconnect_phone: form.phone,
+      weconnect_city: form.city, weconnect_province: form.province,
+      weconnect_postal_code: form.postalCode, weconnect_country: form.country,
+    }).forEach(([key, value]) => localStorage.setItem(key, value));
+    saveMessage.value = "Profile updated successfully.";
+  } catch (error) {
+    errorMessage.value = error.message || "Could not save your profile.";
+  } finally {
+    saving.value = false;
+  }
 }
 
+function saveNotifications() {
+  localStorage.setItem("weconnect_notifications", JSON.stringify(notifications));
+  notificationMessage.value = "Notification preferences saved.";
+  setTimeout(() => notificationMessage.value = "", 2000);
+}
+function readFile(file, callback) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => callback(reader.result);
+  reader.readAsDataURL(file);
+}
+function changeAvatar(event) {
+  readFile(event.target.files[0], (url) => {
+    avatarUrl.value = url;
+    localStorage.setItem("weconnect_avatar", url);
+  });
+}
+function changeCover(event) {
+  readFile(event.target.files[0], (url) => {
+    coverUrl.value = url;
+    localStorage.setItem("weconnect_cover", url);
+  });
+}
+function addDocument(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  documents.value.push({ name: file.name, size: file.size, type: file.type });
+  localStorage.setItem("weconnect_documents", JSON.stringify(documents.value));
+  event.target.value = "";
+}
+function removeDocument(index) {
+  documents.value.splice(index, 1);
+  localStorage.setItem("weconnect_documents", JSON.stringify(documents.value));
+}
 function goBack() {
   router.back();
 }
@@ -278,6 +355,7 @@ function goBack() {
 }
 
 .profile-avatar {
+  position: relative;
   display: grid;
   place-items: center;
   width: 92px;
@@ -285,12 +363,14 @@ function goBack() {
   margin: -2px auto 11px;
   border: 5px solid #fff;
   border-radius: 50%;
+  overflow: hidden;
   background: #eadfd8;
   color: #684b41;
   font-size: 27px;
   font-weight: 800;
   box-shadow: 0 2px 8px rgba(31,41,55,.12);
 }
+.profile-avatar img { width:100%; height:100%; object-fit:cover; }
 
 .avatar-edit {
   position: absolute;
@@ -307,6 +387,7 @@ function goBack() {
 }
 
 .profile-summary h1 {
+  overflow-wrap: anywhere;
   margin: 0;
   color: #4d3933;
   font-size: 14px;
@@ -533,6 +614,7 @@ function goBack() {
   }
 
   .profile-summary h1 {
+  overflow-wrap: anywhere;
     align-self: end;
   }
 
@@ -558,4 +640,26 @@ function goBack() {
     grid-template-columns: 1fr;
   }
 }
+</style>
+<style scoped>
+.form-full { grid-column: 1 / -1; }
+.hidden-input { display:none; }
+.settings-panel { padding: 24px; min-height: 300px; }
+.settings-panel h2 { margin:0 0 8px; color:#4d3933; font-size:18px; }
+.settings-panel p { color:#806c63; font-size:12px; }
+.secondary-button { border:1px solid #684b41; background:#fff; color:#684b41; padding:9px 14px; border-radius:4px; cursor:pointer; font-size:10px; font-weight:700; }
+.document-list { list-style:none; padding:0; margin:18px 0 0; }
+.document-list li { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid #eee8e3; font-size:11px; }
+.document-list button { border:0; background:transparent; color:#a04f43; cursor:pointer; }
+.empty-state { font-style:italic; }
+.billing-card { display:flex; flex-direction:column; gap:5px; padding:16px; margin-top:18px; border:1px solid #e6dfda; background:#fbf7f3; border-radius:5px; font-size:11px; color:#806c63; }
+.notification-option { display:flex; align-items:center; gap:9px; padding:12px 0; border-bottom:1px solid #eee8e3; color:#5f4b43; font-size:12px; }
+.notification-option input { accent-color:#684b41; }
+.public-preview { width:min(1040px,calc(100% - 36px)); margin:-25px auto 30px; padding:18px; background:#fff; border:1px solid #e6dfda; border-radius:5px; color:#806c63; }
+.public-preview div { display:flex; justify-content:space-between; gap:15px; color:#4d3933; }
+.public-preview p { margin:7px 0 0; font-size:11px; }
+.change-cover { cursor:pointer; }
+.update-button:disabled { opacity:.6; cursor:not-allowed; }
+.error-message { color:#a04f43; font-size:9px; }
+@media (max-width:760px){ .settings-panel{padding:16px;} .public-preview{width:calc(100% - 24px);} .public-preview div{flex-direction:column;gap:4px;} }
 </style>
