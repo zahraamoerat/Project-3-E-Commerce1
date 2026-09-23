@@ -58,29 +58,48 @@ const lowStock = computed(() => products.value.filter(p => stockStatus(p) === "L
 const outOfStock = computed(() => products.value.filter(p => stockStatus(p) === "Out of stock").length);
 function money(value){return new Intl.NumberFormat("en-ZA",{style:"currency",currency:"ZAR",maximumFractionDigits:0}).format(Number(value)||0)}
 function statusClass(status){return String(status||"").toLowerCase().replaceAll(" ","-")}
-async function showProductHistory(product){historyProduct.value=product;productHistory.value=[];productHistoryLoading.value=true;try{const response=await fetch(`/api/products/${product.product_id}/stock/history`);if(!response.ok)throw new Error("Unable to load product history.");productHistory.value=await response.json()}catch(e){error.value=e.message}finally{productHistoryLoading.value=false}}
+async function showProductHistory(product){
+  historyProduct.value=product
+  productHistory.value=[]
+  productHistoryLoading.value=true
+  error.value=""
+  try {
+    const token=localStorage.getItem("weconnect_token")
+    const response=await fetch(`/api/products/${product.product_id}/stock/history`,{
+      headers: token ? { Authorization:`Bearer ${token}` } : {}
+    })
+    if(!response.ok) throw new Error("Unable to load product history.")
+    productHistory.value=await response.json()
+  } catch(e) {
+    error.value=e.message
+  } finally {
+    productHistoryLoading.value=false
+  }
+}
 function viewAlerts(){statusFilter.value = alerts.value.some((item) => String(item.alert_status || item.stockStatus || "").toLowerCase() === "out of stock") ? "Out of stock" : "Low stock"}
 function toggleProduct(id,checked){selected.value={...selected.value,[id]:checked}}
 function toggleAll(checked){const next={...selected.value};visibleIds.value.forEach(id=>next[id]=checked);selected.value=next}
 function clearSelection(){selected.value={}}
-async function applyBulk(){const qty=Number(bulkQuantity.value);if(!selectedCount.value)return;if(!Number.isInteger(qty)||qty<0){error.value="Bulk quantity must be a non-negative whole number.";return}const updates=Object.entries(selected.value).filter(([,v])=>v).map(([id])=>{const p=products.value.find(x=>Number(x.product_id)===Number(id));return {product_id:Number(id),quantity:bulkMode.value==="receive"?Number(p?.quantity||0)+qty:qty}});const maxDelta=Math.max(...updates.map(u=>Math.abs(u.quantity-Number(products.value.find(p=>Number(p.product_id)===u.product_id)?.quantity||0))));if(maxDelta>=100&&!window.confirm("This bulk change is 100 units or more. Continue?"))return;bulkSaving.value=true;try{const r=await fetch("/api/products/stock/bulk",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({updates,reason:bulkMode.value==="receive"?"Delivery received":"Manual adjustment"})});const b=await r.json();if(!r.ok)throw new Error(b.message||"Bulk update failed.");message.value=b.message;clearSelection();await loadHistory();setTimeout(()=>message.value="",3500)}catch(e){error.value=e.message}finally{bulkSaving.value=false}}
+async function applyBulk(){const qty=Number(bulkQuantity.value);if(!selectedCount.value)return;if(!Number.isInteger(qty)||qty<0){error.value="Bulk quantity must be a non-negative whole number.";return}const updates=Object.entries(selected.value).filter(([,v])=>v).map(([id])=>{const p=products.value.find(x=>Number(x.product_id)===Number(id));return {product_id:Number(id),quantity:bulkMode.value==="receive"?Number(p?.quantity||0)+qty:qty}});const maxDelta=Math.max(...updates.map(u=>Math.abs(u.quantity-Number(products.value.find(p=>Number(p.product_id)===u.product_id)?.quantity||0))));if(maxDelta>=100&&!window.confirm("This bulk change is 100 units or more. Continue?"))return;bulkSaving.value=true;try{const token=localStorage.getItem("weconnect_token");
+const r=await fetch("/api/products/stock/bulk",{method:"PATCH",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}: {})},body:JSON.stringify({updates,reason:bulkMode.value==="receive"?"Delivery received":"Manual adjustment"})});const b=await r.json();if(!r.ok)throw new Error(b.message||"Bulk update failed.");message.value=b.message;clearSelection();await loadHistory();setTimeout(()=>message.value="",3500)}catch(e){error.value=e.message}finally{bulkSaving.value=false}}
 function restock(product){router.push({name:"RestockPage",params:{id:String(product.product_id)}})}
 function openReceive(product){editing.value=product;adjustmentMode.value="receive";editQuantity.value=0;editReason.value="Delivery received"}
 function startEdit(product){message.value="";error.value="";editing.value=product;adjustmentMode.value="set";editQuantity.value=Number(product.quantity)||0;editReason.value="Manual adjustment"}
 function cancelEdit(){editing.value=null}
 async function saveStock(){if(!editing.value)return;const input=Number(editQuantity.value);if(!Number.isInteger(input)||input<0){error.value="Quantity must be a non-negative whole number.";return}saving.value=true;error.value="";message.value="";const quantity=adjustmentMode.value==="receive"?Number(editing.value.quantity)+input:input;if(Math.abs(quantity-Number(editing.value.quantity))>=100&&!window.confirm("This adjustment is 100 units or more. Continue?")){saving.value=false;return}try{await updateProductStock(editing.value.product_id,quantity,editReason.value);message.value="Stock updated successfully.";editing.value=null;await loadHistory();setTimeout(()=>{message.value=""},3500)}catch(e){error.value=e.message||"Unable to update stock."}finally{saving.value=false}}
-async function loadAnalytics(){analyticsLoading.value=true;try{const response=await fetch("/api/products/stock/analytics");if(!response.ok)throw new Error("Unable to load stock movement analytics.");analytics.value=await response.json()}catch(e){error.value=e.message}finally{analyticsLoading.value=false}}
+async function loadAnalytics(){analyticsLoading.value=true;try{const token=localStorage.getItem("weconnect_token");const response=await fetch("/api/products/stock/analytics",{headers:token?{Authorization:`Bearer ${token}`}: {}});if(!response.ok)throw new Error("Unable to load stock movement analytics.");analytics.value=await response.json()}catch(e){error.value=e.message}finally{analyticsLoading.value=false}}
 async function loadHistory(){historyLoading.value=true;try{const token=localStorage.getItem("weconnect_token");const response=await fetch("/api/products/stock/history",{headers:token?{Authorization:`Bearer ${token}`}:{} });if(!response.ok)throw new Error("Unable to load stock history.");history.value=await response.json()}catch(e){error.value=e.message||"Unable to load stock history."}finally{historyLoading.value=false}}
 function signedChange(value){const n=Number(value)||0;return `${n>0?"+":""}${n}`}
 function exportInventory(){const headers=["Product","SKU","Category","Current stock","Reorder level","Recommended reorder","Status","Lead time (days)","Last restocked"];const rows=filteredProducts.value.map(p=>[p.product_name,p.sku||"",p.category_name||"",p.quantity,p.low_stock_threshold,recommendedQty(p),stockStatus(p),p.lead_time_days||1,formatDate(p.last_restocked)]);const csv=[headers,...rows].map(row=>row.map(v=>"\""+String(v??"").replaceAll("\"","\"\"")+"\"").join(",")).join("\\n");const blob=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="weconnect-inventory.csv";a.click();URL.revokeObjectURL(a.href)}
 function formatDate(value){if(!value)return "—";return new Intl.DateTimeFormat("en-ZA",{dateStyle:"medium",timeStyle:"short"}).format(new Date(value))}
 async function loadAlerts(){alertsLoading.value=true;try{const token=localStorage.getItem("weconnect_token");const response=await fetch("/api/products/stock/alerts",{headers:token?{Authorization:`Bearer ${token}`}:{} });if(!response.ok)throw new Error("Unable to load inventory alerts.");alerts.value=await response.json()}catch(e){console.warn(e.message)}finally{alertsLoading.value=false}}
-loadHistory();loadAlerts();loadAnalytics();
-
 let productRefreshTimer = null;
 
 onMounted(async () => {
-  await refreshSupplierProducts().catch(() => {});
+  await refreshSupplierProducts().catch((requestError) => {
+    error.value = requestError?.message || "Unable to load supplier inventory."
+  })
+  await Promise.all([loadHistory(), loadAlerts(), loadAnalytics()]);
   productRefreshTimer = window.setInterval(() => {
     if (!document.hidden) refreshSupplierProducts().catch(() => {});
   }, 5000);
@@ -113,7 +132,7 @@ window.addEventListener("beforeunload", () => window.clearInterval(alertTimer));
 .alert-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;box-sizing:border-box;margin-bottom:14px;padding:13px 16px;border:1px solid #ecd6bd;border-radius:11px;background:#fff8ee}
 .alert-banner strong{display:block;color:#87591f;font-size:11px}.alert-banner span{display:block;margin-top:4px;color:#9b8067;font-size:10px}.alert-banner button{border:1px solid #ddc09f;border-radius:8px;padding:8px 12px;background:#fff;color:#965f2b;font-size:10px;font-weight:700}
 .notice{box-sizing:border-box;margin-bottom:14px;padding:11px 14px;border-radius:9px;font-size:11px;font-weight:700}.notice.success{border:1px solid #cfe1d5;background:#f0f8f2;color:#397052}.notice.error{border:1px solid #edcfca;background:#fff3f1;color:#a34e47}
-.inventory-card{overflow:hidden;border:1px solid #ddd3cc;border-radius:18px;background:#fff;box-shadow:0 12px 32px rgba(67,47,38,.07)}
+.inventory-card{overflow:hidden;min-width:0;border:1px solid #ddd3cc;border-radius:18px;background:#fff;box-shadow:0 12px 32px rgba(67,47,38,.07)}
 .toolbar{display:grid;grid-template-columns:1fr auto;gap:16px;padding:20px 22px 16px;border-bottom:1px solid #eee8e3;background:linear-gradient(180deg,#fff,#fdfbf9)}
 .toolbar h2,.history-head h2{margin:0;color:#3b2c26;font:700 19px Georgia,serif}.toolbar p,.history-head p{margin:5px 0 0;color:#97857d;font-size:10px}
 .toolbar-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.export,.toolbar-controls select{height:36px;box-sizing:border-box;border:1px solid #ded6d0;border-radius:9px;padding:0 11px;background:#fff;color:#67544c;font-size:10px;font-weight:700}.export:hover,.toolbar-controls select:hover{border-color:#c9b8ae;background:#faf7f4}
