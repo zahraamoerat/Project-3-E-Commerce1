@@ -53,6 +53,8 @@ export const api = {
 
   getProducts: () => request("/products"),
 
+  getSuppliers: () => request("/suppliers"),
+
   getCart: (buyerId) => request(`/cart?buyerId=${encodeURIComponent(buyerId)}`),
 
   addToCart: (buyerId, productId, quantity = 1) =>
