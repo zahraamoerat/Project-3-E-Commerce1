@@ -2011,7 +2011,7 @@ onMounted(() => {
 @media (max-width: 640px) {
 
   .connect-sb-orders-page {
-    padding: 20px 15px;
+    padding: 0 0 20px;
   }
 
   .connect-sb-orders-header {
