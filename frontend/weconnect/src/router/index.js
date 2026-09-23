@@ -205,6 +205,12 @@ const routes = [
   },
 
   {
+    path: "/small-business/suppliers",
+    name: "small-business-suppliers",
+    component: () => import("../views/b_ViewSuppliersView.vue"),
+  },
+
+  {
     path: "/small-business/products/:productId",
     name: "small-business-product",
     component: () => import("../views/b_SmallBusinessProductsView.vue"),
