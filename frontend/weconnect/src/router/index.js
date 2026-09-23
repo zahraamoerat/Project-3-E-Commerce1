@@ -25,7 +25,7 @@ const routes = [
     children: [
       {
         path: "",
-        redirect: "/products",
+        redirect: "/small-business",
       },
 
       {
