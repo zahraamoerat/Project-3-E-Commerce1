@@ -443,8 +443,8 @@ onMounted(loadDashboard);
 
 <style scoped>
 .dashboard-page {
-  width: min(1280px, 94%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   --dashboard-green: #5c3d24;
   --dashboard-green-dark: #4e342e;
   --dashboard-green-soft: #f3e7d9;
