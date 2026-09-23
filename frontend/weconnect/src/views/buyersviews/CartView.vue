@@ -1,201 +1,257 @@
 <template>
   <div class="cart-page">
     <SmallBusinessNavbar />
-    <main class="main-content">
-      <p v-if="error" class="error-message">{{ error }}</p>
-      <p v-if="isLoading" class="loading-message">Loading your cart...</p>
-      <div class="cart-topbar">
-        <button type="button" class="back-button" @click="goBack">
-          <span aria-hidden="true">←</span>
-          Back
-        </button>
-      </div>
-      <!-- Top Search & Welcome -->
-      <header class="header-section">
-        <div>
-          <h2 class="welcome-heading">Shopping cart</h2>
-          <p class="sub-heading">
-            Review your supplier orders before confirming checkout.
-          </p>
-        </div>
-        <div class="search-box">
-          <svg
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-          >
-            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-          <input v-model="searchQuery" type="text" placeholder="Search suppliers or products..." />
-        </div>
-      </header>
 
-      <!-- Cart Workspace Grid -->
-      <div v-if="filteredCartGroups.length > 0" class="cart-grid">
-        <!-- Left: Supplier Items List -->
-        <div class="items-column">
-          <div
-            v-for="group in filteredCartGroups"
-            :key="group.supplierId"
-            class="supplier-card"
-          >
-            <div class="supplier-card-header">
-              <div class="supplier-info">
-                <span class="avatar-circle">{{ group.supplierInitials }}</span>
-                <div>
-                  <h3 class="supplier-name">{{ group.supplierName }}</h3>
-                  <span class="supplier-location">{{ group.location }}</span>
-                </div>
-              </div>
-              <span class="eta-pill">{{ group.estimatedDelivery }}</span>
+    <!-- Page heading / breadcrumb -->
+    <section class="page-hero">
+      <div class="hero-pattern hero-pattern-left" aria-hidden="true"></div>
+      <div class="hero-pattern hero-pattern-right" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <h1>Shopping Cart</h1>
+        <p>
+          <router-link to="/small-business/products">Home</router-link>
+          <span>/</span>
+          Shopping Cart
+        </p>
+      </div>
+    </section>
+
+    <main class="main-content">
+      <p v-if="error" class="status-message error-message" role="alert">
+        {{ error }}
+      </p>
+      <p v-if="isLoading" class="status-message loading-message" role="status">
+        Loading your cart...
+      </p>
+
+      <div v-if="cartGroups.length > 0" class="cart-layout">
+        <section class="cart-section" aria-labelledby="cart-items-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Your selection</p>
+              <h2 id="cart-items-heading">Cart Items</h2>
+            </div>
+            <span class="item-count">{{ totalCartCount }} item{{ totalCartCount === 1 ? "" : "s" }}</span>
+          </div>
+
+          <div class="cart-table">
+            <div class="table-header">
+              <span>Product</span>
+              <span>Price</span>
+              <span>Quantity</span>
+              <span>Subtotal</span>
             </div>
 
-            <!-- Item Table / List -->
-            <div class="item-list">
-              <div
+            <div
+              v-for="group in filteredCartGroups"
+              :key="group.supplierId"
+              class="supplier-group"
+            >
+              <div class="supplier-label">
+                <span class="supplier-dot" aria-hidden="true"></span>
+                <span>{{ group.supplierName }}</span>
+                <span class="supplier-delivery">{{ group.estimatedDelivery }}</span>
+              </div>
+
+              <article
                 v-for="item in group.items"
                 :key="item.cartItemId"
-                class="cart-item-row"
+                class="cart-row"
               >
-                <div class="item-details">
-                  <h4 class="item-name">{{ item.productName }}</h4>
-                  <p class="item-meta">
-                    {{ item.sku }} • {{ item.packageUnit }}
-                  </p>
-                  <span class="unit-price"
-                    >R {{ formatCurrency(item.unitPrice) }} each</span
+                <div class="product-cell">
+                  <button
+                    type="button"
+                    class="remove-button"
+                    :aria-label="`Remove ${item.productName} from cart`"
+                    title="Remove item"
+                    @click="removeItem(item.cartItemId)"
                   >
+                    ×
+                  </button>
+
+                  <div class="product-image-wrap">
+                    <img
+                      v-if="item.imageUrl"
+                      :src="resolveImageUrl(item.imageUrl)"
+                      :alt="item.productName"
+                      class="product-image"
+                      @error="handleImageError"
+                    />
+                    <div v-else class="product-image-placeholder" aria-hidden="true">
+                      {{ productInitials(item.productName) }}
+                    </div>
+                  </div>
+
+                  <div class="product-copy">
+                    <h3>{{ item.productName }}</h3>
+                    <p>{{ item.sku }} · {{ item.packageUnit }}</p>
+                  </div>
                 </div>
 
-                <div class="quantity-picker">
-                  <button
-                    @click="updateQuantity(item.cartItemId, -1)"
-                    class="qty-btn"
-                  >
-                    -
-                  </button>
-                  <span class="qty-value">{{ item.quantity }}</span>
-                  <button
-                    @click="updateQuantity(item.cartItemId, 1)"
-                    class="qty-btn"
-                  >
-                    +
-                  </button>
+                <div class="price-cell">
+                  R {{ formatCurrency(item.unitPrice) }}
                 </div>
 
-                <div class="item-total">
+                <div class="quantity-cell">
+                  <div class="quantity-picker" :aria-label="`Quantity for ${item.productName}`">
+                    <button
+                      type="button"
+                      class="qty-btn"
+                      :aria-label="`Decrease quantity of ${item.productName}`"
+                      @click="updateQuantity(item.cartItemId, -1)"
+                    >
+                      −
+                    </button>
+                    <span class="qty-value">{{ item.quantity }}</span>
+                    <button
+                      type="button"
+                      class="qty-btn"
+                      :aria-label="`Increase quantity of ${item.productName}`"
+                      @click="updateQuantity(item.cartItemId, 1)"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div class="subtotal-cell">
                   R {{ formatCurrency(item.unitPrice * item.quantity) }}
                 </div>
-
-                <button
-                  @click="removeItem(item.cartItemId)"
-                  class="delete-icon"
-                  title="Remove Item"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
+              </article>
             </div>
           </div>
-        </div>
 
-        <!-- Right: Summary Sidebar Card -->
-        <div class="summary-column">
+          <div v-if="searchQuery && filteredCartGroups.length === 0" class="no-results">
+            <strong>No matching cart items</strong>
+            <span>Try a different product or supplier name.</span>
+          </div>
+
+          <div class="cart-actions">
+            <router-link to="/small-business/products" class="continue-shopping">
+              <span aria-hidden="true">←</span>
+              Continue Shopping
+            </router-link>
+          </div>
+        </section>
+
+        <aside class="summary-column" aria-labelledby="summary-heading">
           <div class="summary-card">
-            <h3 class="summary-heading">Order summary</h3>
+            <h2 id="summary-heading">Order Summary</h2>
 
             <div class="summary-line">
-              <span>Subtotal ({{ totalCartCount }} items)</span>
-              <span>R {{ formatCurrency(subtotal) }}</span>
-            </div>
-            <div class="summary-line">
-              <span>Logistics & Delivery</span>
-              <span>R {{ formatCurrency(deliveryFee) }}</span>
-            </div>
-            <div class="summary-line">
-              <span>VAT (15%)</span>
-              <span>R {{ formatCurrency(vatAmount) }}</span>
+              <span>Items</span>
+              <strong>{{ totalCartCount }}</strong>
             </div>
 
-            <hr class="summary-divider" />
+            <div class="summary-line">
+              <span>Sub Total</span>
+              <strong>R {{ formatCurrency(subtotal) }}</strong>
+            </div>
+
+            <div class="summary-line">
+              <span>Shipping</span>
+              <strong>{{ deliveryFee === 0 ? "Free" : "R " + formatCurrency(deliveryFee) }}</strong>
+            </div>
+
+            <div class="summary-line">
+              <span>Taxes (15% VAT)</span>
+              <strong>R {{ formatCurrency(vatAmount) }}</strong>
+            </div>
+
+            <div class="summary-divider"></div>
 
             <div class="summary-line total-line">
-              <span>Total spend</span>
-              <span class="total-amount"
-                >R {{ formatCurrency(grandTotal) }}</span
-              >
+              <span>Total</span>
+              <strong>R {{ formatCurrency(grandTotal) }}</strong>
             </div>
 
-            <!-- Payment Choice -->
-            <div class="form-group">
-              <label class="form-label">Payment option</label>
-              <select v-model="selectedPaymentMethod" class="custom-select">
+            <p class="shipping-note">
+              <span aria-hidden="true">✓</span>
+              Free shipping on orders over R180
+            </p>
+
+            <div class="payment-group">
+              <label for="payment-method">Payment option</label>
+              <select id="payment-method" v-model="selectedPaymentMethod">
                 <option value="invoice">30-Day Invoice (Trade credit)</option>
-                <option value="card">Credit / Debit card</option>
+                <option value="card">Credit / Debit Card</option>
                 <option value="eft">Instant EFT</option>
               </select>
             </div>
 
-            <button @click="handleCheckout" class="checkout-button" :disabled="checkoutBusy">
-              {{ checkoutBusy ? "Placing order..." : "Proceed to checkout" }}
+            <button
+              type="button"
+              class="checkout-button"
+              :disabled="checkoutBusy || isLoading"
+              @click="handleCheckout"
+            >
+              {{ checkoutBusy ? "Placing order..." : "Proceed to Checkout" }}
             </button>
 
-            <p class="security-note">
-              <svg
-                width="14"
-                height="14"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                ></path>
-              </svg>
-              Encrypted & secure B2B transaction
+            <p class="secure-note">
+              <span aria-hidden="true">🔒</span>
+              Secure and encrypted checkout
             </p>
           </div>
-        </div>
+        </aside>
       </div>
 
-      <!-- Empty State -->
-      <div v-else class="empty-cart-card">
-        <div class="empty-icon">🛒</div>
-        <h3>Your cart is empty</h3>
-        <p>Explore suppliers and add wholesale products to your order.</p>
-        <button type="button" class="checkout-button browse-btn" @click="$router.push('/small-business/products')">Browse suppliers</button>
-      </div>
+      <section v-else-if="!isLoading" class="empty-cart">
+        <div class="empty-icon" aria-hidden="true">🛒</div>
+        <p class="eyebrow">Nothing here yet</p>
+        <h2>Your cart is empty</h2>
+        <p>Browse our marketplace and add wholesale products to your order.</p>
+        <router-link to="/small-business/products" class="checkout-button empty-button">
+          Browse Products
+        </router-link>
+      </section>
+
+      <!-- Trust / service strip inspired by the supplied design -->
+      <section class="benefits-strip" aria-label="Shopping benefits">
+        <article class="benefit-card">
+          <div class="benefit-icon" aria-hidden="true">◈</div>
+          <div>
+            <h3>Free Shipping</h3>
+            <p>Free shipping for orders above R180.</p>
+          </div>
+        </article>
+
+        <article class="benefit-card">
+          <div class="benefit-icon" aria-hidden="true">▣</div>
+          <div>
+            <h3>Flexible Payment</h3>
+            <p>Multiple secure payment options.</p>
+          </div>
+        </article>
+
+        <article class="benefit-card">
+          <div class="benefit-icon" aria-hidden="true">◉</div>
+          <div>
+            <h3>24x7 Support</h3>
+            <p>We're available to help when you need us.</p>
+          </div>
+        </article>
+      </section>
     </main>
   </div>
 </template>
 
 <script>
-import { api } from "@/services/api";
+import { api, apiBaseUrl } from "@/services/api";
 import SmallBusinessNavbar from "@/components/SmallBusinessNavbar.vue";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 
 export default {
   name: "CartView",
+
+  components: {
+    SmallBusinessNavbar,
+  },
+
   data() {
     return {
       selectedPaymentMethod: "invoice",
-      deliveryFee: 150.0,
       cartGroups: [],
       searchQuery: "",
       checkoutBusy: false,
@@ -203,7 +259,7 @@ export default {
       error: "",
     };
   },
-  // Group the cart items by supplier so each supplier gets its own section.
+
   computed: {
     totalCartCount() {
       return this.cartGroups.reduce(
@@ -212,6 +268,7 @@ export default {
         0,
       );
     },
+
     subtotal() {
       return this.cartGroups.reduce(
         (total, group) =>
@@ -223,34 +280,45 @@ export default {
         0,
       );
     },
+
     vatAmount() {
       return this.subtotal * 0.15;
     },
-    grandTotal() {
-      return this.subtotal > 0
-        ? this.subtotal + this.deliveryFee + this.vatAmount
-        : 0;
+
+    deliveryFee() {
+      if (this.subtotal <= 0) return 0;
+      return this.subtotal >= 180 ? 0 : 150;
     },
+
+    grandTotal() {
+      return this.subtotal + this.deliveryFee + this.vatAmount;
+    },
+
     filteredCartGroups() {
       const query = this.searchQuery.trim().toLowerCase();
+
       if (!query) return this.cartGroups;
+
       return this.cartGroups
         .map((group) => ({
           ...group,
           items: group.items.filter((item) =>
             [item.productName, item.sku, group.supplierName]
               .filter(Boolean)
-              .some((value) => String(value).toLowerCase().includes(query))
+              .some((value) =>
+                String(value).toLowerCase().includes(query),
+              ),
           ),
         }))
         .filter((group) => group.items.length > 0);
     },
   },
+
   async mounted() {
     await this.loadCart();
   },
+
   methods: {
-    // Group the cart items by supplier so each supplier gets its own section.
     async loadCart() {
       const buyerId = localStorage.getItem("weconnect_buyer_id") || "1";
       this.isLoading = true;
@@ -271,7 +339,6 @@ export default {
                 .slice(0, 2)
                 .map((part) => part[0].toUpperCase())
                 .join(""),
-              location: "Wholesale supplier",
               estimatedDelivery: "2–5 days",
               items: [],
             });
@@ -280,18 +347,18 @@ export default {
           groups.get(item.supplierId).items.push({
             cartItemId: item.cartItemId,
             productId: item.productId,
-            productName: item.title,
+            productName: item.title || "Wholesale product",
             sku: item.sku || "Wholesale product",
             packageUnit: item.unit || "unit",
-            unitPrice: Number(item.price),
-            quantity: Number(item.quantity),
-            imageUrl: item.image,
+            unitPrice: Number(item.price) || 0,
+            quantity: Number(item.quantity) || 1,
+            imageUrl: item.image || "",
           });
         });
 
         this.cartGroups = Array.from(groups.values());
       } catch (error) {
-        this.error = error.message;
+        this.error = error.message || "Unable to load your cart.";
       } finally {
         this.isLoading = false;
       }
@@ -299,13 +366,14 @@ export default {
 
     async updateQuantity(cartItemId, delta) {
       const buyerId = localStorage.getItem("weconnect_buyer_id") || "1";
-      if (!buyerId) return;
 
       for (const group of this.cartGroups) {
-        const item = group.items.find((i) => i.cartItemId === cartItemId);
+        const item = group.items.find((cartItem) => cartItem.cartItemId === cartItemId);
+
         if (!item) continue;
 
         const newQuantity = item.quantity + delta;
+
         if (newQuantity <= 0) {
           await this.removeItem(cartItemId);
           return;
@@ -314,40 +382,72 @@ export default {
         try {
           await api.updateCartItem(buyerId, cartItemId, newQuantity);
           item.quantity = newQuantity;
+          this.error = "";
         } catch (error) {
-          this.error = error.message;
+          this.error = error.message || "Unable to update the quantity.";
         }
+
         return;
       }
     },
 
     async removeItem(cartItemId) {
       const buyerId = localStorage.getItem("weconnect_buyer_id") || "1";
-      if (!buyerId) return;
 
       try {
         await api.removeCartItem(buyerId, cartItemId);
+
         this.cartGroups.forEach((group) => {
-          group.items = group.items.filter((i) => i.cartItemId !== cartItemId);
+          group.items = group.items.filter(
+            (item) => item.cartItemId !== cartItemId,
+          );
         });
+
         this.cartGroups = this.cartGroups.filter(
           (group) => group.items.length > 0,
         );
+
+        this.error = "";
       } catch (error) {
-        this.error = error.message;
+        this.error = error.message || "Unable to remove the item.";
       }
     },
 
-    goBack() {
-      if (window.history.length > 1) this.$router.back();
-      else this.$router.push("/");
-    },
-
-    formatCurrency(val) {
-      return Number(val).toLocaleString("en-ZA", {
+    formatCurrency(value) {
+      return Number(value || 0).toLocaleString("en-ZA", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
+    },
+
+    productInitials(name) {
+      return String(name || "Product")
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0].toUpperCase())
+        .join("");
+    },
+
+    resolveImageUrl(imageUrl) {
+      if (!imageUrl) return "";
+      if (/^(https?:)?\/\//i.test(imageUrl) || imageUrl.startsWith("data:")) {
+        return imageUrl;
+      }
+
+      const normalizedPath = imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl;
+
+      if (normalizedPath.startsWith("/api/")) {
+        return normalizedPath;
+      }
+
+      return apiBaseUrl.replace(/\/$/, "") + normalizedPath;
+    },
+
+    handleImageError(event) {
+      event.target.style.display = "none";
+      const placeholder = event.target.nextElementSibling;
+      if (placeholder) placeholder.style.display = "grid";
     },
 
     async handleCheckout() {
@@ -360,7 +460,7 @@ export default {
       try {
         const result = await api.checkoutCart(
           buyerId,
-          this.selectedPaymentMethod
+          this.selectedPaymentMethod,
         );
 
         await Swal.fire({
@@ -374,6 +474,7 @@ export default {
         this.$router.push("/small-business/orders");
       } catch (error) {
         this.error = error.message || "Checkout failed. Please try again.";
+
         await Swal.fire({
           title: "Checkout failed",
           text: this.error,
@@ -389,520 +490,682 @@ export default {
 </script>
 
 <style scoped>
-/* Shared small-business visual system */
-:global(body) { margin: 0; background: #f7f5f2; font-family: "Plus Jakarta Sans", sans-serif; }
-:global(*) { box-sizing: border-box; }
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap");
 
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+:global(*) {
+  box-sizing: border-box;
+}
 
-/* Main Container Layout */
+:global(body) {
+  margin: 0;
+  background: #f8f7f5;
+  font-family: "DM Sans", sans-serif;
+  color: #2e211d;
+}
+
 .cart-page {
   min-height: 100vh;
-  background-color: #f7f5f2;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  color: #2f211d;
+  background: #f8f7f5;
+  color: #2e211d;
+  font-family: "DM Sans", sans-serif;
 }
 
-/* Sidebar styling matching mockups */
-.sidebar {
-  width: 250px;
-  background-color: #4a2e2b;
-  color: #ffffff;
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
+/* Template-style page heading */
+.page-hero {
+  position: relative;
+  min-height: 128px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #f2f2f1;
+  border-bottom: 1px solid #ebe8e4;
 }
 
-.logo-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 32px;
-  padding-left: 8px;
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
 }
 
-.logo-badge {
-  background-color: #d97736;
-  color: #ffffff;
-  font-weight: 700;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font-size: 13px;
-}
-
-.logo-title {
+.hero-inner h1 {
+  margin: 0;
   font-family: "Playfair Display", serif;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: clamp(28px, 4vw, 40px);
   line-height: 1.1;
+  color: #33231e;
 }
 
-.logo-subtitle {
-  font-size: 9px;
-  letter-spacing: 0.8px;
-  color: #cbb2ab;
-  display: block;
-}
-
-.nav-menu {
+.hero-inner p {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-grow: 1;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  color: #d1beba;
-  text-decoration: none;
-  border-radius: 8px;
-  font-size: 13.5px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.nav-item:hover,
-.nav-item.active {
-  background-color: #5c3a37;
-  color: #ffffff;
-}
-
-.cart-count-badge {
-  margin-left: auto;
-  background: #d97736;
-  color: white;
-  font-size: 11px;
-  padding: 2px 7px;
-  border-radius: 10px;
-  font-weight: 700;
-}
-
-.logout-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  color: #cbb2ab;
-  text-decoration: none;
-  font-size: 13.5px;
-  margin-top: auto;
-}
-
-/* Workspace Header */
-.main-content {
-  width: min(1280px, 94%);
-  margin: 0 auto;
-  padding: 34px 0 56px;
-}
-
-.cart-topbar {
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 24px;
-}
-
-.back-button {
-  display: inline-flex;
+  justify-content: center;
   align-items: center;
   gap: 8px;
-  padding: 9px 14px;
-  border: 1px solid #d8c9bf;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #5c3a37;
-  font: inherit;
+  margin: 10px 0 0;
+  color: #8b7b74;
+  font-size: 11px;
+}
+
+.hero-inner a {
+  color: #66534c;
+  text-decoration: none;
+}
+
+.hero-inner a:hover {
+  color: #b7652b;
+}
+
+.hero-pattern {
+  position: absolute;
+  width: 125px;
+  height: 80px;
+  opacity: .45;
+  background-image: radial-gradient(#c8c5c1 1.5px, transparent 1.5px);
+  background-size: 9px 9px;
+}
+
+.hero-pattern-left {
+  left: 8%;
+  bottom: -42px;
+  transform: rotate(-7deg);
+}
+
+.hero-pattern-right {
+  right: 9%;
+  top: -44px;
+  transform: rotate(10deg);
+}
+
+/* Main layout */
+.main-content {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 30px 0 48px;
+}
+
+.status-message {
+  margin: 0 0 18px;
+  padding: 11px 14px;
+  border-radius: 7px;
   font-size: 13px;
-  font-weight: 600;
+}
+
+.error-message {
+  color: #8b2727;
+  background: #fceaea;
+  border: 1px solid #f2caca;
+}
+
+.loading-message {
+  color: #705c53;
+  background: #fff;
+  border: 1px solid #e8e1dc;
+}
+
+.cart-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 28px;
+  align-items: start;
+}
+
+.cart-section {
+  min-width: 0;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 13px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: #ad6b3b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-size: 22px;
+  color: #33231e;
+}
+
+.item-count {
+  color: #7b6d66;
+  font-size: 12px;
+}
+
+/* Table-like cart structure */
+.cart-table {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #ebe5df;
+  box-shadow: 0 8px 24px rgba(71, 50, 38, .05);
+}
+
+.table-header,
+.cart-row {
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) 90px 115px 100px;
+  column-gap: 18px;
+  align-items: center;
+}
+
+.table-header {
+  min-height: 40px;
+  padding: 0 18px;
+  background: #f5c15d;
+  color: #5c351d;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.table-header span:nth-child(n + 2) {
+  text-align: center;
+}
+
+.supplier-group + .supplier-group {
+  border-top: 1px solid #eee7e1;
+}
+
+.supplier-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 31px;
+  padding: 7px 18px;
+  background: #fbf9f7;
+  color: #765f55;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.supplier-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #b7652b;
+}
+
+.supplier-delivery {
+  margin-left: auto;
+  color: #9a8a82;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.cart-row {
+  min-height: 93px;
+  padding: 13px 18px;
+  border-bottom: 1px solid #eeeae6;
+}
+
+.cart-row:last-child {
+  border-bottom: 0;
+}
+
+.product-cell {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.remove-button {
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #766862;
+  font-size: 17px;
+  line-height: 17px;
   cursor: pointer;
 }
 
-.back-button:hover {
-  background: #f7ebe1;
+.remove-button:hover {
+  color: #a53232;
 }
 
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 28px;
-}
-
-.welcome-heading {
-  font-family: "Playfair Display", serif;
-  font-size: 26px;
-  font-weight: 700;
-  color: #2d1810;
-}
-
-.sub-heading {
-  color: #7a6862;
-  font-size: 13.5px;
-  margin-top: 4px;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #ffffff;
-  border: 1px solid #e8ded5;
-  padding: 8px 14px;
-  border-radius: 20px;
-  width: 280px;
-  color: #7a6862;
-}
-
-.search-box input {
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 13px;
-  width: 100%;
-}
-
-/* Workspace Cart Grid */
-.cart-grid {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 24px;
-}
-
-/* Supplier Card */
-.supplier-card {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e8ded5;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.supplier-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 14px;
-  border-bottom: 1px solid #f2eae4;
-  margin-bottom: 14px;
-}
-
-.supplier-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.avatar-circle {
-  width: 36px;
-  height: 36px;
-  background-color: #f7ebe1;
-  color: #b85c14;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
-}
-
-.supplier-name {
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.supplier-location {
-  font-size: 12px;
-  color: #7a6862;
-}
-
-.eta-pill {
-  background: #faebd7;
-  color: #b85c14;
-  font-size: 11.5px;
-  padding: 5px 12px;
-  border-radius: 16px;
-  font-weight: 600;
-}
-
-/* Item Rows */
-.cart-item-row {
-  display: grid;
-  grid-template-columns: 2fr 100px 110px 30px;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 0;
-}
-
-.cart-item-row:not(:last-child) {
-  border-bottom: 1px dashed #e8ded5;
-}
-
-.item-name {
-  font-size: 14.5px;
-  font-weight: 600;
-}
-
-.item-meta {
-  font-size: 12px;
-  color: #7a6862;
-  margin-top: 2px;
-}
-
-.unit-price {
-  font-size: 12px;
-  color: #d97736;
-  font-weight: 600;
-}
-
-/* Quantity controls */
-.quantity-picker {
-  display: flex;
-  align-items: center;
-  border: 1px solid #e8ded5;
-  border-radius: 6px;
+.product-image-wrap {
+  flex: 0 0 54px;
+  width: 54px;
+  height: 64px;
   overflow: hidden;
-  width: fit-content;
+  background: #f0e9e2;
+}
+
+.product-image,
+.product-image-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-image-placeholder {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #eadfd6, #d5b9a6);
+  color: #69473a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.product-copy {
+  min-width: 0;
+}
+
+.product-copy h3 {
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+  color: #3c2b25;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.product-copy p {
+  margin: 0;
+  color: #95847c;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.price-cell,
+.subtotal-cell {
+  color: #3c302b;
+  font-size: 11px;
+  text-align: center;
+}
+
+.subtotal-cell {
+  font-weight: 700;
+}
+
+.quantity-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.quantity-picker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  overflow: hidden;
+  border: 1px solid #ded8d3;
+  background: #fff;
 }
 
 .qty-btn {
-  background: #f9f6f0;
-  border: none;
-  width: 28px;
-  height: 28px;
+  width: 27px;
+  height: 29px;
+  padding: 0;
+  border: 0;
+  background: #fff;
+  color: #5d4a42;
+  font-size: 14px;
   cursor: pointer;
-  font-weight: 700;
-  color: #2d1810;
 }
 
 .qty-btn:hover {
-  background: #e8ded5;
+  background: #f5eee8;
 }
 
 .qty-value {
-  padding: 0 10px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.item-total {
+  min-width: 30px;
+  color: #3d302a;
+  font-size: 11px;
   font-weight: 700;
-  font-size: 14.5px;
-  text-align: right;
+  text-align: center;
 }
 
-.delete-icon {
-  background: none;
-  border: none;
-  color: #c29b93;
-  cursor: pointer;
+.cart-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  padding-top: 15px;
 }
 
-.delete-icon:hover {
-  color: #a83232;
-}
-
-/* Right Summary Panel */
-.summary-card {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e8ded5;
-  padding: 22px;
-  position: sticky;
-  top: 32px;
-}
-
-.summary-heading {
-  font-family: "Playfair Display", serif;
-  font-size: 19px;
-  margin-bottom: 18px;
+.continue-shopping {
+  color: #6f4a38;
+  font-size: 11px;
   font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.continue-shopping:hover {
+  color: #b7652b;
+}
+
+.no-results {
+  padding: 26px;
+  text-align: center;
+  color: #7c6d66;
+}
+
+.no-results strong,
+.no-results span {
+  display: block;
+}
+
+.no-results strong {
+  margin-bottom: 4px;
+  color: #3c2b25;
+}
+
+/* Summary */
+.summary-card {
+  position: sticky;
+  top: 92px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e8e2dc;
+  box-shadow: 0 8px 24px rgba(71, 50, 38, .05);
+}
+
+.summary-card h2 {
+  margin: 0 0 18px;
+  color: #3a2923;
+  font-family: "Playfair Display", serif;
+  font-size: 18px;
 }
 
 .summary-line {
   display: flex;
   justify-content: space-between;
-  font-size: 13.5px;
-  color: #7a6862;
-  margin-bottom: 10px;
+  gap: 18px;
+  margin-bottom: 11px;
+  color: #8a7a72;
+  font-size: 10px;
+}
+
+.summary-line strong {
+  color: #3e312b;
+  font-weight: 600;
+  text-align: right;
 }
 
 .summary-divider {
-  border: none;
-  border-top: 1px solid #e8ded5;
-  margin: 14px 0;
+  margin: 15px 0;
+  border: 0;
+  border-top: 1px solid #ebe5df;
 }
 
 .total-line {
-  font-size: 15px;
+  align-items: center;
+  margin-bottom: 14px;
+  color: #3b2b25;
+  font-size: 13px;
   font-weight: 700;
-  color: #2d1810;
 }
 
-.total-amount {
-  color: #d97736;
-  font-size: 18px;
+.total-line strong {
+  color: #a85b27;
+  font-size: 16px;
 }
 
-.form-group {
-  margin-top: 18px;
+.shipping-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 17px;
+  padding: 8px 9px;
+  background: #f8f2ea;
+  color: #6c5a51;
+  font-size: 9px;
+  line-height: 1.35;
 }
 
-.form-label {
+.shipping-note span {
+  color: #9f5d2b;
+  font-weight: 700;
+}
+
+.payment-group {
+  margin-top: 4px;
+}
+
+.payment-group label {
   display: block;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #7a6862;
   margin-bottom: 6px;
-  text-transform: uppercase;
+  color: #77665e;
+  font-size: 9px;
+  font-weight: 700;
 }
 
-.custom-select {
+.payment-group select {
   width: 100%;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #e8ded5;
-  background: #f9f6f0;
-  font-size: 13.5px;
+  min-height: 35px;
+  padding: 0 9px;
+  border: 1px solid #ddd6d0;
+  border-radius: 2px;
+  background: #fff;
+  color: #4d3c34;
+  font: inherit;
+  font-size: 10px;
   outline: none;
 }
 
+.payment-group select:focus {
+  border-color: #b7652b;
+  box-shadow: 0 0 0 2px rgba(183, 101, 43, .1);
+}
+
 .checkout-button {
-  width: 100%;
-  background-color: #d97736;
-  color: #ffffff;
-  border: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14.5px;
-  cursor: pointer;
-  margin-top: 18px;
-  transition: background 0.2s ease;
-}
-
-.checkout-button:hover {
-  background-color: #c26527;
-}
-
-.security-note {
   display: flex;
+  width: 100%;
+  min-height: 38px;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #7a6862;
-  margin-top: 14px;
+  margin-top: 13px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 2px;
+  background: #4c2818;
+  color: #fff;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .2s ease, transform .2s ease;
 }
 
-.empty-cart-card {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e8ded5;
-  padding: 60px;
+.checkout-button:hover:not(:disabled) {
+  background: #67371f;
+  transform: translateY(-1px);
+}
+
+.checkout-button:disabled {
+  cursor: not-allowed;
+  opacity: .65;
+}
+
+.secure-note {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin: 11px 0 0;
+  color: #998a83;
+  font-size: 8px;
+}
+
+/* Empty state */
+.empty-cart {
+  padding: 65px 24px;
+  background: #fff;
+  border: 1px solid #e8e2dc;
   text-align: center;
 }
 
 .empty-icon {
-  font-size: 40px;
   margin-bottom: 12px;
+  font-size: 36px;
 }
 
-.browse-btn {
+.empty-cart h2 {
+  margin: 0 0 7px;
+  font-family: "Playfair Display", serif;
+  font-size: 24px;
+}
+
+.empty-cart > p:not(.eyebrow) {
+  margin: 0 auto;
+  max-width: 420px;
+  color: #82736c;
+  font-size: 12px;
+}
+
+.empty-button {
   width: auto;
-  padding: 10px 24px;
-  margin-top: 16px;
+  display: inline-flex;
+  margin-top: 20px;
+  padding: 0 24px;
 }
 
-@media (max-width: 900px) {
-  .main-content {
-    padding: 24px 0;
-  }
+/* Bottom benefit strip */
+.benefits-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-top: 42px;
+}
 
-  .cart-grid {
+.benefit-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.benefit-icon {
+  flex: 0 0 35px;
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #b8865d;
+  border-radius: 9px;
+  background: #fffaf4;
+  color: #8f542d;
+  font-size: 17px;
+}
+
+.benefit-card h3 {
+  margin: 0 0 3px;
+  color: #40332d;
+  font-size: 11px;
+}
+
+.benefit-card p {
+  margin: 0;
+  color: #91827a;
+  font-size: 8px;
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+  .cart-layout {
     grid-template-columns: 1fr;
   }
 
   .summary-card {
     position: static;
   }
+
+  .summary-column {
+    max-width: 430px;
+    width: 100%;
+    margin-left: auto;
+  }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .main-content {
-    width: calc(100% - 24px);
-    padding: 20px 0;
+    width: min(100% - 24px, 620px);
+    padding-top: 22px;
   }
 
-  .header-section {
-    flex-direction: column;
-    gap: 16px;
+  .page-hero {
+    min-height: 112px;
   }
 
-  .welcome-heading {
-    font-size: 24px;
+  .table-header {
+    display: none;
   }
 
-  .search-box {
-    width: 100%;
+  .cart-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 14px;
+    padding: 15px;
   }
 
-  .supplier-card {
-    padding: 16px;
+  .product-cell {
+    grid-column: 1 / -1;
   }
 
-  .supplier-card-header {
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .eta-pill {
-    white-space: nowrap;
-  }
-
-  .cart-item-row {
-    grid-template-columns: 1fr auto;
-    gap: 10px 12px;
-  }
-
-  .item-details {
-    min-width: 0;
-  }
-
-  .item-name {
-    overflow-wrap: anywhere;
-  }
-
-  .quantity-picker {
+  .price-cell {
     grid-column: 1;
+    text-align: left;
   }
 
-  .item-total {
+  .quantity-cell {
     grid-column: 2;
     grid-row: 2;
+    justify-content: flex-end;
   }
 
-  .delete-icon {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: start;
+  .subtotal-cell {
+    grid-column: 1 / -1;
+    padding-top: 2px;
+    border-top: 1px dashed #e6dfda;
+    text-align: left;
   }
 
-  .summary-card,
-  .empty-cart-card {
-    padding: 18px;
+  .supplier-label {
+    padding-left: 15px;
+    padding-right: 15px;
   }
 
-  .summary-line {
-    gap: 16px;
+  .benefits-strip {
+    grid-template-columns: 1fr;
+    gap: 17px;
+    margin-top: 28px;
+  }
+}
+
+@media (max-width: 460px) {
+  .main-content {
+    width: calc(100% - 18px);
   }
 
-  .security-note {
-    text-align: center;
+  .hero-inner h1 {
+    font-size: 28px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .cart-row {
+    padding: 13px 11px;
+  }
+
+  .product-image-wrap {
+    flex-basis: 50px;
+    width: 50px;
+    height: 60px;
+  }
+
+  .summary-card {
+    padding: 16px;
   }
 }
 </style>
