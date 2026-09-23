@@ -25,7 +25,7 @@ const routes = [
     children: [
       {
         path: "",
-        redirect: "/small-business",
+        redirect: "/landing",
       },
 
       {
@@ -266,7 +266,7 @@ const routes = [
 
   {
     path: "/:pathMatch(.*)*",
-    redirect: "/products",
+    redirect: "/landing",
   },
 ];
 
