@@ -10,6 +10,7 @@ import { testDatabaseConnection } from "./config/db.js";
 // ===============================
 import supplierProductRoutes from "./routes/s_productRoutes.js";
 import supplierRoutes from "./routes/supplierRoutes.js";
+import profileRoutes from "./routes/profileRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 
@@ -76,6 +77,11 @@ app.use(
 app.use(
   "/api/supplier",
   supplierRoutes
+);
+
+app.use(
+  "/api/profile",
+  profileRoutes
 );
 
 app.use(
