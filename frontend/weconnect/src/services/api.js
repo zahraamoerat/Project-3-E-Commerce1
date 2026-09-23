@@ -63,7 +63,7 @@ export const api = {
 
   updateCartItem: (buyerId, cartItemId, quantity) =>
     request(`/cart/${cartItemId}`, {
-      method: "PATCH",
+      method: "PUT",
       body: JSON.stringify({ buyerId, quantity }),
     }),
 
