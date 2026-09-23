@@ -35,7 +35,7 @@ export async function getAllOrders(buyerId = null) {
       ON d.order_id = o.order_id
 
     WHERE (? IS NULL OR o.buyer_id = ?)\n    ORDER BY o.ordered_at DESC
-  `);
+  `, [buyerId, buyerId]);
 
   return rows;
 }
