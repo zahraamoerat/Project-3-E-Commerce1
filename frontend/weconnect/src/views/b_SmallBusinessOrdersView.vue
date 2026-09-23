@@ -2118,6 +2118,18 @@ onMounted(() => {
 
 }
 
+
+/* Shared small-business page styling */
+:global(body) { margin: 0; background: #f7f5f2; }
+:global(*) { box-sizing: border-box; }
+.connect-sb-orders-page { min-height: 100vh; background: #f7f5f2; color: #2f211d; }
+.connect-sb-orders-header, .connect-sb-orders-toolbar, .connect-sb-orders-content, .connect-sb-orders-details-card { width: min(1280px, 94%); margin-left: auto; margin-right: auto; }
+.connect-sb-orders-header { padding-top: 38px; }
+.connect-sb-orders-title, .connect-sb-orders-content h2, .connect-sb-orders-details-card h2 { font-family: Georgia, "Times New Roman", serif; color: #2f211d; }
+.connect-sb-orders-card, .connect-sb-orders-details-card { border-color: #e6ddd7; box-shadow: 0 8px 24px rgba(62,43,29,.06); }
+.connect-sb-orders-tab.active { color: #553c35; border-color: #553c35; }
+.connect-sb-orders-status { border-radius: 999px; }
+@media (max-width: 760px) { .connect-sb-orders-header, .connect-sb-orders-toolbar, .connect-sb-orders-content, .connect-sb-orders-details-card { width: calc(100% - 24px); } .connect-sb-orders-header { padding-top: 24px; } }
 </style>
 <style scoped>
 /* Shared WeConnect brown theme refinements */
