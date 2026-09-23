@@ -497,7 +497,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons'
 
 const apiUrl = import.meta.env.VITE_API_URL || '/api'
-const buyerId = 1
+const buyerId = computed(() => localStorage.getItem('weconnect_buyer_id') || '')
 const route = useRoute()
 const router = useRouter()
 
@@ -718,9 +718,14 @@ function clearFilters() {
 }
 
 async function cartRequest(path, options = {}) {
+  if (!buyerId.value) throw new Error('Please sign in as a buyer before using the shop.')
   const response = await fetch(`${apiUrl}/cart${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('weconnect_token') || ''}`,
+      ...(options.headers || {})
+    }
   })
   if (!response.ok) throw new Error('Cart service unavailable')
   return response.json()
@@ -728,7 +733,7 @@ async function cartRequest(path, options = {}) {
 
 async function syncBasketFromCart() {
   try {
-    const items = await cartRequest(`?buyerId=${buyerId}`)
+    const items = await cartRequest(`?buyerId=${encodeURIComponent(buyerId.value)}`)
     const next = {}
     for (const item of items) {
       next[item.productId] = {
@@ -766,12 +771,12 @@ async function toggleBasket(product) {
     if (cartItemId) {
       await cartRequest(`/${cartItemId}`, {
         method: 'PUT',
-        body: JSON.stringify({ buyerId, quantity: nextQuantity })
+        body: JSON.stringify({ buyerId: buyerId.value, quantity: nextQuantity })
       })
     } else {
       const created = await cartRequest('', {
         method: 'POST',
-        body: JSON.stringify({ buyerId, productId: product.id, quantity: 1 })
+        body: JSON.stringify({ buyerId: buyerId.value, productId: product.id, quantity: 1 })
       })
       cartItemId = created.cartItemId
     }
@@ -855,7 +860,7 @@ async function submitReview() {
     const response = await fetch(`${apiUrl}/products/${product.id}/reviews`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ buyerId, rating: reviewForm.value.rating, reviewText })
+      body: JSON.stringify({ buyerId: buyerId.value, rating: reviewForm.value.rating, reviewText })
     })
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}))
@@ -961,7 +966,7 @@ async function loadMarketplaceProducts({ silent = false } = {}) {
   if (refreshInProgress) return
   refreshInProgress = true
   try {
-    const response = await fetch(`${apiUrl}/products?catalog=active&_=${Date.now()}`, { cache: 'no-store' })
+    const response = await fetch(`${apiUrl}/products?catalog=active&_=${Date.now()}`, { cache: 'no-store', headers: { Authorization: `Bearer ${localStorage.getItem('weconnect_token') || ''}` } })
     if (!response.ok) throw new Error('Products could not be loaded.')
     products.value = (await response.json()).map(normalizeProduct)
     if (!silent) errorMessage.value = ''
@@ -973,6 +978,7 @@ async function loadMarketplaceProducts({ silent = false } = {}) {
 }
 
 onMounted(async () => {
+  if (!buyerId.value) errorMessage.value = 'Please sign in as a buyer to add products to your order.'
   await loadMarketplaceProducts()
   isLoading.value = false
   if (maxPrice.value === 1000) maxPrice.value = priceCeiling.value
