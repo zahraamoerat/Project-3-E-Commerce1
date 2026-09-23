@@ -22,6 +22,7 @@ import paymentRoutes from "./routes/b_paymentRoutes.js";
 import orderItemRoutes from "./routes/b_orderItemRoutes.js";
 import productRoutes from "./routes/b_productRoutes.js";
 import cartRoutes from "./routes/b_cartRoutes.js";
+import supplierDirectoryRoutes from "./routes/b_supplierDirectoryRoutes.js";
 
 dotenv.config();
 
@@ -114,6 +115,11 @@ app.use(
 app.use(
   "/api/cart",
   cartRoutes
+);
+
+app.use(
+  "/api/suppliers",
+  supplierDirectoryRoutes
 );
 
 app.use(
