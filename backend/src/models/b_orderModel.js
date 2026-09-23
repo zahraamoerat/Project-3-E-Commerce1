@@ -142,3 +142,53 @@ export async function cancelDeliveryForOrder(orderId) {
 
   return result.affectedRows > 0;
 }
+
+export async function createOrdersFromCart(buyerId) {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [items] = await connection.query(`
+      SELECT ci.cart_item_id, ci.product_id, ci.quantity, p.supplier_id, p.unit_price
+      FROM cart_items ci
+      INNER JOIN products p ON p.product_id = ci.product_id
+      WHERE ci.buyer_id = ?
+      FOR UPDATE
+    `, [buyerId]);
+    if (!items.length) {
+      const error = new Error('Your cart is empty.');
+      error.status = 400;
+      throw error;
+    }
+    const bySupplier = new Map();
+    for (const item of items) {
+      if (!bySupplier.has(item.supplier_id)) bySupplier.set(item.supplier_id, []);
+      bySupplier.get(item.supplier_id).push(item);
+    }
+    const createdOrders = [];
+    for (const [supplierId, supplierItems] of bySupplier) {
+      const total = supplierItems.reduce((sum, item) => sum + Number(item.unit_price) * Number(item.quantity), 0);
+      const orderNumber = `WC-${Date.now()}-${supplierId}-${createdOrders.length + 1}`;
+      const [orderResult] = await connection.query(
+        `INSERT INTO orders (buyer_id, supplier_id, order_number, status, total_amount)
+         VALUES (?, ?, ?, 'Pending', ?)`,
+        [buyerId, supplierId, orderNumber, total]
+      );
+      for (const item of supplierItems) {
+        await connection.query(
+          `INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+           VALUES (?, ?, ?, ?)`,
+          [orderResult.insertId, item.product_id, item.quantity, item.unit_price]
+        );
+      }
+      createdOrders.push({ order_id: orderResult.insertId, order_number: orderNumber, supplier_id: supplierId, total_amount: total });
+    }
+    await connection.query('DELETE FROM cart_items WHERE buyer_id = ?', [buyerId]);
+    await connection.commit();
+    return createdOrders;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
