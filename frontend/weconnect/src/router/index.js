@@ -193,6 +193,12 @@ const routes = [
   },
 
   {
+    path: "/small-business/profile",
+    name: "small-business-profile",
+    component: () => import("../views/b_SmallBusinessProfile.vue"),
+  },
+
+  {
     path: "/small-business/dashboard",
     name: "small-business-dashboard",
     component: () => import("../views/b_SmallBusinessDashboard.vue"),
