@@ -30,6 +30,16 @@
         </p>
       </div>
 
+      <button
+        type="button"
+        class="connect-sb-orders-history-button"
+        :class="{ active: showOrderHistory }"
+        @click="toggleOrderHistory"
+      >
+        <FontAwesomeIcon :icon="faClockRotateLeft" />
+        {{ showOrderHistory ? 'View Current Orders' : 'View Order History' }}
+      </button>
+
       <!-- Full-width divider separates the header from the search -->
       <span class="connect-sb-orders-header-divider"></span>
 
@@ -572,7 +582,8 @@ import {
   faLocationDot,
   faMagnifyingGlass,
   faTruck,
-  faTruckFast
+  faTruckFast,
+  faClockRotateLeft
 } from '@fortawesome/free-solid-svg-icons'
 
 // Store orders returned by the backend.
@@ -590,6 +601,7 @@ const methodError = ref('')
 // Search and filter controls.
 const searchQuery = ref('')
 const activeFilter = ref('All')
+const showOrderHistory = ref(false)
 
 // Store loading and error states.
 const isLoading = ref(true)
@@ -619,6 +631,14 @@ const filteredOrders = computed(() => {
     return matchesFilter && matchesSearch
   })
 })
+
+function toggleOrderHistory() {
+  showOrderHistory.value = !showOrderHistory.value
+
+  if (showOrderHistory.value) {
+    activeFilter.value = 'All'
+  }
+}
 
 // Count orders that are currently active.
 const activeOrdersCount = computed(() => {
@@ -1026,6 +1046,38 @@ onMounted(() => {
 
 
 /* Full-width divider below the heading and date */
+.connect-sb-orders-history-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  margin-top: 14px;
+  padding: 9px 15px;
+  border: 1px solid #D8CCC4;
+  border-radius: 9px;
+  background: #FFFEFC;
+  color: #5C3D24;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.connect-sb-orders-history-button:hover {
+  transform: translateY(-1px);
+  background: #F8F2ED;
+  border-color: #BFAF96;
+  box-shadow: 0 4px 12px rgba(78, 52, 46, 0.08);
+}
+
+.connect-sb-orders-history-button.active {
+  background: #5C3D24;
+  border-color: #5C3D24;
+  color: #FFFEFC;
+}
+
 .connect-sb-orders-header-divider {
   grid-column: 1 / -1;
   grid-row: 2;
