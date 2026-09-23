@@ -817,7 +817,7 @@ async function addDetailToBasket({ goToCart = false } = {}) {
   const nextBusy = { ...basketBusy.value }
   delete nextBusy[product.id]
   basketBusy.value = nextBusy
-  if (goToCart) router.push('/cart')
+  if (goToCart) router.push('/small-business/cart')
 }
 
 async function loadReviews(productId) {
