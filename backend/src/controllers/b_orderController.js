@@ -4,7 +4,8 @@ import {
   getOrderWithDelivery,
   setOrderDeliveryMethod,
   createDeliveryForOrder,
-  cancelDeliveryForOrder
+  cancelDeliveryForOrder,
+  createOrdersFromCart
 } from '../models/b_orderModel.js';
 
 const DELIVERY_LOCKED_STATUSES = [
@@ -124,5 +125,18 @@ export async function chooseDeliveryMethod(req, res) {
     res.status(500).json({
       message: 'Failed to update the delivery method'
     });
+  }
+}
+
+
+export async function checkoutCart(req, res) {
+  try {
+    const buyerId = Number(req.body?.buyerId || req.query?.buyerId || 1);
+    if (!Number.isInteger(buyerId) || buyerId <= 0) return res.status(400).json({ message: 'Invalid buyer ID.' });
+    const orders = await createOrdersFromCart(buyerId);
+    res.status(201).json({ message: 'Order(s) created successfully.', orders });
+  } catch (error) {
+    console.error('Checkout error:', error.message);
+    res.status(error.status || 500).json({ message: error.message || 'Failed to create orders.' });
   }
 }
