@@ -306,9 +306,28 @@ function isTrackingStepActive(step) {
 const apiUrl = import.meta.env.VITE_API_URL || "/api";
 
 async function fetchJson(path) {
-  const response = await fetch(apiUrl + path);
-  if (!response.ok) throw new Error("Request failed: " + path);
-  return response.json();
+  const url = apiUrl + path;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        ...(localStorage.getItem("weconnect_token")
+          ? { Authorization: `Bearer ${localStorage.getItem("weconnect_token")}` }
+          : {}),
+      },
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.message || `Request failed (${response.status}) for ${path}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(`Unable to reach the WeConnect backend at ${url}. Make sure the backend is running on port 5000.`);
+    }
+    throw error;
+  }
 }
 
 async function loadDashboard() {
