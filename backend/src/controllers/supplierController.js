@@ -1,13 +1,13 @@
 import db from "../config/db.js";
 import { getProducts } from "../models/s_productModel.js";
 
-const supplierId = () => Number(process.env.SUPPLIER_ID || 1);
+const supplierIdOf = (req) => Number(req.supplierId);
 const validEmail = (value) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || ""));
 
 export async function getSupplierOverview(req, res, next) {
   try {
-    const id = supplierId(req);
+    const id = supplierIdOf(req);
     const products = await getProducts(id);
     const [orders] = await db.execute(
       `
@@ -99,7 +99,7 @@ export async function updateOrder(req, res, next) {
     ];
     if (!allowed.includes(req.body.status))
       return res.status(400).json({ message: "Invalid order status." });
-    const id = supplierId();
+    const id = supplierIdOf(req);
     await connection.beginTransaction();
     const [[order]] = await connection.execute(
       "SELECT order_id, status AS order_status FROM orders WHERE order_number = ? AND supplier_id = ? FOR UPDATE",
@@ -180,7 +180,7 @@ export async function updateDelivery(req, res, next) {
     const status = statusMap[req.body.status] || req.body.status;
     const [result] = await db.execute(
       `UPDATE deliveries d JOIN orders o ON o.order_id = d.order_id SET d.current_status = ? WHERE d.delivery_id = ? AND o.supplier_id = ?`,
-      [status, req.params.id, supplierId()],
+      [status, req.params.id, supplierIdOf(req)],
     );
     if (!result.affectedRows)
       return res.status(404).json({ message: "Delivery not found." });
@@ -199,7 +199,7 @@ export async function replyToReview(req, res, next) {
         .json({ message: "Reply must be between 2 and 1000 characters." });
     const [result] = await db.execute(
       "INSERT INTO review_replies (review_id, supplier_id, reply_text) VALUES (?, ?, ?)",
-      [req.params.id, supplierId(), reply],
+      [req.params.id, supplierIdOf(req), reply],
     );
     res
       .status(201)
@@ -223,7 +223,7 @@ export async function updateProfile(req, res, next) {
     );
     const [supplier] = await db.execute(
       "SELECT business_name, email, phone, city, province FROM suppliers WHERE supplier_id = ? LIMIT 1",
-      [supplierId()],
+      [supplierIdOf(req)],
     );
     if (!supplier[0])
       return res.status(404).json({ message: "Supplier not found." });
@@ -252,7 +252,7 @@ export async function updateProfile(req, res, next) {
         fields.phone || supplier[0].phone,
         city,
         province,
-        supplierId(),
+        supplierIdOf(req),
       ],
     );
     res.json({

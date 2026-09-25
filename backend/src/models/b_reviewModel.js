@@ -1,4 +1,4 @@
-import pool from '../database/b_connection.js';
+import pool from "../config/db.js";
 
 export async function getProductReviews(productId) {
   const [rows] = await pool.query(`

@@ -37,7 +37,8 @@ export async function fetchOrderById(req, res) {
   try {
     const { orderId } = req.params;
 
-    const buyerId = req.query.buyerId ? Number(req.query.buyerId) : null;  const order = await getOrderById(orderId, buyerId);
+    const buyerId = req.query.buyerId ? Number(req.query.buyerId) : null;
+    const order = await getOrderById(orderId, buyerId);
 
     if (!order) {
       return res.status(404).json({
@@ -131,8 +132,10 @@ export async function chooseDeliveryMethod(req, res) {
 
 export async function checkoutCart(req, res) {
   try {
-    const buyerId = Number(req.body?.buyerId || req.query?.buyerId || 1);
-    if (!Number.isInteger(buyerId) || buyerId <= 0) return res.status(400).json({ message: 'Invalid buyer ID.' });
+    const buyerId = Number(req.body?.buyerId ?? req.query?.buyerId);
+    if (!Number.isInteger(buyerId) || buyerId <= 0) {
+      return res.status(400).json({ message: 'A valid buyer ID is required.' });
+    }
     const orders = await createOrdersFromCart(buyerId);
     res.status(201).json({ message: 'Order(s) created successfully.', orders });
   } catch (error) {

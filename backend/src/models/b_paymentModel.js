@@ -1,4 +1,4 @@
-import pool from '../database/b_connection.js';
+import pool from "../config/db.js";
 
 // Get all payments with the related order and payment method.
 export async function getAllPayments(buyerId = null) {
@@ -18,8 +18,9 @@ export async function getAllPayments(buyerId = null) {
     FROM payments p
     INNER JOIN orders o ON p.order_id = o.order_id
     LEFT JOIN payment_methods pm ON p.method_id = pm.method_id
+    WHERE (? IS NULL OR o.buyer_id = ?)
     ORDER BY p.created_at DESC
-  `);
+  `, [buyerId, buyerId]);
 
   return rows;
 }
@@ -39,10 +40,11 @@ export async function getPaymentsByOrder(orderId, buyerId = null) {
       p.created_at,
       pm.method_name
     FROM payments p
+    INNER JOIN orders o ON p.order_id = o.order_id
     LEFT JOIN payment_methods pm ON p.method_id = pm.method_id
     WHERE p.order_id = ?\n      AND (? IS NULL OR o.buyer_id = ?)
     ORDER BY p.created_at DESC
-  `, [orderId]);
+  `, [orderId, buyerId, buyerId]);
 
   return rows;
 }

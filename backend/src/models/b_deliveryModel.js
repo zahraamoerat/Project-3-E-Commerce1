@@ -1,4 +1,4 @@
-import pool from '../database/b_connection.js';
+import pool from "../config/db.js";
 
 // Get all deliveries with the related order, buyer, supplier, and payment information.
 export async function getAllDeliveries(buyerId = null) {
@@ -63,8 +63,9 @@ export async function getAllDeliveries(buyerId = null) {
         LIMIT 1
       )
 
+    WHERE (? IS NULL OR o.buyer_id = ?)
     ORDER BY d.created_at DESC
-  `);
+  `, [buyerId, buyerId]);
 
   return rows;
 }

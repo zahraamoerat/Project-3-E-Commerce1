@@ -10,7 +10,7 @@ import {
   getStockAnalytics,
 } from "../models/s_productModel.js";
 
-const currentSupplierId = () => Number(process.env.SUPPLIER_ID || 1);
+const currentSupplierId = (req) => Number(req.supplierId);
 const validId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
 const fail = (message, status = 400) =>
   Object.assign(new Error(message), { status });

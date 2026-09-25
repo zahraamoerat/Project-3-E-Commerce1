@@ -1,4 +1,4 @@
-import pool from '../database/b_connection.js';
+import pool from "../config/db.js";
 
 // Get all orders with buyer, supplier, and delivery information.
 export async function getAllOrders(buyerId = null) {

@@ -1,261 +1,297 @@
 <template>
-  <div class="main-content">
-    <header class="page-header">
-      <div>
+  <div class="supplier_reviews_reviews">
+    <header class="supplier_reviews_header">
+      <div><span class="supplier_reviews_eyebrow">BUYER FEEDBACK</span>
         <h1>Reviews</h1>
-        <p class="subtitle">Rate suppliers after delivery, and see your past reviews.</p>
+        <p>Turn great supplier experiences into stronger buyer relationships.</p>
       </div>
+      <div class="supplier_reviews_rating"><strong>{{ averageRating == null ? '—' : averageRating.toFixed(1) }}</strong><span>{{ '★'.repeat(avgStars) }}{{ reviews.length ? '' : '☆☆☆☆☆' }}</span><small>{{ reviews.length ? 'Average supplier rating' : 'No ratings yet' }}</small></div>
     </header>
-
-    <!-- Orders awaiting review -->
-    <section class="card">
-      <h3>Awaiting your review</h3>
-
-      <p v-if="pendingReviews.length === 0" class="empty-text">You're all caught up — no deliveries waiting for a review.</p>
-
-      <div v-for="order in pendingReviews" :key="order.orderId" class="pending-item">
-        <div class="pending-info">
-          <strong>{{ order.supplierName }}</strong>
-          <span class="muted">Order #{{ order.orderId }} · Delivered {{ order.deliveredDate }}</span>
-        </div>
-
-        <div class="star-input">
-          <span
-            v-for="star in 5"
-            :key="star"
-            class="star"
-            :class="{ filled: star <= (draftRatings[order.orderId]?.rating || 0) }"
-            @click="setRating(order.orderId, star)"
-          >★</span>
-        </div>
-
-        <input
-          v-model="draftRatings[order.orderId].comment"
-          type="text"
-          placeholder="Add a comment (optional)"
-          class="comment-input"
-        />
-
-        <button
-          class="btn-primary btn-small"
-          :disabled="!draftRatings[order.orderId]?.rating || submitting[order.orderId]"
-          @click="submitReview(order)"
-        >
-          {{ submitting[order.orderId] ? "Submitting..." : "Submit" }}
-        </button>
-      </div>
+    <section class="supplier_reviews_summary">
+      <article><span>Reviews this month</span><strong>{{ reviews.length }}</strong></article>
+      <article><span>Response rate</span><strong>{{ responseRate }}%</strong></article>
+      <article><span>Unanswered</span><strong>{{ unanswered }}</strong></article>
     </section>
-
-    <!-- Review history -->
-    <section class="card" style="margin-top: 20px;">
-      <h3>Your reviews</h3>
-
-      <p v-if="reviews.length === 0" class="empty-text">You haven't left any reviews yet.</p>
-
-      <div v-for="r in reviews" :key="r.ratingId" class="review-item">
-        <div class="review-top">
-          <div>
-            <strong>{{ r.supplierName }}</strong>
-            <span class="muted" style="margin-left: 8px;">{{ r.date }}</span>
-          </div>
-          <button class="delete-btn" @click="confirmDelete(r)">Delete</button>
-        </div>
-        <div class="star-display">
-          <span v-for="star in 5" :key="star" class="star" :class="{ filled: star <= r.rating }">★</span>
-        </div>
-        <p v-if="r.comment" class="review-comment">{{ r.comment }}</p>
+    <section class="supplier_reviews_review-list">
+      <div class="supplier_reviews_list-head">
+        <div>
+          <h2>Recent buyer reviews</h2>
+          <p>Your latest customer conversations.</p>
+        </div><button type="button" class="supplier_reviews_filter" @click="onlyUnanswered = !onlyUnanswered">{{ onlyUnanswered ?
+          'Showall reviews' : 'Needs reply' }}</button>
       </div>
+      <article v-for="review in visibleReviews" :key="review.id" class="supplier_reviews_review">
+        <div class="supplier_reviews_avatar">{{ review.buyer.slice(0, 2).toUpperCase() }}</div>
+        <div class="supplier_reviews_review-content">
+          <div class="supplier_reviews_review-meta"><strong>{{ review.buyer }}</strong><span>{{ review.date }}</span></div>
+          <div class="supplier_reviews_stars">{{ '★'.repeat(review.rating) }}<span>{{ '★'.repeat(5 - review.rating) }}</span></div>
+          <h3>{{ review.title }}</h3>
+          <p>{{ review.text }}</p><span v-if="review.replied" class="supplier_reviews_replied">Replied</span><button v-else type="button"
+            class="supplier_reviews_reply" @click="reply(review)">Reply to buyer</button>
+        </div>
+      </article>
+      <div v-if="!visibleReviews.length" class="supplier_reviews_empty">No reviews need a reply right now.</div>
     </section>
+    <p v-if="message" class="supplier_reviews_notice">{{ message }}</p>
   </div>
 </template>
-
 <script setup>
-import { ref, reactive, onMounted } from "vue";
-import Swal from "sweetalert2";
-import api from "../services/api";
-
-// Sample data below is a fallback in case the API call fails -
-// loadReviews() overwrites these with real data on mount.
-const pendingReviews = ref([
-  { orderId: "1038", supplierName: "CropGuard Distributors", deliveredDate: "3 days ago" },
-  { orderId: "1030", supplierName: "Boland Packaging Supplies", deliveredDate: "1 week ago" },
-]);
-
-const reviews = ref([
-  { ratingId: 1, supplierName: "Highveld Seed Co.", rating: 5, comment: "Fast delivery and great communication.", date: "2 weeks ago" },
-  { ratingId: 2, supplierName: "Karoo Fertiliser Traders", rating: 4, comment: "Good pricing, delivery took a bit longer than quoted.", date: "3 weeks ago" },
-]);
-
-// Tracks the in-progress star rating + comment for each pending order,
-// before it's submitted.
-const draftRatings = reactive({});
-const submitting = reactive({});
-
-function initDrafts() {
-  pendingReviews.value.forEach((o) => {
-    if (!draftRatings[o.orderId]) {
-      draftRatings[o.orderId] = { rating: 0, comment: "" };
-    }
-  });
-}
-initDrafts();
-
-function setRating(orderId, star) {
-  draftRatings[orderId].rating = star;
-}
-
-async function submitReview(order) {
-  const draft = draftRatings[order.orderId];
-  if (!draft?.rating) return;
-
-  submitting[order.orderId] = true;
-  try {
-    const { data } = await api.post("/reviews", {
-      orderId: order.orderId,
-      rating: draft.rating,
-      comment: draft.comment,
-    });
-
-    reviews.value.unshift({
-      ratingId: data.ratingId,
-      supplierName: order.supplierName,
-      rating: draft.rating,
-      comment: draft.comment,
-      date: "Just now",
-    });
-
-    pendingReviews.value = pendingReviews.value.filter((o) => o.orderId !== order.orderId);
-    delete draftRatings[order.orderId];
-
-    Swal.fire({
-      icon: "success",
-      title: "Thanks for your feedback!",
-      text: `Your review for ${order.supplierName} has been submitted.`,
-      confirmButtonColor: "#E0703D",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-  } catch (err) {
-    console.error("Failed to submit review:", err);
-    Swal.fire({
-      icon: "error",
-      title: "Couldn't submit review",
-      text: "Something went wrong. Please try again.",
-      confirmButtonColor: "#E0703D",
-    });
-  } finally {
-    submitting[order.orderId] = false;
-  }
-}
-
-async function loadReviews() {
-  try {
-    const { data } = await api.get("/reviews");
-    pendingReviews.value = data.pending;
-    reviews.value = data.history;
-    initDrafts();
-  } catch (err) {
-    console.error("Failed to load reviews:", err);
-    // Falls back to the placeholder sample data above.
-  }
-}
-
-async function confirmDelete(review) {
-  const result = await Swal.fire({
-    icon: "warning",
-    title: "Delete this review?",
-    text: `Your review for ${review.supplierName} will be permanently removed.`,
-    showCancelButton: true,
-    confirmButtonText: "Delete",
-    confirmButtonColor: "#C0392B",
-    cancelButtonColor: "#78737E",
-  });
-
-  if (result.isConfirmed) {
-    try {
-      await api.delete(`/reviews/${review.ratingId}`);
-      reviews.value = reviews.value.filter((r) => r.ratingId !== review.ratingId);
-
-      Swal.fire({
-        icon: "success",
-        title: "Review deleted",
-        confirmButtonColor: "#E0703D",
-        timer: 1500,
-        timerProgressBar: true,
-      });
-    } catch (err) {
-      console.error("Failed to delete review:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Couldn't delete review",
-        text: "Something went wrong. Please try again.",
-        confirmButtonColor: "#E0703D",
-      });
-    }
-  }
-}
-
-onMounted(loadReviews);
+import { computed, ref } from "vue";
+import { useSupplierData } from "@/data/supplierData";
+const { reviews, replyToReview } = useSupplierData(); const onlyUnanswered = ref(false); const message = ref(""); const unanswered = computed(() => reviews.value.filter((review) => !review.replied).length); const visibleReviews = computed(() => onlyUnanswered.value ? reviews.value.filter((review) => !review.replied) : reviews.value); const averageRating = computed(() => reviews.value.length ? reviews.value.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.value.length : null); const avgStars = computed(() => averageRating.value == null ? 0 : Math.round(averageRating.value)); const responseRate = computed(() => reviews.value.length ? Math.round((reviews.value.filter((review) => review.replied).length / reviews.value.length) * 100) : 0);
+function reply(review) { replyToReview(review.id); message.value = `Reply saved for ${review.buyer}.`; setTimeout(() => message.value = "", 2500); }
 </script>
-
 <style scoped>
-.page-header { margin-bottom: 20px; }
-.subtitle { color: var(--color-text-muted); font-size: 14px; margin: 4px 0 0; }
+.supplier_reviews_reviews {
+  min-height: 100vh;
+  padding: clamp(22px, 4vw, 38px) clamp(16px, 4vw, 38px) 48px;
+  background: #f7f5f2;
+  color: #4d3933;
+  font-family: Arial, sans-serif;
+  max-width: 1120px;
+  margin: auto
+}
 
-.empty-text { color: var(--color-text-muted); font-size: 14px; }
+.supplier_reviews_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px
+}
 
-.pending-item {
+.supplier_reviews_eyebrow {
+  color: #d2763d;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.8px
+}
+
+.supplier_reviews_header h1 {
+  margin: 7px 0 5px;
+  font: 700 clamp(28px, 4vw, 34px) Georgia, serif;
+  color: #44312c
+}
+
+.supplier_reviews_header p {
+  margin: 0;
+  color: #88766e
+}
+
+.supplier_reviews_rating {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 13px 17px;
+  border: 1px solid #e6dfda;
+  border-radius: 10px;
+  background: #fff
+}
+
+.supplier_reviews_rating strong {
+  font: 700 28px Georgia, serif
+}
+
+.supplier_reviews_rating span,
+.supplier_reviews_stars {
+  color: #d98942;
+  letter-spacing: 2px
+}
+
+.supplier_reviews_rating small {
+  margin-top: 3px;
+  color: #9b8981;
+  font-size: 10px
+}
+
+.supplier_reviews_summary {
   display: grid;
-  grid-template-columns: 1fr auto 1fr auto;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--color-border);
-}
-.pending-item:last-child { border-bottom: none; }
-
-.pending-info { display: flex; flex-direction: column; gap: 2px; }
-.muted { color: var(--color-text-muted); font-size: 12px; }
-
-.star-input, .star-display { display: flex; gap: 2px; }
-.star {
-  font-size: 20px;
-  color: #DDD;
-  cursor: default;
-}
-.star-input .star { cursor: pointer; }
-.star.filled { color: var(--color-accent); }
-
-.comment-input { font-size: 13px; }
-
-.btn-small { padding: 8px 14px; font-size: 13px; white-space: nowrap; }
-.btn-small:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 22px
 }
 
-.review-item {
-  padding: 14px 0;
-  border-bottom: 1px solid var(--color-border);
+.supplier_reviews_summary article {
+  padding: 17px;
+  border: 1px solid #e6dfda;
+  border-radius: 11px;
+  background: #fff
 }
-.review-item:last-child { border-bottom: none; }
-.review-top {
+
+.supplier_reviews_summary span {
+  color: #95827a;
+  font-size: 11px
+}
+
+.supplier_reviews_summary strong {
+  display: block;
+  margin-top: 8px;
+  font: 700 25px Georgia, serif
+}
+
+.supplier_reviews_review-list {
+  border: 1px solid #e6dfda;
+  border-radius: 13px;
+  background: #fff;
+  overflow: hidden
+}
+
+.supplier_reviews_list-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  padding: 21px;
+  border-bottom: 1px solid #eee8e3
 }
-.delete-btn {
-  background: none;
-  border: none;
-  color: #C0392B;
-  font-size: 12px;
-  padding: 0;
+
+.supplier_reviews_list-head h2 {
+  margin: 0;
+  font: 700 20px Georgia, serif
 }
-.delete-btn:hover { text-decoration: underline; }
-.review-comment {
-  margin: 6px 0 0;
+
+.supplier_reviews_list-head p {
+  margin: 4px 0 0;
+  color: #9b8981;
+  font-size: 12px
+}
+
+.supplier_reviews_filter,
+.supplier_reviews_reply {
+  border: 1px solid #e1d8d2;
+  border-radius: 7px;
+  padding: 9px 12px;
+  background: #fff;
+  color: #684b41;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer
+}
+
+.supplier_reviews_review {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+  padding: 20px 21px;
+  border-bottom: 1px solid #f0ece9
+}
+
+.supplier_reviews_avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f1e9e4;
+  color: #96654d;
+  font-size: 11px;
+  font-weight: 700
+}
+
+.supplier_reviews_review-meta {
+  display: flex;
+  justify-content: space-between
+}
+
+.supplier_reviews_review-meta strong {
+  font-size: 13px
+}
+
+.supplier_reviews_review-meta span {
+  color: #9b8981;
+  font-size: 11px
+}
+
+.supplier_reviews_stars {
+  margin: 5px 0 5px;
+  font-size: 13px
+}
+
+.supplier_reviews_stars span {
+  color: #ded4cf
+}
+
+.supplier_reviews_review h3 {
+  margin: 0 0 4px;
+  font: 700 16px Georgia, serif
+}
+
+.supplier_reviews_review p {
+  margin: 0 0 10px;
+  color: #796860;
   font-size: 13px;
-  color: var(--color-text-muted);
+  line-height: 1.5
+}
+
+.supplier_reviews_replied {
+  color: #4b8756;
+  font-size: 11px;
+  font-weight: 700
+}
+
+.supplier_reviews_reply {
+  background: #684b41;
+  color: #fff
+}
+
+.supplier_reviews_empty {
+  text-align: center;
+  padding: 40px;
+  color: #9b8981
+}
+
+.supplier_reviews_notice {
+  position: fixed;
+  right: 25px;
+  bottom: 25px;
+  padding: 13px 16px;
+  border-radius: 8px;
+  background: #684b41;
+  color: #fff;
+  font-size: 13px
+}
+
+@media(max-width:600px) {
+  .supplier_reviews_reviews {
+    padding: 24px 16px
+  }
+
+  .supplier_reviews_header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px
+  }
+
+  .supplier_reviews_rating {
+    align-items: flex-start
+  }
+
+  .supplier_reviews_summary {
+    gap: 8px
+  }
+
+  .supplier_reviews_summary strong {
+    font-size: 21px
+  }
+
+  .supplier_reviews_list-head {
+    align-items: flex-start;
+    gap: 12px;
+    flex-direction: column
+  }
+}
+
+@media(max-width:460px) {
+  .supplier_reviews_list-head .supplier_reviews_filter {
+    width: 100%;
+  }
+
+  .supplier_reviews_review {
+    padding: 18px 16px;
+  }
+
+  .supplier_reviews_review-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
 }
 </style>

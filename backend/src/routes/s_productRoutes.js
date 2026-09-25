@@ -1,6 +1,8 @@
 import express from "express";
+import {requireAuth, requireSupplier} from "../middleware/auth.js";
 import {publishProduct,fetchProducts,fetchProductById,editProduct,removeProduct,patchProductStock,duplicateProduct,restoreProduct,fetchStockHistory,fetchProductStockHistory,fetchInventoryAlerts,fetchProductAnalytics,bulkPatchStock,fetchStockAnalytics} from "../controllers/s_productController.js";
 const router=express.Router();
+router.use(requireAuth, requireSupplier);
 router.get("/",fetchProducts);
 router.get("/stock/history",fetchStockHistory);
 router.get("/stock/alerts",fetchInventoryAlerts);

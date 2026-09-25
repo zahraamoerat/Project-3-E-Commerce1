@@ -1,4 +1,4 @@
-import pool from '../database/b_connection.js';
+import pool from "../config/db.js";
 
 const fallbackProducts = [
   {
@@ -62,6 +62,7 @@ export async function getAllProducts() {
           '[]'
         ) AS productImages,
         s.business_name AS supplier,
+        p.supplier_id AS supplierId,
         p.description AS description,
         p.unit AS unit,
         p.compare_price AS comparePrice,
@@ -90,6 +91,7 @@ export async function getAllProducts() {
         p.is_active,
         p.product_image,
         s.business_name,
+        p.supplier_id,
         p.description,
         p.unit,
         p.compare_price

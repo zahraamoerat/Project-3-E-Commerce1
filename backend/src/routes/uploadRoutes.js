@@ -2,10 +2,14 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 import db from "../config/db.js";
 
 const router = express.Router();
-const uploadDirectory = path.resolve("uploads/products");
+
+const routeDir = path.dirname(fileURLToPath(import.meta.url));
+const backendRoot = path.resolve(routeDir, "../..");
+const uploadDirectory = path.join(backendRoot, "uploads", "products");
 fs.mkdirSync(uploadDirectory, { recursive: true });
 
 const storage = multer.diskStorage({
