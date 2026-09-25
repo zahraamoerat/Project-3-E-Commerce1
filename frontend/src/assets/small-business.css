@@ -1,0 +1,14 @@
+:root {
+  /* Shared small-business visual system */
+  --sb-bg: #f7f5f2;
+  --sb-surface: #fffefa;
+  --sb-ink: #2f211d;
+  --sb-muted: #7a665b;
+  --sb-brown: #5c3d24;
+  --sb-brown-dark: #4e342e;
+  --sb-brown-soft: #f3e7d9;
+  --sb-accent: #c48b5b;
+  --sb-border: #e6ddd7;
+  --sb-font-body: "Inter", "Segoe UI", Arial, sans-serif;
+  --sb-font-heading: Georgia, "Times New Roman", serif;
+}
