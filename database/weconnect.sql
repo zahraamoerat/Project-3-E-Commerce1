@@ -6,6 +6,10 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ------------------------------------------------------------
 -- 1. CENTRAL AUTHENTICATION (Prevents Email/Account Conflicts)
 -- ------------------------------------------------------------
+DROP TABLE IF EXISTS product_media;
+DROP TABLE IF EXISTS product_discount_tiers;
+DROP TABLE IF EXISTS stock_history;
+DROP TABLE IF EXISTS inventory;
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -150,7 +154,7 @@ CREATE TABLE supplier_subscriptions (
     subscription_id INT AUTO_INCREMENT PRIMARY KEY,
     supplier_id INT NOT NULL,
     plan_id INT NOT NULL,
-    status ENUM('Active', 'Past_Due', 'Canceled', 'Pending') DEFAULT 'Active',
+    status ENUM('Active', 'Past_Due', 'Canceled', 'Active','Pending','Paused') DEFAULT 'Pending',
     start_date DATETIME NOT NULL,
     end_date DATETIME NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -176,24 +180,65 @@ CREATE TABLE products (
     supplier_id INT NOT NULL,
     category_id INT,
     product_name VARCHAR(150) NOT NULL,
+    subcategory VARCHAR(150),
     description TEXT,
-    unit_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    stock_quantity INT NOT NULL DEFAULT 0,
-    low_stock_threshold INT DEFAULT 20,         -- Low stock badge threshold
-    status ENUM('Active', 'Inactive') DEFAULT 'Active',
-    image_url VARCHAR(500),
+    price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    compare_price DECIMAL(10,2),
+    unit VARCHAR(50) DEFAULT 'unit',
+    selling_type ENUM('online-only','in-store','both') DEFAULT 'online-only',
+    weight_kg DECIMAL(10,3),
+    length_in DECIMAL(10,2),
+    breadth_in DECIMAL(10,2),
+    width_in DECIMAL(10,2),
+    sku VARCHAR(40),
+    product_image VARCHAR(500),
+    is_active BOOLEAN DEFAULT TRUE,
+    catalog_status ENUM('Active','Archived') DEFAULT 'Active',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_products_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id) ON DELETE CASCADE,
+    CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL
+);
 
-    CONSTRAINT fk_products_supplier
-        FOREIGN KEY (supplier_id)
-        REFERENCES suppliers(supplier_id)
-        ON DELETE CASCADE,
+CREATE TABLE inventory (
+    product_id INT PRIMARY KEY,
+    quantity INT NOT NULL DEFAULT 0,
+    low_stock_threshold INT NOT NULL DEFAULT 10,
+    last_restocked DATE NULL,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
 
-    CONSTRAINT fk_products_category
-        FOREIGN KEY (category_id)
-        REFERENCES categories(category_id)
-        ON DELETE SET NULL
+CREATE TABLE product_media (
+    media_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    media_url VARCHAR(1000) NOT NULL,
+    media_type ENUM('image','video') DEFAULT 'image',
+    is_primary BOOLEAN DEFAULT FALSE,
+    sort_order INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
+
+CREATE TABLE product_discount_tiers (
+    discount_tier_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    minimum_quantity INT NOT NULL,
+    discount_percent DECIMAL(5,2) NOT NULL,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
+);
+
+CREATE TABLE stock_history (
+    stock_history_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    supplier_id INT NOT NULL,
+    previous_quantity INT NOT NULL,
+    new_quantity INT NOT NULL,
+    change_quantity INT NOT NULL,
+    reason VARCHAR(120),
+    notes VARCHAR(500),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE,
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS cart_items;
@@ -226,36 +271,17 @@ CREATE TABLE orders (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
     buyer_id INT NOT NULL,
     supplier_id INT NOT NULL,
-    order_number VARCHAR(50) NOT NULL UNIQUE,  -- e.g. 'SB-1042'
-    order_status ENUM(
-        'Pending',
-        'Confirmed',
-        'Processing',
-        'Dispatched',
-        'Out for delivery',
-        'Shipped',
-        'Delivered',
-        'Cancelled'
-    ) DEFAULT 'Pending',
+    order_number VARCHAR(50) NOT NULL UNIQUE,
+    order_status ENUM('Pending','Confirmed','Processing','Dispatched','Out for delivery','Shipped','Delivered','Cancelled') DEFAULT 'Pending',
+    delivery_method ENUM('Self Collection','WeConnect Delivery') NULL,
     total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    delivery_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_orders_buyer
-        FOREIGN KEY (buyer_id)
-        REFERENCES buyers(buyer_id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_orders_supplier
-        FOREIGN KEY (supplier_id)
-        REFERENCES suppliers(supplier_id)
-        ON DELETE CASCADE
+    CONSTRAINT fk_orders_buyer FOREIGN KEY (buyer_id) REFERENCES buyers(buyer_id) ON DELETE CASCADE,
+    CONSTRAINT fk_orders_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id) ON DELETE CASCADE
 );
 -- altering the 'orders' table and adding a delivery_fee column
-ALTER TABLE orders
-ADD COLUMN delivery_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00
-AFTER total_amount;
-
 DROP TABLE IF EXISTS order_items;
 CREATE TABLE order_items (
     order_item_id INT AUTO_INCREMENT PRIMARY KEY,
