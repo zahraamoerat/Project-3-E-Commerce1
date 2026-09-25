@@ -1,15 +1,27 @@
 import { spawn } from "node:child_process";
 import process from "node:process";
 
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const processes = [];
 
-function start(name, args) {
-  const child = spawn(npm, args, {
-    cwd: process.cwd(),
-    stdio: "inherit",
-    shell: false,
-  });
+function start(name, command) {
+  let child;
+
+  if (process.platform === "win32") {
+    // Running npm.cmd directly with spawn() can produce EINVAL on some
+    // Windows + Git Bash setups. Use cmd.exe explicitly instead.
+    child = spawn(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", command], {
+      cwd: process.cwd(),
+      stdio: "inherit",
+      windowsVerbatimArguments: true,
+      shell: false,
+    });
+  } else {
+    child = spawn("sh", ["-c", command], {
+      cwd: process.cwd(),
+      stdio: "inherit",
+      shell: false,
+    });
+  }
 
   processes.push(child);
 
@@ -30,14 +42,14 @@ console.log("Starting WeConnect frontend and backend...");
 console.log("Frontend: http://localhost:5173");
 console.log("Backend:  http://localhost:5000");
 
-// Vite must run as a development server. The previous script used
-// `vite build --watch`, which builds files but does not serve the Vue app.
-start("backend", ["run", "dev", "-w", "backend"]);
-start("frontend", ["run", "dev", "-w", "frontend"]);
+start("backend", "npm run dev -w backend");
+start("frontend", "npm run dev -w frontend");
 
 function shutdown() {
   for (const child of processes) {
-    if (!child.killed) child.kill("SIGINT");
+    if (!child.killed) {
+      child.kill("SIGINT");
+    }
   }
 }
 
