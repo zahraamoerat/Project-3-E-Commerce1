@@ -34,7 +34,8 @@ export async function getAllOrders(buyerId = null) {
     LEFT JOIN deliveries d
       ON d.order_id = o.order_id
 
-    WHERE (? IS NULL OR o.buyer_id = ?)\n    ORDER BY o.order_date DESC
+    WHERE (? IS NULL OR o.buyer_id = ?)
+    ORDER BY o.order_date DESC
   `, [buyerId, buyerId]);
 
   return rows;
@@ -74,7 +75,8 @@ export async function getOrderById(orderId, buyerId = null) {
     LEFT JOIN deliveries d
       ON d.order_id = o.order_id
 
-    WHERE o.order_id = ?\n      AND (? IS NULL OR o.buyer_id = ?)
+    WHERE o.order_id = ?
+      AND (? IS NULL OR o.buyer_id = ?)
     LIMIT 1
   `, [orderId, buyerId, buyerId]);
 
