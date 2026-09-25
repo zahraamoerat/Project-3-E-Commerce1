@@ -12,8 +12,8 @@ export async function getSupplierOverview(req, res, next) {
     const [orders] = await db.execute(
       `
       SELECT o.order_number AS id, b.business_name AS buyer,
-        DATE_FORMAT(o.ordered_at, '%d %b %Y') AS date,
-        o.total_amount AS total, o.order_status AS order_status,
+        DATE_FORMAT(o.order_date, '%d %b %Y') AS date,
+        o.total_amount AS total, o.order_order_status AS order_status,
         GROUP_CONCAT(DISTINCT p.product_name ORDER BY p.product_name SEPARATOR ', ') AS items
       FROM orders o
       JOIN buyers b ON b.buyer_id = o.buyer_id
@@ -21,7 +21,7 @@ export async function getSupplierOverview(req, res, next) {
       LEFT JOIN products p ON p.product_id = oi.product_id
       WHERE o.supplier_id = ?
       GROUP BY o.order_id
-      ORDER BY o.ordered_at DESC`,
+      ORDER BY o.order_date DESC`,
       [id],
     );
     const [deliveries] = await db.execute(
@@ -102,7 +102,7 @@ export async function updateOrder(req, res, next) {
     const id = supplierIdOf(req);
     await connection.beginTransaction();
     const [[order]] = await connection.execute(
-      "SELECT order_id, status AS order_status FROM orders WHERE order_number = ? AND supplier_id = ? FOR UPDATE",
+      "SELECT order_id, order_status AS order_status FROM orders WHERE order_number = ? AND supplier_id = ? FOR UPDATE",
       [req.params.id, id],
     );
     if (!order) {
