@@ -1,62 +1,162 @@
-# WeConnect
+# WeConnect Branch Documentation: main
 
-B2B trade platform with two sides: **buyers** (small businesses) and **suppliers**
-(wholesalers). The app opens on a landing page where users can sign up or log in
-as either a buyer or a supplier — the role they choose determines which side of
-the platform they see.
+## Overview
 
-## Project structure
+The main branch contains the integrated WeConnect B2B e-commerce application. It provides a buyer experience for small businesses and a supplier experience for wholesalers. The application uses Vue 3 and Vite on the frontend, Express and Node.js on the backend, and MySQL for persistent data.
 
-```
-.
-├─ backend/          Express API (single server.js entry point)
-│  ├─ server.js      Runs the ENTIRE backend AND serves the built frontend
-│  ├─ src/
-│  │  ├─ config/     Database pool (MySQL + SSL)
-│  │  ├─ controllers/
-│  │  ├─ middleware/ JWT auth
-│  │  ├─ models/
-│  │  └─ routes/     All API route modules
-│  ├─ certs/         SSL certificate for the DB connection
-│  └─ uploads/       Uploaded product images
-├─ frontend/         Vue 3 + Vite app (buyer & supplier UIs)
-└─ scripts/dev.js    Runs backend + frontend rebuild together
-```
+## Repository structure
 
-## Getting started
+backend contains the Express API, authentication, controllers, models, routes, database configuration, uploaded product images, and supporting utilities.
 
-```sh
-npm install        # installs backend + frontend (npm workspaces)
-npm run dev        # everything served from http://localhost:5000 (single port)
-```
+frontend contains the Vue 3 application, views, layouts, components, stores, assets, routing, and API service.
 
-For development with Vue hot-module-reload instead:
+database/weconnect.sql contains the database schema.
 
-```sh
-npm run dev:frontend   # Vite on http://localhost:5173 (proxies /api to :5000)
-```
+scripts/dev.js starts the frontend and backend development environment together.
 
-## Production-style run
+The root package.json and package-lock.json define the project-level setup.
 
-```sh
-npm run build      # bundle the frontend into frontend/dist
-npm start          # backend serves API + frontend on http://localhost:5000
-```
+## Installation and startup
 
-## Configuration
+From the repository root:
 
-Copy `backend/.env.example` to `backend/.env` (or edit the existing one) with
-your MySQL/Aiven credentials. `PORT` controls the single port the whole app runs
-on (default `5000`). The frontend talks to the API on the same origin
-(`/api`), so no frontend env file is needed.
+npm install
+npm run dev
 
-## API
+The combined development setup starts the frontend and backend. The normal development addresses are frontend http://localhost:5173 and backend http://localhost:5000.
 
-All routes are mounted under `/api` by `backend/server.js`:
+For backend-only development:
 
-- `/api/auth` – login, register buyer, register supplier, subscription plans
-- `/api/supplier/products` – product CRUD, stock, analytics, uploads
-- `/api/products` – marketplace products and reviews
-- `/api/orders`, `/api/cart`, `/api/payments`, `/api/deliveries`
-- `/api/profile`, `/api/suppliers`, `/api/categories`
-- Database schema lives in `database/weconnect.sql`
+cd backend
+npm install
+npm start
+
+For frontend-only development:
+
+cd frontend
+npm install
+npm run dev
+
+For a production-style build, inspect the root package.json for the current build and start scripts.
+
+## Environment
+
+Copy backend/.env.example to backend/.env and fill in the required database and authentication values.
+
+The database connection is configured in backend/src/config/db.js.
+
+The backend includes backend/certs/ca.pem for the database SSL configuration.
+
+Never commit backend/.env or real credentials.
+
+## Authentication
+
+Authentication code is primarily located in:
+
+backend/src/controllers/authController.js
+backend/src/middleware/auth.js
+backend/src/routes/authRoutes.js
+
+The frontend authentication pages are:
+
+frontend/src/views/loginpage/LoginPage.vue
+frontend/src/views/signuppage/SignUpPage.vue
+
+Registration supports buyer and supplier account flows. The backend uses JWT authentication and role information to protect relevant routes.
+
+## Buyer and small-business side
+
+Buyer-facing pages are found mainly under frontend/src/views/buyersviews and the b_ prefixed views.
+
+Relevant files include:
+
+frontend/src/views/buyersviews/MarketplaceView.vue
+frontend/src/views/buyersviews/CartView.vue
+frontend/src/views/buyersviews/ViewProduct.vue
+frontend/src/views/b_SmallBusinessDashboard.vue
+frontend/src/views/b_SmallBusinessProductsView.vue
+frontend/src/views/b_SmallBusinessOrdersView.vue
+frontend/src/views/b_SmallBusinessDeliveriesView.vue
+frontend/src/views/b_SmallBusinessProfile.vue
+frontend/src/views/b_PaymentsView.vue
+frontend/src/views/b_TrackingView.vue
+
+The buyer workflow connects marketplace products to cart, checkout, payment, orders, and delivery tracking.
+
+## Supplier side
+
+Supplier pages are mainly under frontend/src/views/suppliersviews plus the supplier-related root views.
+
+Important files include:
+
+frontend/src/views/suppliersviews/AddProducts.vue
+frontend/src/views/suppliersviews/EditProduct.vue
+frontend/src/views/S_Products.vue
+frontend/src/views/StockManagement.vue
+frontend/src/views/SupplierDashboard.vue
+frontend/src/views/b_SupplierOrdersView.vue
+frontend/src/views/b_SupplierDeliveriesView.vue
+
+Supplier product creation and editing communicate with the backend and database. Stock management reads and changes supplier product stock.
+
+## Product images
+
+Product image upload routes are in backend/src/routes/uploadRoutes.js.
+
+Image processing or storage helpers are in backend/src/utils/productImage.js.
+
+Uploaded product images are stored under backend/uploads/products.
+
+The product database records contain image references rather than requiring the frontend to hard-code every image.
+
+## Backend API
+
+backend/server.js mounts the major API groups.
+
+The main groups are:
+
+/api/auth
+/api/admin
+/api/supplier/products
+/api/supplier
+/api/profile
+/api/uploads
+/api/categories
+/api/orders
+/api/deliveries
+/api/products
+/api/cart
+/api/suppliers
+/api/payments
+
+To find a specific endpoint, open the matching route file in backend/src/routes, then follow it to its controller and model.
+
+## Database
+
+database/weconnect.sql defines the MySQL schema.
+
+The database supports users, buyers, suppliers, products, cart items, orders, order items, payment methods, payments, deliveries, reviews, supplier replies, conversations, messages, notifications, and subscription-related data.
+
+Import the schema into the intended MySQL database before running database-dependent features.
+
+## Frontend navigation
+
+Open frontend/src/router/index.js to see every registered page and its URL.
+
+Open frontend/src/services/api.js to see how frontend requests are sent to the backend.
+
+Open frontend/src/stores for shared client state.
+
+Open frontend/src/components and frontend/src/layouts for reusable interface structures.
+
+## Recommended end-to-end test
+
+Register a small-business account, log in, browse the marketplace, open a product, add it to the cart, proceed through checkout, select payment and delivery information, submit the order, then verify the order and payment records in MySQL.
+
+Next test a supplier account by adding or editing a product, changing stock, uploading an image, and confirming that the product information is available to the buyer side.
+
+## Security and configuration
+
+Keep all database credentials and JWT secrets in backend/.env. Do not place secrets in Vue VITE variables.
+
+Before submitting, verify authentication, database connection, product image handling, order creation, payment handling, and supplier-to-buyer product visibility.
