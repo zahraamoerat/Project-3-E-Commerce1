@@ -6,10 +6,10 @@ export async function getAllOrders(buyerId = null) {
     SELECT
       o.order_id,
       o.order_number,
-      o.status AS order_status,
+      o.order_status AS order_status,
       o.delivery_method,
       o.total_amount,
-      o.ordered_at AS order_date,
+      o.order_date AS order_date,
       o.updated_at,
 
       b.business_name AS buyer_name,
@@ -34,7 +34,7 @@ export async function getAllOrders(buyerId = null) {
     LEFT JOIN deliveries d
       ON d.order_id = o.order_id
 
-    WHERE (? IS NULL OR o.buyer_id = ?)\n    ORDER BY o.ordered_at DESC
+    WHERE (? IS NULL OR o.buyer_id = ?)\n    ORDER BY o.order_date DESC
   `, [buyerId, buyerId]);
 
   return rows;
@@ -46,10 +46,10 @@ export async function getOrderById(orderId, buyerId = null) {
     SELECT
       o.order_id,
       o.order_number,
-      o.status AS order_status,
+      o.order_status AS order_status,
       o.delivery_method,
       o.total_amount,
-      o.ordered_at AS order_date,
+      o.order_date AS order_date,
       o.updated_at,
 
       b.business_name AS buyer_name,
@@ -86,7 +86,7 @@ export async function getOrderWithDelivery(orderId, buyerId = null) {
   const [rows] = await pool.query(`
     SELECT
       o.order_id,
-      o.status AS order_status,
+      o.order_status AS order_status,
       o.delivery_method,
       o.supplier_id,
       d.delivery_id,
