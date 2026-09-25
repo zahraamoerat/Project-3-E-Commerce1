@@ -1,21 +1,73 @@
-// Keep the API URL configurable for different environments.
 const apiBaseUrl = import.meta.env.VITE_API_URL || "/api";
+const backendBaseUrl = apiBaseUrl.replace(/\/api\/?$/, "");
+
+function isLocalUploadOrigin(parsed) {
+  const origins = new Set([window.location.origin]);
+  if (backendBaseUrl) {
+    try {
+      origins.add(new URL(backendBaseUrl, window.location.origin).origin);
+    } catch {}
+  }
+  if (["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname)) {
+    origins.add("http://localhost:5000");
+    origins.add("http://127.0.0.1:5000");
+  }
+  return origins.has(parsed.origin);
+}
+
+function getUploadPath(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (text.startsWith("/api/uploads/")) return text.slice(4);
+  if (text.startsWith("/uploads/") || text.startsWith("uploads/")) {
+    return text.startsWith("/") ? text : `/${text}`;
+  }
+
+  let parsed;
+  try {
+    parsed = text.startsWith("//") ? new URL(`https:${text}`) : new URL(text);
+  } catch {
+    return "";
+  }
+  if (!isLocalUploadOrigin(parsed)) return "";
+  if (parsed.pathname.startsWith("/api/uploads/")) return parsed.pathname.slice(4);
+  if (parsed.pathname.startsWith("/uploads/")) return parsed.pathname;
+  return "";
+}
+
+export function resolveImageUrl(value) {
+  const source = String(value || "").trim();
+  if (!source) return "";
+  if (/^(data:|blob:)/i.test(source)) return source;
+
+  const uploadPath = getUploadPath(source);
+  if (uploadPath) return `${backendBaseUrl}${uploadPath}`;
+
+  if (/^https?:\/\//i.test(source)) return source;
+  if (source.startsWith("//")) return source;
+  return source.startsWith("/") ? source : `/${source}`;
+}
+
+export function isProductUploadReference(value) {
+  return Boolean(getUploadPath(value));
+}
 
 const getToken = () => localStorage.getItem("weconnect_token");
 
 // Send all requests through one place so headers and errors stay consistent.
 const request = async (path, options = {}) => {
+  const { authToken, ...requestOptions } = options;
   const headers = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...requestOptions.headers,
   };
 
-  const token = getToken();
+  const token = authToken || getToken();
   // Add the saved login token when the request needs authentication.
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const response = await fetch(`${apiBaseUrl}${path}`, {
-    ...options,
+    ...requestOptions,
     headers,
   });
 
@@ -37,6 +89,13 @@ export const api = {
     request("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
+    }),
+
+  changePassword: (newPassword) =>
+    request("/auth/password/change", {
+      method: "POST",
+      authToken: localStorage.getItem("weconnect_password_change_token"),
+      body: JSON.stringify({ new_password: newPassword }),
     }),
 
   registerBuyer: (data) =>

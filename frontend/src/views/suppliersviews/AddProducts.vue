@@ -209,7 +209,7 @@
               :key="image"
               class="supplier_add_products_thumbnail-tile"
             >
-              <img :src="image" :alt="`Selected product image ${index + 1}`" />
+              <img :src="resolveImageUrl(image)" :alt="`Selected product image ${index + 1}`" />
               <button
                 type="button"
                 :aria-label="`Remove image ${index + 1}`"
@@ -364,12 +364,12 @@
 import { reactive, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
+import { resolveImageUrl } from "@/services/api";
 const router = useRouter();
 const {
   addProduct,
   uploadProductImages,
   cleanupProductImages,
-  imagePlaceholders,
   categories,
   categoriesLoading,
   categoriesError,
@@ -473,8 +473,8 @@ async function publish() {
       ...form,
       product_name: form.product_name.trim(),
       description: form.description.trim(),
-      image: images[0] || imagePlaceholders.packaging,
-      images,
+       image: images[0] || null,
+       images,
     });
     message.value = "Product published successfully.";
     setTimeout(() => router.push("/products"), 500);
@@ -506,8 +506,8 @@ async function saveDraft() {
       ...form,
       product_name: form.product_name.trim() || "Untitled draft",
       category_name: form.category_name,
-      image: images[0] || imagePlaceholders.packaging,
-      images,
+       image: images[0] || null,
+       images,
     });
     message.value = "Draft saved.";
     setTimeout(() => router.push("/products"), 500);

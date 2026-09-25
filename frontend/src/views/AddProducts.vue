@@ -100,7 +100,7 @@
           </button>
           <div v-if="form.images.length" class="supplier_add_products_thumbnail-strip">
             <div v-for="(image, index) in form.images" :key="image" class="supplier_add_products_thumbnail-tile">
-              <img :src="image" :alt="`Selected product image ${index + 1}`" />
+              <img :src="resolveImageUrl(image)" :alt="`Selected product image ${index + 1}`" />
               <button type="button" :aria-label="`Remove image ${index + 1}`"
                 @click="removeImage(index)">&#215;</button>
             </div>
@@ -161,7 +161,8 @@
 import { reactive, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
-const router=useRouter(); const {addProduct,uploadProductImages,cleanupProductImages,imagePlaceholders,categories,categoriesLoading,categoriesError,loadCategories}=useSupplierData();
+import { resolveImageUrl } from "@/services/api";
+const router=useRouter(); const {addProduct,uploadProductImages,cleanupProductImages,categories,categoriesLoading,categoriesError,loadCategories}=useSupplierData();
 loadCategories();
 const message=ref(""); const error=ref(""); const saving=ref(false);
 const form=reactive({product_name:"",category_name:"",subcategory:"",sku:"",description:"",price:null,comparePrice:null,quantity:0,low_stock_threshold:10,unit:"pack",bulkDiscount:{minQuantity:null,discountPercent:null},weight:null,length:null,breadth:null,width:null,images:[]});
@@ -181,7 +182,7 @@ async function publish(){
   let uploadedUrls=[];
   try{
     const images=await uploadProductImages(form.images,(urls)=>{uploadedUrls=urls;});
-    await addProduct({...form,product_name:form.product_name.trim(),description:form.description.trim(),bulk_discount: form.bulkDiscount.minQuantity ? { minimum_quantity: Number(form.bulkDiscount.minQuantity), discount_percent: Number(form.bulkDiscount.discountPercent) } : null,image:images[0]||imagePlaceholders.packaging,images});
+    await addProduct({...form,product_name:form.product_name.trim(),description:form.description.trim(),bulk_discount: form.bulkDiscount.minQuantity ? { minimum_quantity: Number(form.bulkDiscount.minQuantity), discount_percent: Number(form.bulkDiscount.discountPercent) } : null,image:images[0]||null,images});
     message.value="Product published successfully.";
     localStorage.setItem("weconnect-product-catalog-updated", String(Date.now()));
     setTimeout(()=>router.push("/products"),500);
@@ -201,7 +202,7 @@ async function saveDraft(){
   let uploadedUrls=[];
   try{
     const images=await uploadProductImages(form.images,(urls)=>{uploadedUrls=urls;});
-    await addProduct({...form,product_name:form.product_name.trim()||"Untitled draft",category_name:form.category_name,bulk_discount: form.bulkDiscount.minQuantity ? { minimum_quantity: Number(form.bulkDiscount.minQuantity), discount_percent: Number(form.bulkDiscount.discountPercent) } : null,image:images[0]||imagePlaceholders.packaging,images});
+    await addProduct({...form,product_name:form.product_name.trim()||"Untitled draft",category_name:form.category_name,bulk_discount: form.bulkDiscount.minQuantity ? { minimum_quantity: Number(form.bulkDiscount.minQuantity), discount_percent: Number(form.bulkDiscount.discountPercent) } : null,image:images[0]||null,images});
     message.value="Draft saved.";
     localStorage.setItem("weconnect-product-catalog-updated", String(Date.now()));
     setTimeout(()=>router.push("/products"),500);

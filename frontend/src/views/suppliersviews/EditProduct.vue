@@ -240,7 +240,7 @@
               }"
             >
               <img
-                :src="image"
+                :src="resolveImageUrl(image)"
                 :alt="`${form.product_name || 'Product'} image ${index + 1}`"
               />
               <span v-if="index === 0" class="supplier_edit_product_media-badge"
@@ -463,6 +463,7 @@ import {
 } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
+import { resolveImageUrl } from "@/services/api";
 
 const route = useRoute();
 const router = useRouter();

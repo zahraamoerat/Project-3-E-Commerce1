@@ -126,7 +126,7 @@
               class="supplier_edit_product_thumbnail-tile"
               :class="{ 'supplier_edit_product_thumbnail-tile--primary': index === 0 }"
             >
-              <img :src="image" :alt="`${form.product_name || 'Product'} image ${index + 1}`" />
+              <img :src="resolveImageUrl(image)" :alt="`${form.product_name || 'Product'} image ${index + 1}`" />
               <span v-if="index === 0" class="supplier_edit_product_media-badge">Primary</span>
               <span v-else class="supplier_edit_product_media-type">{{ isNewImage(image) ? "New" : "Saved" }}</span>
 
@@ -208,6 +208,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
+import { resolveImageUrl } from "@/services/api";
 
 const route = useRoute();
 const router = useRouter();

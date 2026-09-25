@@ -89,6 +89,10 @@ ADD COLUMN approved_at DATETIME NULL;
 ALTER TABLE users 
 ADD COLUMN is_approved BOOLEAN DEFAULT FALSE;
 
+ALTER TABLE users
+ADD COLUMN must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN auth_version INT UNSIGNED NOT NULL DEFAULT 0;
+
 -- ------------------------------------------------------------
 -- 4. SUPPLIERS
 -- Includes Browse Filters & Dashboard flags

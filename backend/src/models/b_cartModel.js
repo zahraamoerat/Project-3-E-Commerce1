@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { normalizeProductImage } from "../utils/productImage.js";
 
 export async function getCartItems(buyerId) {
   const [rows] = await pool.query(`
@@ -10,7 +11,17 @@ export async function getCartItems(buyerId) {
       ci.quantity,
       p.product_name AS title,
       p.price,
-      p.product_image AS image,
+       COALESCE(
+         (
+           SELECT pm.media_url
+           FROM product_media pm
+           WHERE pm.product_id = p.product_id
+             AND pm.media_type = 'image'
+           ORDER BY pm.is_primary DESC, pm.sort_order ASC, pm.media_id ASC
+           LIMIT 1
+         ),
+         NULLIF(p.product_image, '')
+       ) AS image,
       p.unit,
       p.sku,
       COALESCE((SELECT MAX(t.discount_percent) FROM product_discount_tiers t WHERE t.product_id=p.product_id AND ci.quantity >= t.minimum_quantity), 0) AS discountPercent,
@@ -33,7 +44,10 @@ export async function getCartItems(buyerId) {
     ORDER BY ci.created_at DESC
   `, [buyerId]);
 
-  return rows;
+  return rows.map((row) => ({
+    ...row,
+    image: normalizeProductImage(row.image),
+  }));
 }
 
 export async function addCartItem(buyerId, productId, quantity) {

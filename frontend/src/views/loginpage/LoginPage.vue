@@ -125,6 +125,7 @@ export default {
     async handleLogin() {
       this.error = "";
       this.isLoading = true;
+      localStorage.removeItem("weconnect_password_change_token");
       try {
         const result = await api.login(this.email, this.password);
 
@@ -132,6 +133,22 @@ export default {
           throw new Error(
             `This account is registered as a ${result.role}, not a ${this.selectedRole}.`,
           );
+        }
+
+        if (result.passwordChangeRequired) {
+          if (!result.passwordChangeToken) {
+            throw new Error("Password change could not be started.");
+          }
+          localStorage.setItem(
+            "weconnect_password_change_token",
+            result.passwordChangeToken,
+          );
+          localStorage.setItem(
+            "weconnect_email",
+            result.user?.email || this.email,
+          );
+          await this.$router.push("/change-password");
+          return;
         }
 
         localStorage.setItem("weconnect_token", result.token);

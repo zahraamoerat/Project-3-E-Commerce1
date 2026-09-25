@@ -1,4 +1,5 @@
 import { computed, ref } from "vue";
+import { isProductUploadReference } from "@/services/api";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
@@ -232,9 +233,7 @@ async function updateProfile(changes) {
 }
 
 async function cleanupProductImages(urls) {
-  const safeUrls = Array.isArray(urls) ? urls.filter((url) => {
-    try { const parsed = new URL(url); return parsed.pathname.startsWith("/uploads/products/"); } catch { return false; }
-  }) : [];
+  const safeUrls = Array.isArray(urls) ? urls.filter((url) => isProductUploadReference(url)) : [];
   if (!safeUrls.length) return;
   try {
     await request("/uploads/products", { method: "DELETE", body: JSON.stringify({ urls: safeUrls }) });
@@ -266,6 +265,9 @@ async function uploadProductImages(imageSources, onUploaded = null) {
 
   const response = await fetch(`${API_URL}/uploads/products`, {
     method: "POST",
+    headers: localStorage.getItem("weconnect_token")
+      ? { Authorization: `Bearer ${localStorage.getItem("weconnect_token")}` }
+      : {},
     body: formData,
   });
 

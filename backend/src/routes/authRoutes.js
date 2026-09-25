@@ -2,6 +2,7 @@ import express from "express";
 import {
   login,
   me,
+  changePassword,
   getSubscriptionPlans,
   registerBuyer,
   registerSupplier,
@@ -21,6 +22,8 @@ router.post("/register-buyer", registerBuyer);
 
 // POST /api/auth/register-supplier
 router.post("/register-supplier", registerSupplier);
+
+router.post("/password/change", requireAuth, changePassword);
 
 // GET /api/auth/me
 router.get("/me", requireAuth, me);

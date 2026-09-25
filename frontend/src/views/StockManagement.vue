@@ -18,7 +18,7 @@
       </div>
       <div v-if="selectedCount" class="bulk-bar"><strong>{{ selectedCount }} selected</strong><select v-model="bulkMode"><option value="receive">Receive stock</option><option value="set">Set exact stock</option></select><input v-model.number="bulkQuantity" type="number" min="0" step="1" aria-label="Bulk quantity" /><button type="button" :disabled="bulkSaving" @click="applyBulk">{{ bulkSaving ? "Saving..." : "Apply" }}</button><button type="button" class="link-button" @click="clearSelection">Clear</button></div><div class="table-head"><span><input type="checkbox" :checked="allVisibleSelected" :indeterminate="someVisibleSelected" @change="toggleAll($event.target.checked)" aria-label="Select visible products" /> Product</span><span>Stock</span><span>Reorder</span><span>Status</span><span>Price</span><span>Actions</span></div>
       <div v-for="product in pagedProducts" :key="product.product_id" class="inventory-row">
-        <div class="product"><input type="checkbox" :checked="!!selected[product.product_id]" @change="toggleProduct(product.product_id,$event.target.checked)" :aria-label="`Select ${product.product_name}`" /><img :src="product.image" :alt="product.product_name" /><div><strong>{{ product.product_name }}</strong><span>{{ product.sku }} · {{ product.category_name || "Uncategorised" }}</span></div></div>
+        <div class="product"><input type="checkbox" :checked="!!selected[product.product_id]" @change="toggleProduct(product.product_id,$event.target.checked)" :aria-label="`Select ${product.product_name}`" /><img :src="resolveImageUrl(product.image)" :alt="product.product_name" /><div><strong>{{ product.product_name }}</strong><span>{{ product.sku }} · {{ product.category_name || "Uncategorised" }}</span></div></div>
         <div class="quantity"><strong>{{ product.quantity }}</strong><span>units</span></div><div class="reorder"><strong>{{ recommendedQty(product) }}</strong><span>recommended · {{ product.lead_time_days || 1 }}d lead</span></div>
         <span class="badge" :class="statusClass(stockStatus(product))">{{ stockStatus(product) }}</span>
         <strong class="price">{{ money(product.price) }}</strong>
@@ -31,6 +31,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { useSupplierData } from "@/data/supplierData";
+import { resolveImageUrl } from "@/services/api";
 const { products, updateProductStock, refreshSupplierProducts, loading } = useSupplierData();
 const router = useRouter(), query = ref(""), statusFilter = ref("All"), categoryFilter = ref("All"), sortOrder = ref("stock"), page = ref(1);
 const editing = ref(null), adjustmentMode = ref("set"), editQuantity = ref(0), editReason = ref("Manual adjustment"), saving = ref(false), message = ref(""), error = ref("");

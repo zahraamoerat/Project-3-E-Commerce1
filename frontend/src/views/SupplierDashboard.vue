@@ -48,7 +48,7 @@
           </div>
           <RouterLink to="/stockmanagement">Manage</RouterLink>
         </div>
-        <article v-for="product in attention" :key="product.product_id" class="supplier_dashboard_stock-row"><img :src="product.image"
+        <article v-for="product in attention" :key="product.product_id" class="supplier_dashboard_stock-row"><img :src="resolveImageUrl(product.image)"
             :alt="product.product_name" />
           <div><strong>{{ product.product_name }}</strong><small>{{ product.quantity }} units remaining</small></div>
           <span>{{ product.stockStatus }}</span>
@@ -63,6 +63,7 @@
 import { computed, onMounted } from "vue";
 import { RouterLink } from "vue-router";
 import { useSupplierData, supplierStats } from "@/data/supplierData";
+import { resolveImageUrl } from "@/services/api";
 const { orders, products, profile, loadSupplierData } = useSupplierData();
 const { productCount, lowStockCount: lowStock, outOfStockCount: outOfStock, revenue } = supplierStats;
 const businessName = computed(() => profile.value.businessName?.trim() || "Supplier");

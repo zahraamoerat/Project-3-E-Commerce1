@@ -9,6 +9,10 @@ import {
   bulkUpdateStock,
   getStockAnalytics,
 } from "../models/s_productModel.js";
+import {
+  normalizeProductImage,
+  prepareProductImages,
+} from "../utils/productImage.js";
 
 const currentSupplierId = (req) => Number(req.supplierId);
 const validId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
@@ -100,25 +104,25 @@ function productData(body, category_id, supplier_id) {
     bulk_discount = { minimum_quantity, discount_percent };
   }
 
-  const images = Array.isArray(body.images)
-    ? [...new Set(body.images.map((u) => String(u).trim()).filter(Boolean))]
-    : [];
-  if (images.length > 8)
+  const rawImages = Array.isArray(body.images) ? body.images : [];
+  if (rawImages.length > 8)
     throw fail("A product can have a maximum of 8 images.");
-  for (const url of images) {
-    if (url.length > 1000) throw fail("Product image URL is too long.");
-    try {
-      const parsed = new URL(url);
-      if (!["http:", "https:"].includes(parsed.protocol)) throw new Error();
-      if (
-        parsed.pathname.startsWith("/uploads/products/") &&
-        !/^[a-zA-Z0-9._-]+$/.test(parsed.pathname.split("/").pop() || "")
-      )
-        throw new Error();
-    } catch {
+  for (const value of rawImages) {
+    const url = String(value || "").trim();
+    if (url.length > 1000 || !normalizeProductImage(url)) {
       throw fail("Product images must use valid HTTP or HTTPS URLs.");
     }
   }
+
+  const primaryImage = body.product_image ?? body.image;
+  const imageData = prepareProductImages({
+    images: rawImages,
+    product_image: primaryImage,
+  });
+  if (primaryImage != null && primaryImage !== "" && !imageData.product_image) {
+    throw fail("The primary product image must use a valid HTTP or HTTPS URL.");
+  }
+
   return {
     supplier_id,
     category_id,
@@ -141,8 +145,8 @@ function productData(body, category_id, supplier_id) {
     breadth_in: body.breadth ?? body.breadth_in ?? null,
     width_in: body.width ?? body.width_in ?? null,
     sku,
-    product_image: body.product_image || body.image || null,
-    images,
+    product_image: imageData.product_image,
+    images: imageData.images,
     quantity,
     low_stock_threshold: threshold,
     bulk_discount,

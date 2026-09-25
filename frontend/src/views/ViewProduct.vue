@@ -12,13 +12,13 @@
         <section>
           <div class="supplier_view_product_gallery-main">
             <button v-if="productImages.length > 1" type="button" class="supplier_view_product_gallery-arrow supplier_view_product_left" aria-label="Previous image" @click="activeImage = activeImage === 0 ? productImages.length - 1 : activeImage - 1">&#8249;</button>
-            <img :src="productImages[activeImage]" :alt="product.product_name" />
+            <img :src="resolveImageUrl(productImages[activeImage])" :alt="product.product_name" />
             <button v-if="productImages.length > 1" type="button" class="supplier_view_product_gallery-arrow supplier_view_product_right" aria-label="Next image" @click="activeImage = activeImage === productImages.length - 1 ? 0 : activeImage + 1">&#8250;</button>
           </div>
           <div class="supplier_view_product_thumbnail-row">
             <button v-for="(image, index) in productImages" :key="image" type="button" class="supplier_view_product_thumbnail"
               :class="{ selected: activeImage === index }" @click="activeImage = index">
-              <img :src="image" :alt="`${product.product_name} thumbnail ${index + 1}`" />
+              <img :src="resolveImageUrl(image)" :alt="`${product.product_name} thumbnail ${index + 1}`" />
             </button>
           </div>
         </section>
@@ -68,6 +68,7 @@ import { computed, ref } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import Swal from "sweetalert2";
 import { useSupplierData } from "@/data/supplierData";
+import { resolveImageUrl } from "@/services/api";
 const route=useRoute();
 const { products }=useSupplierData();
 const product=computed(()=>products.value.find((item)=>item.product_id===Number(route.params.id))||null);

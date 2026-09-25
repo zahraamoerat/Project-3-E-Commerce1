@@ -237,7 +237,7 @@
 </template>
 
 <script>
-import { api, apiBaseUrl } from "@/services/api";
+import { api, resolveImageUrl as resolveAssetUrl } from "@/services/api";
 import SmallBusinessNavbar from "@/components/SmallBusinessNavbar.vue";
 import { basketKey } from "@/stores/basket";
 import Swal from "sweetalert2";
@@ -488,18 +488,7 @@ export default {
     },
 
     resolveImageUrl(imageUrl) {
-      if (!imageUrl) return "";
-      if (/^(https?:)?\/\//i.test(imageUrl) || imageUrl.startsWith("data:")) {
-        return imageUrl;
-      }
-
-      const normalizedPath = imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl;
-
-      if (normalizedPath.startsWith("/api/")) {
-        return normalizedPath;
-      }
-
-      return apiBaseUrl.replace(/\/$/, "") + normalizedPath;
+      return resolveAssetUrl(imageUrl);
     },
 
     handleImageError(event) {

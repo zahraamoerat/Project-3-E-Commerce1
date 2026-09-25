@@ -46,7 +46,7 @@
         <div v-if="loading" class="product-grid"><div v-for="n in 4" :key="n" class="skeleton"></div></div>
         <div v-else-if="featuredProducts.length" class="product-grid">
           <article v-for="product in featuredProducts" :key="product.id" class="product-card" @click="router.push('/small-business/products/'+product.id)">
-            <div class="product-image"><img :src="product.image" :alt="product.title" loading="lazy" @error="imageFallback" /><span v-if="product.discountTiers?.length" class="badge">Bulk savings</span></div>
+            <div class="product-image"><img :src="resolveImageUrl(product.image)" :alt="product.title" loading="lazy" @error="imageFallback" /><span v-if="product.discountTiers?.length" class="badge">Bulk savings</span></div>
             <div class="product-info"><span>{{ product.category }}</span><h3>{{ product.title }}</h3><strong>R {{ formatPrice(product.price) }}</strong><small v-if="product.discountTiers?.length">From {{ product.discountTiers[0].minimum_quantity }}+ units • {{ product.discountTiers[0].discount_percent }}% off</small></div>
           </article>
         </div>
@@ -71,6 +71,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SmallBusinessNavbar from '../components/SmallBusinessNavbar.vue'
+import { resolveImageUrl } from '@/services/api'
 
 const apiUrl = import.meta.env.VITE_API_URL || '/api'
 const router = useRouter()

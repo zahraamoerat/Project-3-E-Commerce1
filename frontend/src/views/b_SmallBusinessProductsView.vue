@@ -170,7 +170,7 @@
                 <article v-for="product in paginatedProducts" :key="product.id" class="beauty-product-card">
                   <div class="product-visual">
                     <button type="button" class="product-image-button" :aria-label="`View ${product.title}`" @click="viewProduct(product)">
-                      <img :src="product.image" :alt="product.title" class="product-image" loading="lazy" @error="imageFallback" />
+                      <img :src="resolveImageUrl(product.image)" :alt="product.title" class="product-image" loading="lazy" @error="imageFallback" />
                     </button>
 
                      <span v-if="isOutOfStock(product)" class="discount-badge out-of-stock-badge">Out of stock</span>
@@ -270,7 +270,7 @@
           <section class="detail-gallery" aria-label="Product gallery">
             <div class="detail-image-wrap">
               <button v-if="detailImages.length > 1" type="button" class="detail-gallery-arrow detail-gallery-arrow-left" @click="activeDetailImage = activeDetailImage === 0 ? detailImages.length - 1 : activeDetailImage - 1" aria-label="Previous product image">‹</button>
-              <img :src="detailImages[activeDetailImage]" :alt="selectedProduct.title" @error="handleDetailImageError" />
+              <img :src="resolveImageUrl(detailImages[activeDetailImage])" :alt="selectedProduct.title" @error="handleDetailImageError" />
               <button v-if="detailImages.length > 1" type="button" class="detail-gallery-arrow detail-gallery-arrow-right" @click="activeDetailImage = activeDetailImage === detailImages.length - 1 ? 0 : activeDetailImage + 1" aria-label="Next product image">›</button>
             </div>
             <div v-if="detailImages.length > 1" class="detail-image-count" aria-live="polite">
@@ -278,7 +278,7 @@
             </div>
             <div class="detail-thumb-row">
               <button v-for="(image, index) in detailImages" :key="image + index" type="button" class="detail-thumb" :class="{ active: activeDetailImage === index }" @click="activeDetailImage = index">
-                <img :src="image" :alt="selectedProduct.title + ' image ' + (index + 1)" loading="lazy" @error="imageFallback" />
+                <img :src="resolveImageUrl(image)" :alt="selectedProduct.title + ' image ' + (index + 1)" loading="lazy" @error="imageFallback" />
               </button>
             </div>
           </section>
@@ -432,7 +432,7 @@
                       :aria-label="`View ${product.title}`"
                       @click="viewProduct(product)"
                     >
-                      <img :src="product.image" :alt="product.title" loading="lazy" @error="imageFallback" />
+                      <img :src="resolveImageUrl(product.image)" :alt="product.title" loading="lazy" @error="imageFallback" />
                     </button>
 
                      <span v-if="isOutOfStock(product)" class="related-discount out-of-stock-badge">Out of stock</span>
@@ -498,6 +498,7 @@
 
 <script setup>
 import SmallBusinessNavbar from '../components/SmallBusinessNavbar.vue'
+import { resolveImageUrl } from '@/services/api'
 import { basketKey, countBasketItems, setBasketCount, wishlistKey } from '../stores/basket'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

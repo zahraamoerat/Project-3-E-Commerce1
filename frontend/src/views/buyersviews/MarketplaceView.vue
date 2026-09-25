@@ -31,7 +31,7 @@
           :key="product.id"
           class="product-card"
         >
-          <img :src="product.image" :alt="product.title" />
+          <img :src="resolveImageUrl(product.image)" :alt="product.title" />
           <div class="product-body">
             <span class="category">{{ product.category }}</span>
             <h2>{{ product.title }}</h2>
@@ -61,7 +61,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { api } from "@/services/api";
+import { api, resolveImageUrl } from "@/services/api";
 
 // Marketplace state used while products are loading or being added to the cart.
 const products = ref([]);

@@ -30,7 +30,7 @@
               &#8249;
             </button>
             <img
-              :src="productImages[activeImage]"
+              :src="resolveImageUrl(productImages[activeImage])"
               :alt="product.product_name"
             />
             <button
@@ -56,7 +56,7 @@
               @click="activeImage = index"
             >
               <img
-                :src="image"
+                :src="resolveImageUrl(image)"
                 :alt="`${product.product_name} thumbnail ${index + 1}`"
               />
             </button>
@@ -274,6 +274,7 @@ import { computed, ref } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import Swal from "sweetalert2";
 import { useSupplierData } from "@/data/supplierData";
+import { resolveImageUrl } from "@/services/api";
 const route = useRoute();
 const { products } = useSupplierData();
 const product = computed(

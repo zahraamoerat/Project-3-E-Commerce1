@@ -2,6 +2,21 @@ import db from "../config/db.js";
 import bcrypt from "bcryptjs";
 import { signUser } from "../middleware/auth.js";
 
+function getPasswordPolicyError(password) {
+  if (password.length < 12) {
+    return "Use at least 12 characters.";
+  }
+  if (
+    !/[a-z]/.test(password) ||
+    !/[A-Z]/.test(password) ||
+    !/[0-9]/.test(password) ||
+    !/[^A-Za-z0-9]/.test(password)
+  ) {
+    return "Use uppercase, lowercase, number, and symbol characters.";
+  }
+  return "";
+}
+
 export async function login(req, res, next) {
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
@@ -21,6 +36,8 @@ export async function login(req, res, next) {
         u.user_role,
         u.is_active,
         u.is_approved,
+        u.auth_version,
+        u.must_change_password,
         s.supplier_id,
         s.approval_status
       FROM users u
@@ -64,12 +81,28 @@ export async function login(req, res, next) {
       email: userRecord.email,
       user_role: userRecord.user_role,
       supplier_id: userRecord.supplier_id || null,
+      auth_version: Number(userRecord.auth_version || 0),
     };
 
     const buyerId =
       user.user_role === "buyer"
         ? await getBuyerId(user.user_id)
         : null;
+
+    if (Number(userRecord.must_change_password) === 1) {
+      return res.json({
+        passwordChangeRequired: true,
+        passwordChangeToken: signUser(
+          { ...user, purpose: "password_change" },
+          { expiresIn: "15m" },
+        ),
+        user,
+        role: user.user_role,
+        userId: user.user_id,
+        buyerId,
+        supplierId: user.supplier_id,
+      });
+    }
 
     return res.json({
       token: signUser(user),
@@ -91,6 +124,99 @@ async function getBuyerId(userId) {
   );
 
   return rows[0]?.buyer_id || null;
+}
+
+export async function changePassword(req, res, next) {
+  if (req.user?.purpose !== "password_change") {
+    return res.status(403).json({
+      message: "This password change session is invalid.",
+    });
+  }
+
+  const newPassword = String(req.body.new_password || "");
+  const policyError = getPasswordPolicyError(newPassword);
+  if (policyError) {
+    return res.status(400).json({ message: policyError });
+  }
+
+  let connection;
+  let committed = false;
+
+  try {
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    const [[account]] = await connection.execute(
+      `SELECT
+        u.user_id,
+        u.email,
+        u.password_hash,
+        u.user_role,
+        u.auth_version,
+        u.must_change_password,
+        s.supplier_id
+      FROM users u
+      LEFT JOIN suppliers s ON s.user_id = u.user_id
+      WHERE u.user_id = ?
+      FOR UPDATE`,
+      [req.user.user_id],
+    );
+
+    if (!account || Number(account.must_change_password) !== 1) {
+      await connection.rollback();
+      return res.status(409).json({
+        message: "This temporary password session is no longer valid. Please sign in again.",
+      });
+    }
+
+    if (await bcrypt.compare(newPassword, account.password_hash)) {
+      await connection.rollback();
+      return res.status(400).json({
+        message: "Choose a password different from the temporary password.",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const nextAuthVersion = Number(account.auth_version || 0) + 1;
+
+    await connection.execute(
+      `UPDATE users
+       SET password_hash = ?, must_change_password = FALSE, auth_version = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE user_id = ? AND auth_version = ?`,
+      [passwordHash, nextAuthVersion, account.user_id, account.auth_version || 0],
+    );
+
+    await connection.commit();
+    committed = true;
+
+    const user = {
+      user_id: account.user_id,
+      email: account.email,
+      user_role: account.user_role,
+      supplier_id: account.supplier_id || null,
+      auth_version: nextAuthVersion,
+    };
+    const buyerId =
+      user.user_role === "buyer" ? await getBuyerId(user.user_id) : null;
+
+    return res.json({
+      token: signUser(user),
+      user,
+      role: user.user_role,
+      userId: user.user_id,
+      buyerId,
+      supplierId: user.supplier_id,
+    });
+  } catch (error) {
+    if (connection && !committed) {
+      try {
+        await connection.rollback();
+      } catch {}
+    }
+    return next(error);
+  } finally {
+    connection?.release();
+  }
 }
 
 export async function me(req, res) {

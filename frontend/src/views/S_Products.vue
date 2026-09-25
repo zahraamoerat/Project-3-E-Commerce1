@@ -93,7 +93,7 @@
               <tr v-for="product in paginatedProducts" :key="product.product_id">
                 <td class="supplier_products_checkbox-cell"><input v-model="selectedProductIds" type="checkbox" :value="product.product_id" :aria-label="'Select ' + product.product_name" /></td>
                 <td class="supplier_products_product-cell">
-                  <span class="supplier_products_product-icon"><img v-if="product.image" :src="product.image" :alt="product.product_name" @error="handleImageError" /><FontAwesomeIcon v-else :icon="faCube" /></span>
+                  <span class="supplier_products_product-icon"><img v-if="product.image" :src="resolveImageUrl(product.image)" :alt="product.product_name" @error="handleImageError" /><FontAwesomeIcon v-else :icon="faCube" /></span>
                   <strong>{{ product.product_name }}</strong>
                 </td>
                 <td class="supplier_products_sku">{{ product.sku || "—" }}</td>
@@ -132,7 +132,7 @@
         <div v-else class="supplier_products_product-grid">
           <article v-for="product in paginatedProducts" :key="product.product_id" class="supplier_products_product-tile">
             <div class="supplier_products_tile-image">
-              <img v-if="product.image" :src="product.image" :alt="product.product_name" @error="handleImageError" /><FontAwesomeIcon v-else :icon="faCube" />
+              <img v-if="product.image" :src="resolveImageUrl(product.image)" :alt="product.product_name" @error="handleImageError" /><FontAwesomeIcon v-else :icon="faCube" />
               <span class="supplier_products_status-badge" :class="stockStatus(product).toLowerCase().replaceAll(' ', '-')">
                 <span class="supplier_products_status-dot"></span>
                 {{ product.stockStatus }}
@@ -178,6 +178,7 @@ import { RouterLink } from "vue-router";
 import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { useSupplierData } from "@/data/supplierData";
+import { resolveImageUrl } from "@/services/api";
 import {
   faCube, faList, faMagnifyingGlass, faPen, faPlus,
   faTableCells, faTrashCan, faEye, faCopy
