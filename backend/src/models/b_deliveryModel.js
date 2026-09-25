@@ -16,7 +16,7 @@ export async function getAllDeliveries(buyerId = null) {
       d.updated_at,
 
       o.order_number,
-      o.status AS order_status,
+      o.order_status AS order_status,
       o.delivery_method,
       o.total_amount,
 
