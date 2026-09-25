@@ -112,6 +112,23 @@ export const api = {
 
   getProfile: () => request("/profile"),
 
+  getOrders: (buyerId) =>
+    request(`/orders?buyerId=${encodeURIComponent(buyerId)}`),
+
+  getPayments: (buyerId) =>
+    request(`/payments?buyerId=${encodeURIComponent(buyerId)}`),
+
+  getDeliveries: (buyerId) =>
+    request(`/deliveries?buyerId=${encodeURIComponent(buyerId)}`),
+
+  getOrderItems: (orderId, buyerId) =>
+    request(
+      `/orders/${encodeURIComponent(orderId)}/items?buyerId=${encodeURIComponent(buyerId)}`,
+    ),
+
+  getDeliveryLocation: (deliveryId) =>
+    request(`/deliveries/${encodeURIComponent(deliveryId)}/location`),
+
   updateProfile: (data) =>
     request("/profile", {
       method: "PATCH",
