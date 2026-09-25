@@ -150,7 +150,7 @@ export async function updateOrder(req, res, next) {
       }
     }
     await connection.execute(
-      "UPDATE orders SET status = ? WHERE order_id = ?",
+      "UPDATE orders SET order_status = ? WHERE order_id = ?",
       [req.body.status, order.order_id],
     );
     await connection.commit();
