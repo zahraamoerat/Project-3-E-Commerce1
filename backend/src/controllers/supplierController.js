@@ -28,7 +28,7 @@ export async function getSupplierOverview(req, res, next) {
       `
       SELECT d.delivery_id AS id, o.order_number AS \`order\`, b.business_name AS destination,
         d.estimated_arrival AS eta, d.current_status AS status,
-        COALESCE(d.courier_name, d.delivery_method) AS carrier
+        COALESCE(d.courier_name, o.delivery_method) AS carrier
       FROM deliveries d
       JOIN orders o ON o.order_id = d.order_id
       JOIN buyers b ON b.buyer_id = o.buyer_id
