@@ -42,7 +42,8 @@ export async function getPaymentsByOrder(orderId, buyerId = null) {
     FROM payments p
     INNER JOIN orders o ON p.order_id = o.order_id
     LEFT JOIN payment_methods pm ON p.method_id = pm.method_id
-    WHERE p.order_id = ?\n      AND (? IS NULL OR o.buyer_id = ?)
+    WHERE p.order_id = ?
+      AND (? IS NULL OR o.buyer_id = ?)
     ORDER BY p.created_at DESC
   `, [orderId, buyerId, buyerId]);
 
