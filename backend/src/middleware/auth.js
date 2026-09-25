@@ -1,9 +1,17 @@
+import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import db from "../config/db.js";
 
+// Load backend environment variables before JWT_SECRET is read.
+// This module is imported before server.js executes dotenv.config(), so
+// authentication must initialise dotenv here as well.
+dotenv.config();
+
 const secret = process.env.JWT_SECRET;
 if (!secret) {
-  throw new Error("JWT_SECRET must be configured.");
+  throw new Error("JWT_SECRET must be configured in backend/.env.");
+}
+
 }
 
 export function signUser(user, options = {}) {
