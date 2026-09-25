@@ -37,7 +37,7 @@ const productSelect = `
       WHERE oi.product_id = p.product_id
         AND o.supplier_id = p.supplier_id
         AND o.order_status IN ('Processing', 'Shipped', 'Out for delivery', 'Delivered')
-        AND o.ordered_at >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+        AND o.order_date >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
     ), 0) AS units_sold_30d
   FROM products p
   LEFT JOIN categories c ON p.category_id = c.category_id
