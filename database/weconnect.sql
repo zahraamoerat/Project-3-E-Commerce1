@@ -349,6 +349,15 @@ CREATE TABLE deliveries (
     estimated_arrival VARCHAR(100),            -- ETA string (e.g. "24 min" or "Tomorrow 9-11am")
     dispatched_at DATETIME,
     delivered_at DATETIME,
+    pickup_label VARCHAR(255),
+    pickup_latitude DECIMAL(10,8),
+    pickup_longitude DECIMAL(11,8),
+    destination_label VARCHAR(255),
+    destination_latitude DECIMAL(10,8),
+    destination_longitude DECIMAL(11,8),
+    route_distance_m DECIMAL(12,2),
+    route_duration_s INT,
+    setup_confirmed_at DATETIME NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
