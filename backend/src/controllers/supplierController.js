@@ -13,7 +13,7 @@ export async function getSupplierOverview(req, res, next) {
       `
       SELECT o.order_number AS id, b.business_name AS buyer,
         DATE_FORMAT(o.ordered_at, '%d %b %Y') AS date,
-        o.total_amount AS total, o.status AS order_status,
+        o.total_amount AS total, o.order_status AS order_status,
         GROUP_CONCAT(DISTINCT p.product_name ORDER BY p.product_name SEPARATOR ', ') AS items
       FROM orders o
       JOIN buyers b ON b.buyer_id = o.buyer_id
