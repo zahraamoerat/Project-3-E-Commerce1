@@ -22,6 +22,7 @@ const loading = ref(true);
 const error = ref("");
 let loaded = false;
 let loadedForToken = null;
+let activeLoadId = 0;
 
 async function request(path, options = {}) {
   const token = localStorage.getItem("weconnect_token");
@@ -72,6 +73,7 @@ export async function refreshSupplierProducts() {
 }
 
 export function resetSupplierData() {
+  activeLoadId += 1;
   loaded = false;
   loadedForToken = null;
   products.value = [];
@@ -80,6 +82,7 @@ export function resetSupplierData() {
   reviews.value = [];
   profile.value = { businessName: "", owner: "", email: "", phone: "", location: "", description: "" };
   businessPicture.value = "";
+  loading.value = false;
   error.value = "";
 }
 
@@ -89,39 +92,80 @@ export function setBusinessPicture(url) {
   localStorage.setItem(`weconnect_business_picture_${supplierId}`, url || "");
 }
 
+async function loadProfileForToken(currentToken, loadId) {
+  try {
+    const data = await request("/profile");
+    if (
+      loadId === activeLoadId &&
+      localStorage.getItem("weconnect_token") === currentToken &&
+      data?.profile
+    ) {
+      Object.assign(profile.value, data.profile);
+      return true;
+    }
+  } catch (requestError) {
+    console.error("Supplier profile could not be loaded:", requestError);
+  }
+  return false;
+}
+
 async function loadSupplierData(force = false) {
   const currentToken = localStorage.getItem("weconnect_token");
+  if (!currentToken) {
+    resetSupplierData();
+    return;
+  }
+
   const tokenChanged = loadedForToken !== currentToken;
   if (loaded && !force && !tokenChanged) return;
-  if (loaded && tokenChanged) resetSupplierData();
+  if (tokenChanged) resetSupplierData();
+
+  const loadId = ++activeLoadId;
   loadedForToken = currentToken;
   loading.value = true;
+  const isCurrent = () =>
+    loadId === activeLoadId &&
+    localStorage.getItem("weconnect_token") === currentToken;
+
   try {
     const productData = await request("/supplier/products");
+    if (!isCurrent()) return;
     products.value = productData || [];
     error.value = "";
 
+    let profileLoaded = false;
     try {
       const data = await request("/supplier/overview");
+      if (!isCurrent()) return;
       orders.value = data.orders || [];
       deliveries.value = data.deliveries || [];
       reviews.value = data.reviews || [];
-      if (data.profile) Object.assign(profile.value, data.profile);
+      if (data.profile) {
+        Object.assign(profile.value, data.profile);
+        profileLoaded = Boolean(String(data.profile.businessName || "").trim());
+      }
     } catch (overviewError) {
-      console.error("Supplier overview could not be loaded:", overviewError);
+      if (isCurrent()) {
+        console.error("Supplier overview could not be loaded:", overviewError);
+      }
     }
 
-    loaded = true;
+    if (isCurrent() && !profileLoaded) {
+      await loadProfileForToken(currentToken, loadId);
+    }
+    if (isCurrent()) loaded = true;
   } catch (requestError) {
+    if (!isCurrent()) return;
     error.value = requestError.message;
     console.error("Unable to load products:", requestError);
+    await loadProfileForToken(currentToken, loadId);
   } finally {
-    loading.value = false;
+    if (isCurrent()) loading.value = false;
   }
 }
 
 loadCategories();
-loadSupplierData();
+if (localStorage.getItem("weconnect_token")) loadSupplierData();
 
 async function addProduct(product) {
   const result = await request("/supplier/products", { method: "POST", body: JSON.stringify(product) });

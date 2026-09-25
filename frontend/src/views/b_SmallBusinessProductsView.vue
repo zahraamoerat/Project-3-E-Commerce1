@@ -173,12 +173,15 @@
                       <img :src="product.image" :alt="product.title" class="product-image" loading="lazy" @error="imageFallback" />
                     </button>
 
-                    <span v-if="product.discountPercent > 0" class="discount-badge">{{ product.discountPercent }}% off</span>
-                    <span v-else-if="product.status === 'Low stock'" class="discount-badge low-stock-badge">Low stock</span>
+                     <span v-if="isOutOfStock(product)" class="discount-badge out-of-stock-badge">Out of stock</span>
+                     <span v-else-if="product.discountPercent > 0" class="discount-badge">{{ product.discountPercent }}% off</span>
+                     <span v-else-if="product.status === 'Low stock'" class="discount-badge low-stock-badge">Low stock</span>
+
 
                     <div class="product-hover-actions">
                       <button type="button" aria-label="View product" @click="viewProduct(product)"><FontAwesomeIcon :icon="faExpand" /></button>
-                      <button type="button" aria-label="Add to order" :disabled="product.status === 'Out of stock' || basketBusy[product.id]" @click="toggleBasket(product)">
+                       <button type="button" aria-label="Add to order" :disabled="isOutOfStock(product) || basketBusy[product.id]" @click="toggleBasket(product)">
+
                         <FontAwesomeIcon :icon="basket[product.id] ? faCheck : faBagShopping" />
                       </button>
                     </div>
@@ -205,11 +208,12 @@
                       type="button"
                       class="product-add-button"
                       :class="{ selected: basket[product.id] }"
-                      :disabled="product.status === 'Out of stock'"
-                      @click="toggleBasket(product)"
-                    >
-                      <FontAwesomeIcon :icon="basket[product.id] ? faCheck : faPlus" />
-                      {{ basketBusy[product.id] ? 'Updating...' : (basket[product.id] ? 'Added to order' : 'Add to order') }}
+                       :disabled="isOutOfStock(product)"
+                       @click="toggleBasket(product)"
+                     >
+                       <FontAwesomeIcon :icon="basket[product.id] ? faCheck : faPlus" />
+                       {{ basketBusy[product.id] ? 'Updating...' : (isOutOfStock(product) ? 'Out of stock' : (basket[product.id] ? 'Added to order' : 'Add to order')) }}
+
                     </button>
                   </div>
                 </article>
@@ -280,10 +284,12 @@
           </section>
 
           <section class="detail-copy">
-            <div class="detail-category-row">
-              <p class="detail-category">{{ selectedProduct.category }}</p>
-              <span v-if="selectedProduct.discountPercent" class="detail-discount">{{ selectedProduct.discountPercent }}% Off</span>
-            </div>
+             <div class="detail-category-row">
+               <p class="detail-category">{{ selectedProduct.category }}</p>
+               <span v-if="isOutOfStock(selectedProduct)" class="detail-stock-status">Out of stock</span>
+               <span v-else-if="selectedProduct.discountPercent" class="detail-discount">{{ selectedProduct.discountPercent }}% Off</span>
+             </div>
+
             <h1>{{ selectedProduct.title }}</h1>
             <div class="detail-review-line">
               <span class="detail-stars">{{ starsFor(selectedProduct.rating) }}</span>
@@ -316,8 +322,9 @@
                 <span>{{ quantity }}</span>
                 <button type="button" :disabled="quantity >= Math.max(1, selectedProduct.stockQty)" @click="quantity = Math.min(Math.max(1, selectedProduct.stockQty), quantity + 1)">+</button>
               </div>
-              <button type="button" class="detail-primary" :disabled="selectedProduct.status === 'Out of stock'" @click="addDetailToBasket"><FontAwesomeIcon :icon="faBagShopping" /> {{ detailActionLabel }}</button>
-              <button type="button" class="detail-buy-now" :disabled="selectedProduct.status === 'Out of stock'" @click="orderNow">Buy Now</button>
+               <button type="button" class="detail-primary" :disabled="isOutOfStock(selectedProduct)" @click="addDetailToBasket"><FontAwesomeIcon :icon="faBagShopping" /> {{ detailActionLabel }}</button>
+               <button type="button" class="detail-buy-now" :disabled="isOutOfStock(selectedProduct)" @click="orderNow">{{ isOutOfStock(selectedProduct) ? 'Out of stock' : 'Buy Now' }}</button>
+
               <button type="button" class="detail-heart" :class="{ saved: detailSaved }" :aria-pressed="detailSaved" @click="toggleDetailWishlist" :aria-label="detailSaved ? 'Remove from wishlist' : 'Save product'">{{ detailSaved ? '♥' : '♡' }}</button>
             </div>
 
@@ -346,7 +353,8 @@
           <div v-else-if="activeDetailTab === 'info'" class="detail-tab-content detail-info-grid">
             <div><span>Category</span><strong>{{ selectedProduct.category }}</strong></div>
             <div><span>SKU</span><strong>{{ selectedProduct.sku || 'Not provided' }}</strong></div>
-            <div><span>Stock</span><strong>{{ selectedProduct.stockQty }} units</strong></div>
+             <div><span>Stock</span><strong>{{ isOutOfStock(selectedProduct) ? 'Out of stock' : selectedProduct.stockQty + ' units' }}</strong></div>
+
             <div><span>Supplier</span><strong>{{ selectedProduct.supplier }}</strong></div>
           </div>
 
@@ -427,14 +435,16 @@
                       <img :src="product.image" :alt="product.title" loading="lazy" @error="imageFallback" />
                     </button>
 
-                    <span v-if="product.discountPercent > 0" class="related-discount">
-                      {{ product.discountPercent }}% off
-                    </span>
+                     <span v-if="isOutOfStock(product)" class="related-discount out-of-stock-badge">Out of stock</span>
+                     <span v-else-if="product.discountPercent > 0" class="related-discount">
+                       {{ product.discountPercent }}% off
+                     </span>
+
 
                     <button
                       type="button"
                       class="related-quick-add"
-                      :disabled="product.status === 'Out of stock' || basketBusy[product.id]"
+                      :disabled="isOutOfStock(product) || basketBusy[product.id]"
                       :aria-label="`Add ${product.title} to order`"
                       @click="toggleBasket(product)"
                     >
@@ -465,11 +475,12 @@
                       type="button"
                       class="related-add-button"
                       :class="{ selected: basket[product.id] }"
-                      :disabled="product.status === 'Out of stock'"
-                      @click="toggleBasket(product)"
-                    >
-                      <FontAwesomeIcon :icon="basket[product.id] ? faCheck : faPlus" />
-                      {{ basketBusy[product.id] ? 'Updating...' : (basket[product.id] ? 'Added to order' : 'Add to order') }}
+                       :disabled="isOutOfStock(product)"
+                       @click="toggleBasket(product)"
+                     >
+                       <FontAwesomeIcon :icon="basket[product.id] ? faCheck : faPlus" />
+                       {{ basketBusy[product.id] ? 'Updating...' : (isOutOfStock(product) ? 'Out of stock' : (basket[product.id] ? 'Added to order' : 'Add to order')) }}
+
                     </button>
                   </div>
                 </article>
@@ -598,7 +609,7 @@ const paginatedProducts = computed(() => {
 const pageNumbers = computed(() => Array.from({ length: totalPages.value }, (_, index) => index + 1))
 const showingStart = computed(() => sortedProducts.value.length ? ((currentPage.value - 1) * pageSize) + 1 : 0)
 const showingEnd = computed(() => Math.min(currentPage.value * pageSize, sortedProducts.value.length))
-const detailActionLabel = computed(() => basket.value[selectedProduct.value?.id] ? 'Add to cart' : 'Add to cart')
+const detailActionLabel = computed(() => isOutOfStock(selectedProduct.value) ? 'Out of stock' : 'Add to cart')
 const activeDetailDiscount = computed(() => { const tiers = selectedProduct.value?.discountTiers || []; return [...tiers].reverse().find(t => quantity.value >= Number(t.minimum_quantity))?.discount_percent || 0 })
 const detailUnitPrice = computed(() => { const base = Number(selectedProduct.value?.price || 0); return base * (1 - Number(activeDetailDiscount.value || 0) / 100) })
 const relatedProducts = computed(() => {
@@ -652,6 +663,10 @@ function normalizeProductImages(product) {
       .map(url => url.trim())
   )]
 }
+function isOutOfStock(product) {
+  return String(product?.status || '').trim().toLowerCase() === 'out of stock' || Number(product?.stockQty) <= 0
+}
+
 function normalizeProduct(product) {
   const stockQty = Number(product.stockQty ?? product.quantity ?? 0)
   const price = Number(product.price ?? 0)
@@ -671,7 +686,8 @@ function normalizeProduct(product) {
     discountPercent,
     discountTiers: Array.isArray(product.discountTiers) ? product.discountTiers.map(t => ({ ...t, minimum_quantity: Number(t.minimum_quantity), discount_percent: Number(t.discount_percent) })).sort((a,b) => a.minimum_quantity - b.minimum_quantity) : [],
     stockQty,
-    status: product.status ?? (stockQty > 0 ? 'Active' : 'Out of stock'),
+    status: isOutOfStock({ status: product.status, stockQty }) ? 'Out of stock' : (product.status || 'Active'),
+
     image: product.image ?? product.image_url ?? product.product_image ?? product.productImage ?? 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=900&q=80',
     images: normalizeProductImages(product),
     supplier: product.supplier ?? product.supplier_name ?? 'WeConnect supplier',
@@ -780,6 +796,10 @@ async function syncBasketFromCart() {
 }
 
 async function toggleBasket(product) {
+  if (isOutOfStock(product)) {
+    notice.value = `${product.title} is currently out of stock.`
+    return
+  }
   if (basketBusy.value[product.id]) return
 
   basketBusy.value = { ...basketBusy.value, [product.id]: true }
@@ -830,7 +850,12 @@ async function toggleBasket(product) {
 }
 async function addDetailToBasket({ goToCart = false } = {}) {
   const product = selectedProduct.value
-  if (!product || basketBusy.value[product.id]) return
+  if (!product) return
+  if (isOutOfStock(product)) {
+    notice.value = `${product.title} is currently out of stock.`
+    return
+  }
+  if (basketBusy.value[product.id]) return
   basketBusy.value = { ...basketBusy.value, [product.id]: true }
   const nextQuantity = Math.max(1, Math.min(quantity.value || 1, Math.max(1, product.stockQty)))
   const existing = basket.value[product.id]
@@ -1058,6 +1083,7 @@ onBeforeUnmount(() => {
 .basket-count { position: absolute; top: -4px; right: -5px; display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: #5c3d24; color: #fff; font-size: 8px; font-weight: 700; }
 
 .shop-hero { position: relative; display: grid; place-items: center; padding: 42px 20px 35px; min-height: 145px; overflow: hidden; background: #f6f6f4; text-align: center; }
+.hero-heading { display: grid; justify-items: start; gap: 7px; width: 100%; text-align: left; }
 .shop-hero h1 { z-index: 1; margin: 0; color: #30302e; font-family: Georgia, "Times New Roman", serif; font-size: clamp(30px, 4vw, 36px); font-weight: 500; letter-spacing: .2px; }
 .shop-hero p { z-index: 1; margin: 0 0 7px; color: #77736f; font-size: 11px; letter-spacing: 1.7px; }
 .shop-hero p span { margin: 0 7px; color: #b5b0ab; }
@@ -1147,6 +1173,7 @@ onBeforeUnmount(() => {
 .product-image-button:hover .product-image { transform: scale(1.035); }
 .discount-badge { position: absolute; top: 10px; left: 10px; padding: 7px 9px; border-radius: 20px; background: #5c3d24; color: #fff; font-size: 9px; font-weight: 700; text-transform: uppercase; }
 .low-stock-badge { background: #b7773b; }
+.discount-badge.out-of-stock-badge, .related-discount.out-of-stock-badge { background: #fae5e1; color: #b85043; }
 .product-hover-actions { position: absolute; top: 10px; right: 10px; display: grid; gap: 6px; opacity: 0; transform: translateX(6px); transition: .2s ease; }
 .product-visual:hover .product-hover-actions { opacity: 1; transform: translateX(0); }
 .product-hover-actions button { display: grid; place-items: center; width: 29px; height: 29px; border: 0; border-radius: 50%; background: rgba(255,255,255,.95); color: #5d5651; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
@@ -1214,7 +1241,7 @@ onBeforeUnmount(() => {
 .detail-thumb-row { display: flex; gap: 7px; margin-top: 8px; }
 .detail-thumb { width: 66px; height: 66px; padding: 2px; border: 2px solid transparent; border-radius: 7px; background: #eee4d8; cursor: pointer; overflow: hidden; }
 .detail-thumb.active { border-color: #5c3d24; }.detail-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
-.detail-copy { padding-top: 8px; }.detail-category-row { display: flex; align-items: center; gap: 8px; }.detail-category { margin: 0; color: #8e8178; font-size: 9px; font-weight: 700; }.detail-discount { padding: 3px 7px; border-radius: 8px; background: #e7f2e9; color: #3e7650; font-size: 8px; font-weight: 800; }
+.detail-copy { padding-top: 8px; }.detail-category-row { display: flex; align-items: center; gap: 8px; }.detail-category { margin: 0; color: #8e8178; font-size: 9px; font-weight: 700; }.detail-discount { padding: 3px 7px; border-radius: 8px; background: #e7f2e9; color: #3e7650; font-size: 8px; font-weight: 800; }.detail-stock-status { padding: 3px 7px; border-radius: 8px; background: #fae5e1; color: #b85043; font-size: 8px; font-weight: 800; }
 .detail-copy h1 { margin: 5px 0 8px; color: #3d332d; font: 600 25px Georgia, serif; }.detail-review-line { display: flex; align-items: center; gap: 6px; color: #8c837c; font-size: 9px; }.detail-stars { color: #e2b21b; letter-spacing: 1px; font-size: 11px; }
 .detail-price { display: flex; align-items: baseline; gap: 9px; margin: 9px 0 12px; }.detail-price strong { color: #6d4a32; font-size: 18px; }.detail-price span { color: #aaa19b; font-size: 10px; text-decoration: line-through; }
 .detail-description { margin: 0 0 13px; color: #756d67; line-height: 1.55; font-size: 10px; }.detail-option { margin: 12px 0; }.detail-option-label { display: flex; gap: 8px; margin-bottom: 6px; color: #5b514b; font-size: 9px; }.detail-option-label span { color: #9a6b45; }

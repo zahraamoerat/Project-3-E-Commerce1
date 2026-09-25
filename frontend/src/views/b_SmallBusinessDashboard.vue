@@ -71,15 +71,15 @@
         <strong>R{{ formatMoney(stats.pendingPayment) }}</strong>
         <p><span class="warning">{{ stats.pendingInvoices }}</span> invoice{{ stats.pendingInvoices === 1 ? "" : "s" }} due</p>
       </article>
-      <article v-if="stats.inTransit > 0" class="metric-card">
-        <div class="metric-top"><span class="metric-icon green">↗</span><span class="metric-caption">In transit</span></div>
-        <strong>{{ stats.inTransit }}</strong>
-        <p><span class="positive">{{ stats.inTransit }}</span> delivery{{ stats.inTransit === 1 ? "" : "ies" }} in transit</p>
-      </article>
       <article class="metric-card">
         <div class="metric-top"><span class="metric-icon cream">R</span><span class="metric-caption">Monthly spend</span></div>
         <strong>R{{ formatMoney(stats.totalSpend) }}</strong>
         <p><span class="positive">{{ stats.spendChangePercent }}%</span> vs last month</p>
+      </article>
+      <article class="metric-card">
+        <div class="metric-top"><span class="metric-icon green">↗</span><span class="metric-caption">In transit</span></div>
+        <strong>{{ stats.inTransit }}</strong>
+        <p><span class="positive">{{ stats.inTransit }}</span> {{ stats.inTransit === 1 ? "delivery" : "deliveries" }} in transit</p>
       </article>
     </section>
 

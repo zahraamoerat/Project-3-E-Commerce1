@@ -50,6 +50,7 @@ import logo from "../assets/link-icon-white.png"
 import { ref } from "vue"
 import { useRouter } from "vue-router"
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome"
+import { resetSupplierData } from "@/data/supplierData"
 import { faChartLine } from "@fortawesome/free-solid-svg-icons"
 import { faShoppingBag } from "@fortawesome/free-solid-svg-icons"
 import { faList } from "@fortawesome/free-solid-svg-icons"
@@ -68,6 +69,7 @@ function toggleSidebar() {
 }
 /* ========================= LOGOUT ========================= */
 function logout() {
+  resetSupplierData();
   [
     "weconnect_token",
     "weconnect_role",

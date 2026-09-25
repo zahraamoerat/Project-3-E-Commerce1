@@ -797,8 +797,8 @@ async function processPayment() {
 
     await Swal.fire({
       icon: 'success',
-      title: 'Payment Successful',
-      text: `Payment ${paymentReference.value} has been recorded successfully.`,
+      title: 'Order placed',
+      text: `Order ${selectedOrder.value.orderNumber} has been paid successfully.`,
       confirmButtonText: 'View Receipt',
       confirmButtonColor: '#4E342E'
     })

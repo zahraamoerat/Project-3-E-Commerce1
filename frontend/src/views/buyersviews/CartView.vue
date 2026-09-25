@@ -526,15 +526,8 @@ export default {
           this.selectedPaymentMethod,
         );
 
-        await Swal.fire({
-          title: "Order placed",
-          text: `Your ${result.orders?.length || 1} supplier order(s) were created successfully.`,
-          icon: "success",
-          confirmButtonText: "View orders",
-        });
-
         this.cartGroups = [];
-        this.$router.push("/small-business/orders");
+        this.$router.push(`/payment/${result.orders?.[0]?.order_id}`);
       } catch (error) {
         this.error = error.message || "Checkout failed. Please try again.";
 

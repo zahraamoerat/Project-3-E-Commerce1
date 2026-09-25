@@ -13,7 +13,7 @@
       <header class="supplier_dashboard_hero">
         <div><span class="supplier_dashboard_eyebrow">SUPPLIER OVERVIEW</span>
           <h1>Good morning, {{ businessName }}.</h1>
-          <p>Your catalog is active and buyers are already browsing your latest stock.</p>
+          <p>Manage your catalog and stock to keep buyers informed about your business.</p>
         </div>
       </header>
     <section class="supplier_dashboard_stats">
@@ -60,12 +60,15 @@
   </div>
 </template>
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { RouterLink } from "vue-router";
 import { useSupplierData, supplierStats } from "@/data/supplierData";
-const { orders, products, profile } = useSupplierData();
+const { orders, products, profile, loadSupplierData } = useSupplierData();
 const { productCount, lowStockCount: lowStock, outOfStockCount: outOfStock, revenue } = supplierStats;
 const businessName = computed(() => profile.value.businessName?.trim() || "Supplier");
+onMounted(() => {
+  loadSupplierData(true);
+});
 const buyerCount = computed(() => new Set(orders.value.map((order) => order.buyer).filter(Boolean)).size);
 const attention = computed(() => products.value.filter((product) => product.stockStatus !== "In stock"));
 function money(value) { return new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(value); }
