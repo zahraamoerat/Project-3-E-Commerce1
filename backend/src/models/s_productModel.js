@@ -36,7 +36,7 @@ const productSelect = `
       JOIN orders o ON o.order_id = oi.order_id
       WHERE oi.product_id = p.product_id
         AND o.supplier_id = p.supplier_id
-        AND o.status IN ('Processing', 'Shipped', 'Out for delivery', 'Delivered')
+        AND o.order_status IN ('Processing', 'Shipped', 'Out for delivery', 'Delivered')
         AND o.ordered_at >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
     ), 0) AS units_sold_30d
   FROM products p
